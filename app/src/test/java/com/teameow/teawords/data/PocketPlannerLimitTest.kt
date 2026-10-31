@@ -21,4 +21,17 @@ class PocketPlannerLimitTest {
         assertTrue(round.tasks.map { it.word }.containsAll(states.take(2).map { it.word }))
         assertEquals(1, PocketPlanner.build(states, words, 3, 100, wordLimit = 1)!!.wordCount)
     }
+    @Test fun reviewEntryIncludesOnlyDueWordsWhenNewBudgetIsZero() {
+        val states = fresh.mapIndexed { index, state ->
+            when (index) {
+                0 -> state.copy(attempts = 1, due = 1)
+                1 -> state.copy(attempts = 1, due = 200)
+                else -> state
+            }
+        }
+        val round = PocketPlanner.build(states, words, 0, 100, wordLimit = 10)!!
+        assertEquals(setOf(states.first().word), round.tasks.map { it.word }.toSet())
+        assertTrue(round.tasks.none { it.taught })
+        assertNull(PocketPlanner.build(states.drop(1), words, 0, 100))
+    }
 }

@@ -1,5 +1,8 @@
 package com.teameow.teawords.ui.screens
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -18,10 +21,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import kotlinx.coroutines.delay
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
  * Shared Material 3 building blocks. Every page composes these so that spacing, radii,
@@ -40,7 +51,7 @@ import kotlinx.coroutines.delay
  */
 internal val LocalReservedBottom = staticCompositionLocalOf<Dp?> { null }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TeaListPage(
     title: String,
@@ -52,9 +63,15 @@ fun TeaListPage(
     navigationContent: (@Composable () -> Unit)? = null,
     floatingActionButton: (@Composable () -> Unit)? = null,
     loading: Boolean = false,
+    expandedTitle: Boolean = true,
+    embedded: Boolean = false,
+    header: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     content: LazyListScope.() -> Unit
 ) {
+    val layout = teaLayoutSize()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val listState = rememberLazyListState()
     val reservedBottom = LocalReservedBottom.current
     var showLoading by remember { mutableStateOf(false) }
     LaunchedEffect(loading) {
@@ -65,60 +82,61 @@ fun TeaListPage(
         } else showLoading = false
     }
     Column(
-        modifier.fillMaxSize()
+        modifier.fillMaxSize().then(
+            // Fixed/custom headers have no collapse limit; attaching this connection would
+            // consume upward drags indefinitely before the list can receive them.
+            if (expandedTitle && header == null) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+            else Modifier
+        )
             .then(
-                // Host absent: this page is the bottom-most surface and has to clear the gesture area
-                // itself. Host present: reserve exactly what the host measured for the floating dock
-                // and nothing else. `navigationBars` must not be added here — the host's reservation
-                // already includes the gesture bar, and stacking the two shorted the 学习 list by one
-                // gesture bar, which is what left a blank strip between the content and the dock.
-                if (reservedBottom == null) Modifier.navigationBarsPadding()
-                else Modifier.padding(bottom = reservedBottom)
+                // Hosted lists scroll behind the dock; only the list's end clears its buttons.
+                if (reservedBottom == null && !embedded) Modifier.navigationBarsPadding() else Modifier
             )
             .background(containerColor)
     ) {
-        TopAppBar(
-            title = {
-                Column {
-                    Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (subtitle != null) Text(
-                        subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis
-                    )
-                }
-            },
-            // The icon is never dropped while a page is busy, only disabled: removing it makes
-            // TopAppBar re-centre the title, which shifts the whole bar on every tap.
-            navigationIcon = {
-                if (navigationContent != null) navigationContent()
-                else if (onBack != null) IconButton(onClick = onBack, enabled = backEnabled) {
-                    Icon(AppSymbols.ArrowBack, contentDescription = "返回")
-                }
-            },
-            actions = actions,
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = containerColor,
-                titleContentColor = MaterialTheme.colorScheme.onSurface,
-                navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        val heading: @Composable () -> Unit = {
+            Text(title, fontSize = if (expandedTitle) layout.titleSize else MaterialTheme.typography.titleLarge.fontSize,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        val navigation: @Composable () -> Unit = {
+            if (navigationContent != null) navigationContent()
+            else if (onBack != null) IconButton(onClick = onBack, enabled = backEnabled) {
+                Icon(AppSymbols.ArrowBack, contentDescription = "返回")
+            }
+        }
+        val barColors = TopAppBarDefaults.topAppBarColors(
+            containerColor = containerColor, scrolledContainerColor = containerColor,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        if (header != null) header()
+        else if (expandedTitle) LargeFlexibleTopAppBar(
+            title = heading,
+            expandedHeight = if (layout.compact) 112.dp else 144.dp,
+            subtitle = subtitle?.let { value -> { Text(value, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+            navigationIcon = navigation, actions = actions, colors = barColors, scrollBehavior = scrollBehavior,
+            windowInsets = if (embedded) WindowInsets(0, 0, 0, 0) else TopAppBarDefaults.windowInsets
+        ) else TopAppBar(title = {
+            Column { heading(); subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) } }
+        }, navigationIcon = navigation, actions = actions, colors = barColors,
+            windowInsets = if (embedded) WindowInsets(0, 0, 0, 0) else TopAppBarDefaults.windowInsets)
         Box(Modifier.weight(1f).fillMaxWidth()) {
         LazyColumn(
             Modifier.fillMaxSize()
                 // The hosted dock already includes the keyboard height in reservedBottom.
                 .then(if (reservedBottom == null) Modifier.imePadding() else Modifier),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = if (floatingActionButton != null) 88.dp else 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            state = listState,
+            contentPadding = PaddingValues(start = layout.horizontalPadding, end = layout.horizontalPadding, top = 8.dp, bottom = (reservedBottom ?: 0.dp) + if (floatingActionButton != null) 88.dp else 20.dp),
+            verticalArrangement = Arrangement.spacedBy(layout.sectionGap),
             content = content
         )
         // Overlay the indicator in the existing top gap so loading never moves list items.
         if (showLoading) LinearProgressIndicator(
             Modifier.align(Alignment.TopCenter).fillMaxWidth().height(4.dp).testTag("page-loading")
         )
-        if (floatingActionButton != null) Box(Modifier.align(Alignment.BottomEnd).padding(16.dp)) { floatingActionButton() }
+        if (floatingActionButton != null) Box(Modifier.align(Alignment.BottomEnd).padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = (reservedBottom ?: 0.dp) + 16.dp)) { floatingActionButton() }
         }
     }
 }
@@ -127,13 +145,13 @@ fun TeaListPage(
 @Composable
 fun TeaCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
-    contentPadding: PaddingValues = PaddingValues(20.dp),
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(24.dp),
         // Content colour is set explicitly: relying on the inherited value left cards rendering
         // their container while the text inside was drawn in a colour indistinguishable from it.
         colors = CardDefaults.cardColors(
@@ -141,7 +159,9 @@ fun TeaCard(
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
-        Column(Modifier.padding(contentPadding), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+        ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
+            Column(Modifier.padding(contentPadding), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
+        }
     }
 }
 
@@ -151,7 +171,7 @@ fun LearningCard(
     title: String,
     subtitle: String,
     titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
     TeaCard(containerColor = containerColor) {
@@ -167,14 +187,16 @@ fun LearningCard(
     }
 }
 
-/** Indeterminate work indicator. Thin and inset so it never stretches edge to edge. */
+/** Indeterminate query feedback; determinate work keeps its progress bar. */
 @Composable
 fun TeaProgressBar(modifier: Modifier = Modifier) {
-    LinearProgressIndicator(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.primary,
-        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-    )
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically) {
+        TeaLoadingIndicator()
+        Spacer(Modifier.width(8.dp))
+        Text("正在查询…", style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 /** Section label that separates major regions inside a page. */
@@ -301,18 +323,79 @@ fun TeaScreenProgress(done: Int, total: Int, modifier: Modifier = Modifier) {
 
 /** Centred empty state with an optional icon-free headline. */
 @Composable
-fun TeaEmptyState(title: String, subtitle: String, modifier: Modifier = Modifier) {
+fun TeaEmptyState(title: String, subtitle: String, modifier: Modifier = Modifier, icon: ImageVector? = null) {
+    val entrance = remember(title, subtitle) { Animatable(0f) }
+    LaunchedEffect(entrance) { entrance.animateTo(1f, tween(360, easing = TeaEnterEasing)) }
+    fun stage(start: Float): Float = ((entrance.value - start) / (1f - start)).coerceIn(0f, 1f)
     Column(
         modifier.fillMaxWidth().padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        Icon(icon ?: AppSymbols.Book5, contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(48.dp).graphicsLayer {
+                alpha = stage(0f)
+                scaleX = 0.92f + 0.08f * stage(0f)
+                scaleY = scaleX
+                translationY = 12.dp.toPx() * (1f - stage(0f))
+            })
+        Spacer(Modifier.height(6.dp))
+        Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center,
+            modifier = Modifier.graphicsLayer {
+                alpha = stage(0.16f)
+                translationY = 8.dp.toPx() * (1f - stage(0.16f))
+            })
         Text(
             subtitle,
+            modifier = Modifier.graphicsLayer {
+                alpha = stage(0.32f)
+                translationY = 8.dp.toPx() * (1f - stage(0.32f))
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+/** Material grouped options: independently shaped rows retain their full touch targets. */
+@Composable
+internal fun TeaSegmentedGroup(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)),
+        verticalArrangement = Arrangement.spacedBy(2.dp), content = content)
+}
+
+@Composable
+internal fun TeaOptionRow(
+    title: String, summary: String? = null, icon: ImageVector? = null,
+    enabled: Boolean = true, selected: Boolean? = null,
+    trailing: (@Composable () -> Unit)? = null, onClick: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    val background = if (selected == true) colors.secondaryContainer else colors.surfaceContainerHigh
+    Surface(shape = RoundedCornerShape(4.dp),
+        color = background, contentColor = if (selected == true) colors.onSecondaryContainer else colors.onSurface) {
+        ListItem(
+            headlineContent = { Text(title, style = MaterialTheme.typography.bodyLarge) },
+            supportingContent = summary?.let { value -> { Text(value, style = MaterialTheme.typography.bodyMedium) } },
+            leadingContent = icon?.let { value -> { Icon(value, null, Modifier.size(24.dp)) } },
+            trailingContent = trailing ?: { Icon(AppSymbols.ChevronRight, null) },
+            colors = ListItemDefaults.colors(containerColor = background,
+                headlineColor = if (selected == true) colors.onSecondaryContainer else colors.onSurface,
+                supportingColor = if (selected == true) colors.onSecondaryContainer else colors.onSurfaceVariant),
+            modifier = Modifier.heightIn(min = 56.dp).then(
+                if (selected != null) Modifier.selectable(selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
+                else Modifier.clickable(enabled = enabled, onClick = onClick))
+        )
+    }
+}
+
+@Composable
+internal fun TeaStatusMessage(message: String, error: Boolean = false) {
+    Surface(shape = RoundedCornerShape(20.dp),
+        color = if (error) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = if (error) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer) {
+        Text(message, Modifier.fillMaxWidth().padding(16.dp), style = MaterialTheme.typography.bodyMedium)
     }
 }

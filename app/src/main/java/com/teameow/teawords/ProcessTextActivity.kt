@@ -17,7 +17,10 @@ class ProcessTextActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         incoming.value = extractText(intent)
-        setContent { TeaWordsTheme { ProvidePronunciation { LookupScreen(incoming.value, external = true, onBack = { finish() }) } } }
+        val appearance = com.teameow.teawords.data.AppPreferences(this)
+        setContent { TeaWordsTheme(
+            darkTheme = com.teameow.teawords.ui.theme.resolveDarkTheme(appearance.themeMode, androidx.compose.foundation.isSystemInDarkTheme()),
+            dynamicColor = appearance.dynamicColor, pureBlack = appearance.pureBlack) { ProvidePronunciation { LookupScreen(incoming.value, external = true, onBack = { finish() }) } } }
     }
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); incoming.value = extractText(intent) }
     companion object {

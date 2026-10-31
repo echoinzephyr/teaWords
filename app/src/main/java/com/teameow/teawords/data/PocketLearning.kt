@@ -7,7 +7,7 @@ import org.json.JSONObject
 import java.util.UUID
 
 enum class PocketKind(val label: String) {
-    STUDY("认识一下"), MEANING("选词义"), LISTEN("听音选词"), MATCH("词义配对"), CLOZE("语境填空"), SPELLING("拼写填空")
+    STUDY("认识一下"), MEANING("选词义"), LISTEN("听音选词"), MATCH("词义配对"), CLOZE("语境填空"), SPELLING("拼写填空"), TYPING("整词默写")
 }
 
 data class PocketTask(
@@ -18,6 +18,7 @@ data class PocketTask(
     val answer: String get() = when (kind) {
         PocketKind.MEANING, PocketKind.MATCH -> definition
         PocketKind.SPELLING -> word.filterIndexed { index, _ -> prompt.getOrNull(index) == '_' }
+        PocketKind.TYPING -> word
         else -> word
     }
 }
@@ -37,6 +38,21 @@ data class PocketRound(
 object PocketPlanner {
     const val DEFAULT_WORD_LIMIT = 5
     const val MAX_WORD_LIMIT = 100
+    /** A full-word typing round uses the same due-first selection and daily new-word cap. */
+    fun typingRound(states: List<Knowledge>, words: Map<String, VocabularyItem>, newBudget: Int,
+                    now: Long, wordLimit: Int = 10, preferredWords: List<String> = emptyList()): PocketRound? {
+        val eligible = states.filter { !words[it.word]?.definition.isNullOrBlank() }
+        val due = eligible.filter { it.attempts > 0 && it.due <= now }.sortedBy { it.due }.take(wordLimit)
+        val rank = preferredWords.withIndex().associate { it.value to it.index }
+        val fresh = eligible.filter { it.attempts == 0 && it.report != SelfReport.KNOWN }
+            .sortedWith(compareBy<Knowledge> { rank[it.word] ?: Int.MAX_VALUE }.thenBy { it.word })
+            .take(minOf(wordLimit - due.size, newBudget.coerceAtLeast(0)))
+        val tasks = (due + fresh).mapNotNull { state -> words[state.word]?.let { item ->
+            PocketTask(item.word, LexicalText.splitSenses(item.definition).firstOrNull()?.text ?: item.definition,
+                PocketKind.TYPING)
+        } }
+        return tasks.takeIf { it.isNotEmpty() }?.let { PocketRound(UUID.randomUUID().toString(), it) }
+    }
     fun spellingPrompt(word: String): String {
         val letters = word.indices.filter { word[it].isLetter() }
         val holes = letters.shuffled().take(minOf(letters.size, if (letters.size < 5) 1 else if (letters.size < 9) 2 else 3)).toSet()
@@ -94,7 +110,20 @@ object PocketPlanner {
 /** One checkpoint; answer evidence and cursor commit in the same SQLite transaction. */
 class PocketLearningRepository(private val helper: DatabaseHelper) {
     private val db get() = helper.writableDatabase
-    init { db.execSQL("CREATE TABLE IF NOT EXISTS pocket_round (slot INTEGER PRIMARY KEY CHECK(slot=1), payload TEXT NOT NULL)") }
+    init {
+        db.execSQL("CREATE TABLE IF NOT EXISTS pocket_round (slot INTEGER PRIMARY KEY CHECK(slot=1), payload TEXT NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS typing_attempts (round_id TEXT NOT NULL, task_index INTEGER NOT NULL, word TEXT NOT NULL, errors INTEGER NOT NULL, elapsed_ms INTEGER NOT NULL, chars INTEGER NOT NULL, timestamp INTEGER NOT NULL, PRIMARY KEY(round_id, task_index))")
+    }
+
+    data class TypingStats(val words: Int, val errors: Int, val chars: Int, val elapsedMs: Long) {
+        val accuracy: Int get() = if (chars + errors == 0) 0 else chars * 100 / (chars + errors)
+        val wordsPerMinute: Int get() = if (elapsedMs <= 0) 0 else ((chars / 5.0) * 60_000 / elapsedMs).toInt()
+    }
+
+    fun typingStats(roundId: String): TypingStats = db.rawQuery(
+        "SELECT COUNT(*), COALESCE(SUM(errors),0), COALESCE(SUM(chars),0), COALESCE(SUM(elapsed_ms),0) FROM typing_attempts WHERE round_id=?",
+        arrayOf(roundId)
+    ).use { c -> c.moveToFirst(); TypingStats(c.getInt(0), c.getInt(1), c.getInt(2), c.getLong(3)) }
 
     fun load(): PocketRound? = db.rawQuery("SELECT payload FROM pocket_round WHERE slot=1", null).use {
         if (!it.moveToFirst()) return@use null
@@ -165,7 +194,8 @@ class PocketLearningRepository(private val helper: DatabaseHelper) {
     }
 
     fun answer(roundId: String, index: Int, correct: Boolean, skipped: Boolean, elapsed: Long,
-               ability: AbilityEstimate, retention: Double, pairedTo: Int? = null): PocketRound {
+               ability: AbilityEstimate, retention: Double, pairedTo: Int? = null,
+               typingErrors: Int = 0): PocketRound {
         db.beginTransaction()
         try {
             val round = checkNotNull(load())
@@ -192,7 +222,7 @@ class PocketLearningRepository(private val helper: DatabaseHelper) {
             val revealed = skipped || task.taught || task.kind == PocketKind.STUDY
             // Choice prompts are useful memory practice, not calibrated free-recall evidence.
             val earlierMiss = round.missed.any { round.tasks[it].word == task.word }
-            val grade = if (correct && !revealed && !earlierMiss) ReviewGrade.HARD else ReviewGrade.AGAIN
+            val grade = if (correct && !revealed && !earlierMiss && typingErrors == 0) ReviewGrade.HARD else ReviewGrade.AGAIN
             // Several activities in one sitting are one memory exposure, not several spaced reviews.
             val lastForWord = round.tasks.indices.none {
                 it != index && it !in round.done && round.tasks[it].word == task.word
@@ -205,12 +235,14 @@ class PocketLearningRepository(private val helper: DatabaseHelper) {
                 if (!lastForWord && memoryRecord != null && memoryRecord.dueAt > 0) memoryRecord.dueAt
                 else interval?.let { now + (it * MemoryState.MILLIS_PER_DAY).toLong() })
             repo.saveReview(state, verdict, ids.first, ids.second, correct, revealed,
-                elapsed, now, ability.theta, mode = "POCKET_${task.kind.name}")
-            if (!lastForWord) {
-                // This schema uses last_tested_at as FSRS's lastReview: intermediate activities
-                // must not move that clock forward before the final activity is scheduled.
-                db.execSQL("UPDATE user_sense_knowledge SET last_tested_at=? WHERE sense_id=?",
-                    arrayOf(memory.lastReview, ids.second))
+                elapsed, now, ability.theta, mode = "POCKET_${task.kind.name}",
+                countReview = lastForWord)
+            if (task.kind == PocketKind.TYPING) {
+                db.insertOrThrow("typing_attempts", null, ContentValues().apply {
+                    put("round_id", roundId); put("task_index", index); put("word", task.word)
+                    put("errors", typingErrors.coerceAtLeast(0)); put("elapsed_ms", elapsed.coerceAtLeast(0))
+                    put("chars", if (correct && !skipped) task.word.length else 0); put("timestamp", now)
+                })
             }
             val next = round.copy(done = round.done + index,
                 correct = round.correct + if (correct && !skipped && task.kind != PocketKind.STUDY) 1 else 0,

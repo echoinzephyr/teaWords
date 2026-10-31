@@ -31,6 +31,10 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // Optional side-by-side build for device verification when a release-signed app is installed.
+            providers.gradleProperty("verificationAppSuffix").orNull?.let { applicationIdSuffix = it }
+        }
         release {
             if (releaseKeyStore != null) signingConfig = signingConfigs.getByName("distribution")
             isMinifyEnabled = false

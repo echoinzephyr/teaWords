@@ -41,6 +41,7 @@ internal fun PocketLearningScreen(
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     var spelling by rememberSaveable(round.id, currentIndex) { mutableStateOf("") }
+    var typingErrors by rememberSaveable(round.id, currentIndex) { mutableIntStateOf(0) }
     val task = round.tasks.getOrNull(currentIndex)
     val speech = rememberPronunciationServices()
     val preference by speech.preference.collectAsState()
@@ -86,7 +87,8 @@ internal fun PocketLearningScreen(
         scope.launch {
             try {
                 val next = withContext(Dispatchers.IO) {
-                    repo.answer(round.id, index, correct, skip, elapsed, AbilityStore(context).load(), retention, pairedTo)
+                    repo.answer(round.id, index, correct, skip, elapsed, AbilityStore(context).load(), retention,
+                        pairedTo, if (answered.kind == PocketKind.TYPING) typingErrors else 0)
                 }
                 feedback = when {
                     answered.kind == PocketKind.MATCH -> {
@@ -142,44 +144,63 @@ internal fun PocketLearningScreen(
         }
     }
 
-    TeaListPage(
-        title = "随手练", subtitle = "一点一点来，随时可以暂停",
-        onBack = onBack, backEnabled = !saving, loading = saving
-    ) {
-        item {
-            LinearProgressIndicator(progress = { round.done.size.toFloat() / round.tasks.size.coerceAtLeast(1) },
-                modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            TeaCaption("${round.done.size} / ${round.tasks.size} 步 · ${round.wordCount} 个词")
-        }
-        error?.let { item { TeaCaption(it) } }
-        when {
-            feedback != null -> item {
-                TeaCard(containerColor = MaterialTheme.colorScheme.secondaryContainer) {
-                    Text(feedback!!, style = MaterialTheme.typography.titleLarge)
-                    Button(onClick = { feedback = null }, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (round.complete) "看看这一轮" else "继续")
+    TeaExercisePage(title = if (task?.kind == PocketKind.TYPING) "打字记词" else "专项练习",
+        done = round.done.size, total = round.tasks.size, busy = saving, onBack = onBack,
+        actions = {
+            when {
+                feedback != null -> TeaExerciseAction(if (round.complete) "看看这一轮" else "继续", !saving) { feedback = null }
+                round.complete -> TeaExerciseAction("完成", !saving, onClick = onBack)
+                task?.kind == PocketKind.MATCH -> TeaExerciseAction("这组还不熟，看看答案", !saving, secondary = true) {
+                    submit(selectedPair ?: currentIndex, false, true)
+                }
+                task != null -> {
+                    when (task.kind) {
+                        PocketKind.STUDY -> TeaExerciseAction("认识了，来试试", !saving) { submit(currentIndex, false) }
+                        PocketKind.SPELLING -> TeaExerciseAction("检查拼写", !saving && spelling.length == task.answer.length) {
+                            submit(currentIndex, spelling.equals(task.answer, true))
+                        }
+                        PocketKind.TYPING -> TeaExerciseAction("完成默写", !saving && spelling.equals(task.word, true)) {
+                            submit(currentIndex, true)
+                        }
+                        else -> task.options.forEach { option ->
+                            TeaExerciseOption(option, !saving && (task.kind != PocketKind.LISTEN || heard)) {
+                                submit(currentIndex, option == task.answer)
+                            }
+                        }
+                    }
+                    if (task.kind != PocketKind.STUDY) {
+                        TextButton(onClick = { submit(currentIndex, false, true) }, enabled = !saving,
+                            modifier = Modifier.fillMaxWidth()) {
+                            Text(if (task.kind == PocketKind.TYPING) "看答案，稍后复习" else "还不熟 / 跳过")
+                        }
                     }
                 }
             }
-            round.complete -> item {
-                TeaCard {
+        }) {
+        error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
+        when {
+            feedback != null -> item { TeaExerciseContent {
+                Text(feedback!!, style = MaterialTheme.typography.titleLarge)
+            } }
+            round.complete -> item { TeaExerciseContent {
                     Text("这一小轮完成了", style = MaterialTheme.typography.headlineMedium)
                     Text("练过 ${round.wordCount} 个词 · ${round.correct} / ${round.exerciseCount} 次答对")
+                    if (round.tasks.any { it.kind == PocketKind.TYPING }) {
+                        val stats = remember(round.id, round.done.size) { repo.typingStats(round.id) }
+                        TeaCaption("整词默写 ${stats.words} 个 · 准确率 ${stats.accuracy}% · ${stats.wordsPerMinute} 词/分钟")
+                    }
                     round.missed.map { round.tasks[it].word }.distinct().forEach { word ->
                         TeaCaption("再留意：$word · ${round.tasks.first { it.word == word }.definition}")
                     }
                     TeaCaption("进度已保存，今天到这里也很好。下次会优先安排需要复习的词。")
-                    Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("完成") }
-                }
-            }
+            } }
             task?.kind == PocketKind.MATCH -> item {
                 val indices = round.tasks.indices.filter {
                     round.tasks[it].kind == PocketKind.MATCH && round.tasks[it].group == task.group
                 }
                 val rightOrder = remember(round.id, task.group) { indices.shuffled() }
                 val usedRight = round.pairings.values.toSet() + round.done.filter { it in indices && it !in round.pairings }
-                TeaCard {
+                TeaExerciseContent {
                     Text("把单词和词义连起来", style = MaterialTheme.typography.headlineSmall)
                     TeaCaption("先点左边的词，再点右边的词义")
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -205,21 +226,16 @@ internal fun PocketLearningScreen(
                             }
                         }
                     }
-                    TextButton(onClick = { submit(selectedPair ?: currentIndex, false, true) }, enabled = !saving) {
-                        Text("这组还不熟，看看答案")
-                    }
                 }
             }
             task != null -> item(key = "pocket-$currentIndex") {
-                TeaCard {
+                TeaExerciseContent {
                     TeaCaption(task.kind.label)
                     when (task.kind) {
                         PocketKind.STUDY -> {
                             Text(task.word, style = MaterialTheme.typography.displaySmall)
                             Text(task.definition, style = MaterialTheme.typography.titleLarge)
                             DefaultPronunciationButton(task.word)
-                            Button(onClick = { submit(currentIndex, false) }, enabled = !saving,
-                                modifier = Modifier.fillMaxWidth()) { Text("认识了，来试试") }
                         }
                         PocketKind.LISTEN -> {
                             Text("听到的是哪个词？", style = MaterialTheme.typography.headlineSmall)
@@ -251,26 +267,41 @@ internal fun PocketLearningScreen(
                                 keyboardActions = KeyboardActions(onDone = {
                                     if (spelling.length == task.answer.length) submit(currentIndex, spelling.equals(task.answer, true))
                                 }))
-                            Button(onClick = { submit(currentIndex, spelling.equals(task.answer, true)) },
-                                enabled = !saving && spelling.length == task.answer.length,
-                                modifier = Modifier.fillMaxWidth()) { Text("检查拼写") }
+                        }
+                        PocketKind.TYPING -> {
+                            Text(task.definition, style = MaterialTheme.typography.titleLarge)
+                            TeaCaption("根据词义输入完整英文词。输错后修改，再继续输入。")
+                            val firstError = spelling.indices.firstOrNull {
+                                it >= task.word.length || !spelling[it].equals(task.word[it], true)
+                            }
+                            val prefix = firstError ?: spelling.length
+                            Text("已正确输入 $prefix / ${task.word.length} 个字符",
+                                color = if (firstError == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                            OutlinedTextField(value = spelling, onValueChange = { value ->
+                                val next = value.take(task.word.length)
+                                if (next.length > spelling.length && next.indices.any {
+                                    it >= task.word.length || !next[it].equals(task.word[it], true)
+                                } && spelling.indices.none { it >= task.word.length || !spelling[it].equals(task.word[it], true) }) {
+                                    typingErrors++
+                                }
+                                spelling = next
+                                if (next.equals(task.word, true)) {
+                                    focus.clearFocus()
+                                    keyboard?.hide()
+                                }
+                            }, label = { Text("输入单词") }, singleLine = true, isError = firstError != null,
+                                enabled = !saving, modifier = Modifier.fillMaxWidth(),
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None,
+                                    autoCorrectEnabled = false, keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = {
+                                    if (spelling.equals(task.word, true)) submit(currentIndex, true)
+                                }))
+                            if (typingErrors > 0) TeaCaption("本词已纠错 $typingErrors 次；纠错后完成仍会安排复习。")
                         }
                         else -> Text(task.word, style = MaterialTheme.typography.displaySmall)
                     }
-                    if (task.kind != PocketKind.STUDY) {
-                        task.options.forEach { option ->
-                            OutlinedButton(onClick = { submit(currentIndex, option == task.answer) },
-                                enabled = !saving && (task.kind != PocketKind.LISTEN || heard),
-                                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(option) }
-                        }
-                        TextButton(onClick = { submit(currentIndex, false, true) }, enabled = !saving) { Text("还不熟 / 跳过") }
-                    }
                 }
             }
-        }
-        if (!round.complete || feedback != null) item {
-            OutlinedButton(onClick = onBack, enabled = !saving, modifier = Modifier.fillMaxWidth()) { Text("暂停，稍后继续") }
-            TeaCaption("已完成的每一步都已保存")
         }
     }
 }

@@ -366,6 +366,17 @@ class WordSearchRepository(
         }
     }
 
+    /** Count the union without decoding every dictionary entry just to show a picker summary. */
+    fun countBookWords(bookIds: Set<String>): Int {
+        val ids = bookIds.intersect(books().map { it.id }.toSet()).sorted()
+        if (ids.isEmpty()) return 0
+        val placeholders = ids.joinToString(",") { "?" }
+        return db().rawQuery(
+            "SELECT COUNT(DISTINCT word_id) FROM word_book_entries WHERE book_id IN ($placeholders)",
+            ids.toTypedArray()
+        ).use { cursor -> if (cursor.moveToFirst()) cursor.getInt(0) else 0 }
+    }
+
     /** Full union of selected books; learning must not use the search result limit. */
     fun learningWords(bookIds: Set<String>): List<SearchHit> {
         val ids = bookIds.intersect(books().map { it.id }.toSet()).sorted()

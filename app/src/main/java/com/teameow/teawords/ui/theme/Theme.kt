@@ -76,22 +76,17 @@ fun supportsDynamicColor(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_COD
 fun TeaWordsTheme(
     darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
+    pureBlack: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val view = LocalView.current
     val context = LocalContext.current
     // 动态取色（Material You）用系统壁纸生成的配色；关掉时永远是品牌 Purple，设计稿的默认行为。
     // 这里必须内联 SDK_INT 判断：lint 的 NewApi 检查看不懂上面那个辅助函数。
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            dynamicColorScheme(context, dark = darkTheme)
-        darkTheme -> PurpleDark
-        else -> PurpleLight
-    }
+    val colorScheme = settingsColorScheme(context, darkTheme, dynamicColor, pureBlack)
     if (!view.isInEditMode) SideEffect {
         (view.context as? Activity)?.window?.let { window ->
             WindowCompat.getInsetsController(window, view).apply {
-                // 深色背景必须配浅色状态栏图标，否则时间/电量在深色下会看不见。
                 isAppearanceLightStatusBars = !darkTheme
                 isAppearanceLightNavigationBars = !darkTheme
             }
@@ -104,6 +99,18 @@ fun TeaWordsTheme(
             medium = RoundedCornerShape(20.dp), large = RoundedCornerShape(20.dp), extraLarge = RoundedCornerShape(28.dp)),
         content = content
     )
+}
+
+internal fun settingsColorScheme(context: android.content.Context, darkTheme: Boolean, dynamicColor: Boolean, pureBlack: Boolean): ColorScheme {
+    val colors = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+            dynamicColorScheme(context, dark = darkTheme)
+        darkTheme -> PurpleDark
+        else -> PurpleLight
+    }
+    return if (darkTheme && pureBlack) colors.copy(background = Color.Black, surface = Color.Black,
+        surfaceContainerLowest = Color.Black, surfaceContainerLow = Color(0xFF0D0B0E),
+        surfaceContainer = Color(0xFF151316), surfaceContainerHigh = Color(0xFF211E23)) else colors
 }
 
 @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)

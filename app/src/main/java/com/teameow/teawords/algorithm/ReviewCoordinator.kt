@@ -37,6 +37,18 @@ class ReviewCoordinator(
     private val tracer: KnowledgeTracer = BayesianKnowledgeTracing,
     private val scheduler: SpacedRepetitionScheduler = FsrsScheduler
 ) {
+    /** Recognition schedules practice without upgrading free-recall mastery or ability. */
+    fun gradeRecognition(
+        belief: KnowledgeBelief, memory: MemoryState, ability: AbilityEstimate,
+        correct: Boolean, now: Long, targetRetention: Double = FsrsScheduler.DEFAULT_TARGET_RETENTION
+    ): ReviewVerdict {
+        val grade = if (correct) ReviewGrade.HARD else ReviewGrade.AGAIN
+        val nextMemory = scheduler.review(memory, grade, now)
+        val interval = scheduler.nextIntervalDays(nextMemory, targetRetention)?.coerceAtMost(1.0)
+        return ReviewVerdict(grade, belief, nextMemory, ability, interval,
+            interval?.let { now + (it * MemoryState.MILLIS_PER_DAY).toLong() })
+    }
+
     /**
      * @param targetRetention from the user's learning strategy; higher means shorter intervals.
      */

@@ -1,6 +1,8 @@
 # 英式 / 美式双发音：实现、数据来源与扩展接口
 
-本轮交付：Android 系统 TTS 的 UK / US 双口音发音，覆盖词典详情页、单词学习与快速排雷，并把音标与音频的数据来源、许可证和真人录音扩展点独立出来。
+单词词卡已增加有道词典音频：点击播放时优先请求对应英式或美式音频，失败后回退到同口音的系统 TTS；可在词卡「更多」中切换为系统语音。词典详情页、快速排雷和课程继续使用下述系统 TTS 流程。词卡的「在线查询词义」会获取并缓存有道释义、短语、词形和独立英美音标；本地 ECDICT 的未标注音标单独显示，不冒充地区音标。
+
+原有实现：Android 系统 TTS 的 UK / US 双口音发音，覆盖词典详情页、单词学习与快速排雷，并把音标与音频的数据来源、许可证和真人录音扩展点独立出来。
 
 相关代码：`data/pronunciation/`（4 个文件）、`ui/screens/PronunciationComponents.kt`；接入点 `LookupScreen`、`LearningScreen`、`MainScreen`、`SettingsScreen`、`MainActivity`、`ProcessTextActivity`。
 

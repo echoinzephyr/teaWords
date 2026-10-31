@@ -120,69 +120,65 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
         "待确认" to MaterialTheme.colorScheme.outline
     )
 
+    var showExplanation by remember { mutableStateOf(false) }
     TeaListPage(
+        embedded = true, expandedTitle = false,
         title = "词汇知识画像",
-        subtitle = "实测证据与模型预测分开统计",
+        subtitle = "学习积累与回忆表现",
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         navigationContent = {},
         actions = {
-            FilledTonalIconButton(onClick = onBack, modifier = Modifier.size(56.dp)) {
+            FilledTonalIconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
                 Icon(AppSymbols.Close, "关闭统计")
             }
         }
     ) {
         if (loading) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
-        error?.let { item { TeaCaption(it) } }
+        error?.let { item { TeaStatusMessage(it, error = true) } }
 
-        // Hero: the number that is actually evidence, with its definition underneath.
+        item {
+            TeaCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("已验证词汇", style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("$verified", style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                    TextButton(onClick = { showExplanation = !showExplanation }) { Text(if (showExplanation) "收起说明" else "统计说明") }
+                }
+                if (showExplanation) TeaCaption("连续 3 次主动回忆正确才算验证，仅代表练习过的释义。自评与答题记录分开保存；同一词跨词书共用进度。")
+                if (!loading && rows.isEmpty()) Text("还没有学习记录，完成一轮学习后查看你的积累。",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+        }
         item {
             TeaCard {
-                Text(
-                    "$verified",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text("个词已通过测试验证", style = MaterialTheme.typography.titleMedium)
-                TeaCaption("连续 3 次主动回忆正确才算验证；只代表学习过的释义，不代表该词所有义项。")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TeaMetric("$selfKnown", "自评认识 · 待验证", Modifier.weight(1f))
-                    TeaMetric("$pending", "尚未判断", Modifier.weight(1f))
-                    TeaMetric("$dictionarySize", "本地词库词条", Modifier.weight(1f))
+                TeaMetricRow("$learning" to "学习中", "$selfKnown" to "自评认识", "$pending" to "待确认")
+                TeaCaption("本地词库 $dictionarySize 词 · 已记录 ${rows.size} 词")
+            }
+        }
+        if (rows.isNotEmpty()) {
+            item {
+                LearningCard("词汇状态", "测试记录与自评分别统计") {
+                    val states = listOf("已验证" to verified, "学习中" to learning, "自评认识" to selfKnown,
+                        "模糊认识" to fuzzy, "完全陌生" to unknown, "待确认" to pending)
+                    states.filter { it.second > 0 }.forEach { (label, count) ->
+                        TeaProgressRow(label, count, rows.size, accent = accents.getValue(label))
+                    }
                 }
             }
         }
-
-        // Distribution across the word books that actually exist.
-        item {
-            LearningCard("覆盖分布", "按词书分档 · 柱内为已验证词数") {
-                val bands = listOf(
-                    "CET-4" to rows.count { it.tags.contains("cet4") && it.verified },
-                    "CET-6" to rows.count { it.tags.contains("cet6") && it.verified },
-                    "大纲外" to rows.count { it.tags.isBlank() && it.verified }
-                )
-                BarChart(bands, "本地词典中没有词频数据，因此不显示 A1–C2 之类的等级分布。")
-                val bandTotals = listOf(
-                    "CET-4" to rows.count { it.tags.contains("cet4") },
-                    "CET-6" to rows.count { it.tags.contains("cet6") },
-                    "大纲外" to rows.count { it.tags.isBlank() }
-                )
-                TeaCaption(
-                    "有学习记录的词：" + bandTotals.joinToString(" · ") { "${it.first} ${it.second}" }
-                )
-            }
-        }
-
-        // The five-way split, each row labelled as evidence or prediction.
-        item {
-            LearningCard("词汇知识状态", "$dictionarySize 个词条在库 · 每个词只归入一类") {
-                TeaProgressRow("已验证 · 测试证据", verified, dictionarySize, accent = accents.getValue("已验证"))
-                TeaProgressRow("学习中 · 有测试记录但未验证", learning, dictionarySize, accent = accents.getValue("学习中"))
-                TeaProgressRow("自评认识 · 仅你的判断，非测试证据", selfKnown, dictionarySize, accent = accents.getValue("自评认识"))
-                TeaProgressRow("模糊认识 · 自评待巩固", fuzzy, dictionarySize, accent = accents.getValue("模糊认识"))
-                TeaProgressRow("完全陌生 · 自评未学", unknown, dictionarySize, accent = accents.getValue("完全陌生"))
-                TeaProgressRow("待确认 · 尚无任何记录", pending, dictionarySize, accent = accents.getValue("待确认"))
-                TeaCaption("前两类来自答题记录。「自评认识」是你自己的判断，不计入已验证。")
+        if (verified > 0) {
+            item {
+                LearningCard("词书覆盖", "已通过测试验证的词汇") {
+                    val bands = listOf(
+                        "CET-4" to rows.count { it.tags.contains("cet4") && it.verified },
+                        "CET-6" to rows.count { it.tags.contains("cet6") && it.verified },
+                        "大纲外" to rows.count { it.tags.isBlank() && it.verified })
+                    BarChart(bands, "按本地词典的词书标签统计。")
+                }
             }
         }
 
@@ -213,19 +209,9 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
             }
         }
 
-        // Ability dimensions: only shown where the data exists.
         item {
-            LearningCard("能力维度", "按作答方式分别记录掌握情况") {
-                Text(
-                    "英文识别 · 中文回忆 · 拼写：三种作答方式已按独立难度建模，但当前版本尚未把每次作答的方式写进记录。",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                TeaCaption("因此这里不显示各维度的分数，避免用未记录的数据拼出好看的比例。")
-                TeaMetricRow(
-                    "$streak" to "连续学习天数",
-                    "${totals.tests}" to "累计回忆次数",
-                    "${totals.seconds / 3600}h" to "累计专注时长"
-                )
+            LearningCard("学习积累", "来自实际作答记录") {
+                TeaMetricRow("$streak" to "连续天数", "${totals.tests}" to "累计回忆", formatDuration(totals.seconds) to "专注时长")
             }
         }
 
@@ -240,7 +226,7 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
             }
         }
 
-        item {
+        if (selfKnown > 0 || legacyTests > 0) item {
             LearningCard("减少无效重复", "自评认识、且尚无测试记录的词不再占用新词队列") {
                 val skipped = rows.filter { it.selfReportedKnown }
                 val hiddenNow = skipped.count { System.currentTimeMillis() - it.updated < SAMPLE_AFTER_MS }

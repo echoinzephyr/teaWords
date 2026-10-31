@@ -6,6 +6,9 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
@@ -25,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.teameow.teawords.algorithm.*
 import com.teameow.teawords.data.*
 import kotlinx.coroutines.Dispatchers
@@ -47,18 +51,24 @@ private const val DAY_MS = 86_400_000L
  * one plan that merges every word actually worth doing today, and a knowledge snapshot that
  * never presents a self-report as a test result.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LearningScreen(
     dbHelper: DatabaseHelper,
     selectedBookIds: Set<String> = emptySet(),
     onSelectedBooksChange: (Set<String>) -> Unit = {},
     onShowStats: () -> Unit = {},
-    onModeChange: (String) -> Unit = {}
+    onModeChange: (String) -> Unit = {},
+    profileOpen: Boolean = false,
+    onProfileDismiss: () -> Unit = {},
+    studyWallpaper: String? = null
 ) {
     val context = LocalContext.current
     val repo = remember(dbHelper) { LearningRepository(dbHelper) }
     val scope = rememberCoroutineScope()
     val pocketRepo = remember(dbHelper) { PocketLearningRepository(dbHelper) }
+    val sessionRepo = remember(dbHelper) { WordLearningSessionRepository(dbHelper) }
+    var wordSession by remember { mutableStateOf<WordLearningSession?>(null) }
     var pocketRound by remember { mutableStateOf<PocketRound?>(null) }
     val prefs = remember { context.getSharedPreferences("learning", 0) }
     var pocketWordLimit by rememberSaveable { mutableIntStateOf(
@@ -67,27 +77,43 @@ fun LearningScreen(
 
     var books by remember { mutableStateOf(emptyList<com.teameow.teawords.data.search.WordSearchRepository.BookInfo>()) }
     var tags by remember { mutableStateOf(emptyMap<String, String>()) }
+    var favorites by remember { mutableStateOf(emptyList<VocabularyItem>()) }
+    var studyQuery by rememberSaveable { mutableStateOf("") }
+    var studySearchReturn by rememberSaveable { mutableStateOf("home") }
+    var studySearchRequest by remember { mutableLongStateOf(0L) }
     var showBooks by remember { mutableStateOf(false) }
     var draftBooks by remember { mutableStateOf(selectedBookIds) }
     val appPrefs = remember { AppPreferences(context) }
     val strategy = LearningStrategy.valueOf(appPrefs.studyStrategy.id)
     val newCap = appPrefs.dailyNewCapOverride.takeIf { it > 0 } ?: strategy.dailyNewCap
     val retention = appPrefs.targetRetentionOverride.takeIf { it > 0 } ?: strategy.targetRetention
-    val dayStart = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
+    var homeClock by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    val dayStart = Calendar.getInstance().apply { timeInMillis = homeClock }.apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
     var newStudiedToday by remember { mutableIntStateOf(0) }
     val newBudget = (newCap - newStudiedToday).coerceAtLeast(0)
     var states by remember { mutableStateOf(emptyList<Knowledge>()) }
     var words by remember { mutableStateOf(emptyMap<String, VocabularyItem>()) }
     var mode by rememberSaveable { mutableStateOf("home") }
+    var wordReturnMode by rememberSaveable { mutableStateOf("home") }
+    var homeReview by rememberSaveable { mutableStateOf(false) }
+    var activeLessonId by rememberSaveable { mutableStateOf<String?>(null) }
+    var courseTrack by rememberSaveable { mutableStateOf("ky") }
+    var courseReturnMode by rememberSaveable { mutableStateOf("learningHub") }
+    var courseProgress by remember { mutableStateOf(emptyMap<String, CourseRepository.Progress>()) }
     var busy by remember { mutableStateOf(true) }
     var message by remember { mutableStateOf<String?>(null) }
     var queue by remember { mutableStateOf(emptyList<Knowledge>()) }
     var position by remember { mutableIntStateOf(0) }
     var sessionCorrect by remember { mutableIntStateOf(0) }
     var selectedLimit by rememberSaveable { mutableStateOf(prefs.getInt("expressive_round_limit", 0).takeIf { it in listOf(10, 15, 20) }) }
-    var quickMode by rememberSaveable { mutableStateOf(prefs.getBoolean("expressive_quick_mode", false)) }
     val limit = selectedLimit ?: 10
-    var showProfile by rememberSaveable { mutableStateOf(false) }
+    DisposableEffect(prefs) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "expressive_round_limit") selectedLimit = prefs.getInt(key, 10).takeIf { it in listOf(10, 15, 20) }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
     var lastScreened by remember { mutableStateOf(emptyList<Knowledge>()) }
     var screeningTotal by remember { mutableIntStateOf(0) }
     var showImport by remember { mutableStateOf(false) }
@@ -102,6 +128,8 @@ fun LearningScreen(
         }
         newStudiedToday = withContext(Dispatchers.IO) { repo.newWordsSince(dayStart) }
         pocketRound = withContext(Dispatchers.IO) { pocketRepo.load() }
+        wordSession = withContext(Dispatchers.IO) { sessionRepo.load() }
+        favorites = withContext(Dispatchers.IO) { dbHelper.getVocabulary() }
         books = result.first
         states = result.second.states
         words = result.second.words
@@ -112,10 +140,16 @@ fun LearningScreen(
         busy = true
         try { reload() } catch (e: Exception) { message = "读取失败：${e.message}" }
         finally { busy = false }
-        mode = "home"
+        if (mode != "learningHub") mode = "home"
+    }
+    LaunchedEffect(mode) {
+        if (mode == "home" || mode == "learningHub") courseProgress = withContext(Dispatchers.IO) {
+            CourseRepository(dbHelper).allProgress()
+        }
     }
 
     fun importWords(source: String = "用户导入", license: String = "用户提供，许可由用户确认", read: () -> String) {
+        val returnToHub = mode == "learningHub"
         busy = true
         scope.launch {
             try {
@@ -123,7 +157,7 @@ fun LearningScreen(
                 reload()
                 screeningTotal = count
                 lastScreened = emptyList()
-                mode = "home"
+                mode = if (returnToHub) "learningHub" else "home"
                 message = "新增 $count 个词，重复词保留原有学习记录"
                 showImport = false
             } catch (e: Exception) {
@@ -151,15 +185,21 @@ fun LearningScreen(
     }
 
     // The host keeps the floating dock visible on the learning pages; reporting the current mode
-    // lets it withhold the dock only during a running round, where leaving would discard it.
+    // lets it withhold the dock during a running round; saved recall progress survives leaving.
     LaunchedEffect(mode) { onModeChange(mode) }
     DisposableEffect(Unit) { onDispose { onModeChange("home") } }
 
-    var homeClock by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(mode, lifecycle) {
-        if (mode == "home") lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) { homeClock = System.currentTimeMillis(); delay(15_000) }
+        }
+    }
+    LaunchedEffect(dayStart, mode) {
+        if (mode == "home" || mode == "learningHub") {
+            try {
+                newStudiedToday = withContext(Dispatchers.IO) { repo.newWordsSince(dayStart) }
+            } catch (e: Exception) { message = "刷新学习额度失败：${e.message}" }
         }
     }
     val now = homeClock
@@ -172,11 +212,9 @@ fun LearningScreen(
     val unseen = states.filter { it.report == SelfReport.UNSEEN && it.attempts == 0 }
     val dueCount = states.count { it.attempts > 0 && it.due <= now }
     val fuzzyCount = states.count { it.report == SelfReport.FUZZY && it.attempts == 0 }
-    val selfKnownCount = states.count { it.report == SelfReport.KNOWN && it.attempts == 0 }
     val verifiedCount = states.count { it.verified }
     val learningCount = states.count { it.attempts > 0 && !it.verified }
     val unknownCount = states.count { it.report == SelfReport.UNKNOWN }
-    val pendingCount = states.size - verifiedCount - learningCount - fuzzyCount - unknownCount
 
     // Ability estimate and word book tags drive an ability-scoped screening queue, so a 4500-word
     // book does not have to be judged by hand. See ScreeningPriority for the banding rules.
@@ -205,12 +243,6 @@ fun LearningScreen(
         (scheduledPlan + fresh).take(limit)
     }
 
-    // How many words a round would actually start with. `plan` is only what the spaced-repetition
-    // side already owed; when it is empty the ability estimate still names words worth learning
-    // (that is what `onStart` queues). Showing `plan.size` alone reported "0 项建议" next to an
-    // enabled 开始学习 button, which reads as a contradiction.
-    val queueCount = if (plan.isNotEmpty()) plan.size else screeningPlan.learnDirectly.size
-
     // --- Spaced repetition state -----------------------------------------------------------------
     // Sense ids and stored memory state are needed to grade an answer with FSRS instead of a fixed
     // table. They are loaded once per round rather than per answer.
@@ -221,23 +253,6 @@ fun LearningScreen(
     val senseCache = remember { mutableMapOf<String, Pair<Long, Long>>() }
     fun senseOf(word: String): Pair<Long, Long> =
         senseCache.getOrPut(word) { senses.ensurePrimarySense(word) }
-    LaunchedEffect(mode) {
-        if (mode == "session") {
-            busy = true
-            try {
-            memoryByWord = withContext(Dispatchers.IO) {
-                queue.mapNotNull { item ->
-                    val sense = senseOf(item.word)
-                    senses.memoryFor(sense.second)?.let { record -> item.word to MemoryState(
-                        difficulty = record.difficulty, stability = record.stability,
-                        lastReview = record.lastReview, reps = record.reps, lapses = record.lapses)
-                    }
-                }.toMap()
-            }
-            } catch (e: Exception) { message = "准备学习失败：${e.message}"; mode = "home" }
-            finally { busy = false }
-        }
-    }
     val difficultyByWord = remember(states, tagged) {
         tagged.associate { it.word to DifficultyPrior.forWord(it.word, it.tags).value }
     }
@@ -290,8 +305,236 @@ fun LearningScreen(
         }
     }
 
+    fun startCourseReview(targetWords: List<String>, bookIds: Set<String>) {
+        if (pocketRound?.complete == false) { mode = "pocket"; return }
+        busy = true
+        scope.launch {
+            try {
+                val round = withContext(Dispatchers.IO) {
+                    val dictionary = checkNotNull(com.teameow.teawords.data.search.DictionaryGateway.sourceOrNull())
+                    val snapshot = LearningCatalog(dbHelper, dictionary).load(bookIds)
+                    PocketPlanner.typingRound(snapshot.states.filter { it.word in targetWords }, snapshot.words,
+                        newBudget, System.currentTimeMillis(), wordLimit = 10, preferredWords = targetWords)
+                }
+                if (round == null) { message = "今日新词额度已用完或薄弱词尚未到期"; mode = "courses" }
+                else {
+                    withContext(Dispatchers.IO) { pocketRepo.start(round) }
+                    pocketRound = round
+                    mode = "pocket"
+                }
+            } catch (e: Exception) { message = "复习启动失败：${e.message}"; mode = "courses" }
+            finally { busy = false }
+        }
+    }
+
+    fun startDueReview() {
+        if (busy) return
+        if (pocketRound?.complete == false) { homeReview = true; mode = "pocket"; return }
+        val stamp = System.currentTimeMillis()
+        val round = PocketPlanner.build(states.filter { it.attempts > 0 && it.due <= stamp },
+            words, 0, stamp, emptyList(), wordLimit = limit)
+        if (round == null) { message = "暂无到期复习"; return }
+        busy = true
+        scope.launch {
+            try {
+                withContext(Dispatchers.IO) { pocketRepo.start(round) }
+                pocketRound = round
+                message = null
+                homeReview = true
+                mode = "pocket"
+            } catch (e: Exception) { message = "复习启动失败：${e.message}" }
+            finally { busy = false }
+        }
+    }
+
+    fun startWordPlan() {
+        if (busy) return
+        busy = true
+        scope.launch {
+            try {
+                val active = withContext(Dispatchers.IO) { sessionRepo.load() }
+                val session = if (active != null && !active.complete) active else {
+                    val tasks = plan.mapNotNull { state ->
+                        words[state.word]?.definition?.takeIf { it.isNotBlank() }?.let {
+                            WordLearningTask(state.word, it)
+                        }
+                    }
+                    if (tasks.isEmpty()) {
+                        message = "本轮暂无任务：可选择其他词书、调整每日新词上限，或等待复习到期。"
+                        return@launch
+                    }
+                    withContext(Dispatchers.IO) { sessionRepo.start(tasks) }
+                }
+                val byWord = withContext(Dispatchers.IO) {
+                    repo.states(session.tasks.map { it.word }).associateBy { it.word }
+                }
+                val roundQueue = session.tasks.map { byWord.getValue(it.word) }
+                val roundMemory = withContext(Dispatchers.IO) {
+                    roundQueue.drop(session.position).mapNotNull { item ->
+                        val sense = senseOf(item.word)
+                        senses.memoryFor(sense.second)?.let { record -> item.word to MemoryState(
+                            difficulty = record.difficulty, stability = record.stability,
+                            lastReview = record.lastReview, reps = record.reps, lapses = record.lapses)
+                        }
+                    }.toMap()
+                }
+                wordSession = session
+                queue = roundQueue
+                memoryByWord = roundMemory
+                ability = AbilityStore(context).load()
+                position = session.position
+                sessionCorrect = session.correct
+                message = null
+                wordReturnMode = if (mode == "home") "home" else "learningHub"
+                mode = "session"
+            } catch (e: Exception) { message = "准备学习失败，请重试：${e.message}" }
+            finally { busy = false }
+        }
+    }
+
+    fun saveWordAnswer(state: Knowledge, correct: Boolean, elapsed: Long, revealed: Boolean, recognition: Boolean = false) {
+        if (busy) return
+        busy = true
+        message = null
+        scope.launch {
+            try {
+                val now = System.currentTimeMillis()
+                val known = withContext(Dispatchers.IO) { repo.states(listOf(state.word)).first { it.word == state.word } }
+                // FSRS + BKT + ability, graded together; the verdict is what gets stored.
+                val verdict = if (recognition) coordinator.gradeRecognition(
+                    BeliefMapper.from(known.report.name, known.attempts, known.streak, known.updated, now),
+                    memoryByWord[state.word] ?: MemoryState.unseen, ability, correct, now, retention
+                ) else coordinator.grade(
+                    belief = BeliefMapper.from(
+                        report = known.report.name,
+                        attempts = known.attempts,
+                        streak = known.streak,
+                        updatedAt = known.updated,
+                        now = now
+                    ),
+                    memory = memoryByWord[state.word] ?: MemoryState.unseen,
+                    ability = ability,
+                    difficulty = difficultyByWord[state.word] ?: 0.0,
+                    correct = correct,
+                    revealed = revealed,
+                    elapsedMillis = elapsed,
+                    now = now,
+                    targetRetention = retention
+                )
+                val saved = withContext(Dispatchers.IO) {
+                    sessionRepo.answer(checkNotNull(wordSession).id, position, correct, revealed, elapsed) {
+                        val sense = senseOf(it)
+                        repo.saveReview(known, verdict, sense.first, sense.second,
+                            correct, revealed, elapsed, now, ability.theta, mode = if (recognition) "RECOGNITION" else "RECALL")
+                    }
+                }
+                val updated = saved.second
+                wordSession = saved.first
+                position = saved.first.position
+                sessionCorrect = saved.first.correct
+                AbilityStore(context).save(verdict.ability)
+                homeClock = now
+                newStudiedToday = withContext(Dispatchers.IO) { repo.newWordsSince(
+                    Calendar.getInstance().apply { timeInMillis = now; set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
+                ) }
+                ability = verdict.ability
+                memoryByWord = memoryByWord + (state.word to verdict.memory)
+                states = states.map { if (it.word == updated.word) updated else it }
+                if (dailySample?.word == state.word) prefs.edit().putString("sample_day", today).apply()
+            } catch (e: Exception) {
+                message = "保存失败，请重试：${e.message}"
+            } finally {
+                busy = false
+            }
+        }
+    }
+
     val page: @Composable (String, () -> Unit) -> Unit = { pageMode, back ->
-    if (pageMode == "pocketSetup") {
+    if (pageMode == "studySearch") {
+        CompositionLocalProvider(LocalTeaSearchScope provides null) {
+            LookupScreen(studyQuery, onBack = back, requestId = studySearchRequest,
+                model = androidx.lifecycle.viewmodel.compose.viewModel(key = "study-search"))
+        }
+    } else if (pageMode == "favorites") {
+        NotebookPage(favorites, onOpen = { word -> studyQuery = word; studySearchReturn = "favorites"; studySearchRequest++; mode = "studySearch" },
+            onDelete = { word -> scope.launch {
+                try { favorites = withContext(Dispatchers.IO) { dbHelper.removeVocabulary(word); dbHelper.getVocabulary() } }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { message = "收藏更新失败，请重试" }
+            } }, onBack = back)
+    } else if (pageMode == "courses") {
+        CourseListScreen(dbHelper, initialTrack = courseTrack, onTrackChange = { courseTrack = it },
+            onBack = { mode = courseReturnMode }, onOpen = { lesson ->
+            activeLessonId = lesson.id
+            mode = "courseLesson"
+        }, onReviewWeak = { weak -> startCourseReview(weak, setOf("ky", "ielts", "toefl")) })
+    } else if (pageMode == "courseLesson" && activeLessonId != null) {
+        val lesson = CourseCatalog.all.firstOrNull { it.id == activeLessonId }
+        if (lesson != null) CourseLessonScreen(dbHelper, lesson, onBack = { mode = "courses" },
+            onReviewWeak = { weak -> startCourseReview(weak, setOf(lesson.bookId)) })
+    } else if (pageMode == "learningHub") {
+        TeaListPage("短课与专项练习", onBack = back) {
+            item {
+                val completed = CourseCatalog.all.count { courseProgress[it.id]?.complete == true }
+                val next = CourseCatalog.all.firstOrNull {
+                    courseProgress[it.id]?.let { state -> state.step > 0 && !state.complete } == true
+                }
+                TeaCard {
+                    Text("英语短课", style = MaterialTheme.typography.headlineSmall)
+                    Text("考研、雅思、托福 · 按主题单元逐课学习")
+                    TeaCaption("已完成 $completed / ${CourseCatalog.all.size} 课 · 可暂停续学")
+                    next?.let { lesson ->
+                        Text("待续学：${CourseDirectory.trackName(lesson.bookId)} · ${lesson.title}")
+                        Button(onClick = { courseTrack = lesson.bookId; activeLessonId = lesson.id; mode = "courseLesson" },
+                            modifier = Modifier.fillMaxWidth()) { Text("继续这节短课") }
+                    }
+                    OutlinedButton(onClick = { courseReturnMode = "learningHub"; mode = "courses" },
+                        modifier = Modifier.fillMaxWidth()) { Text("选择课程") }
+                }
+            }
+            item {
+                val paused = pocketRound?.takeUnless { it.complete }
+                TeaCard {
+                    Text("专项练习", style = MaterialTheme.typography.headlineSmall)
+                    Text("混合小练习与整词打字，按自己的节奏巩固。")
+                    paused?.let { TeaCaption("上次练到 ${it.done.size}/${it.tasks.size} 步") }
+                    Button(onClick = {
+                        if (paused != null) mode = "pocket"
+                        else { message = null; mode = "pocketSetup" }
+                    }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (paused != null) "继续上次练习" else "混合小练习")
+                    }
+                    OutlinedButton(onClick = {
+                        if (paused != null) mode = "pocket"
+                        else {
+                            val round = PocketPlanner.typingRound(states, words, newBudget, System.currentTimeMillis())
+                            if (round == null) message = "目前没有可练的到期词或新词"
+                            else {
+                                busy = true
+                                scope.launch {
+                                    try {
+                                        withContext(Dispatchers.IO) { pocketRepo.start(round) }
+                                        pocketRound = round
+                                        message = null
+                                        mode = "pocket"
+                                    } catch (e: Exception) { message = "开始失败：${e.message}" }
+                                    finally { busy = false }
+                                }
+                            }
+                        }
+                    }, enabled = !busy && (paused == null || paused.tasks.all { it.kind == PocketKind.TYPING }),
+                        modifier = Modifier.fillMaxWidth()) {
+                        Text(when {
+                            paused == null -> "打字记词"
+                            paused.tasks.all { it.kind == PocketKind.TYPING } -> "继续打字记词"
+                            else -> "完成上次练习后再打字"
+                        })
+                    }
+                }
+            }
+            message?.let { note -> item { TeaCaption(note) } }
+        }
+    } else if (pageMode == "pocketSetup") {
         PocketRoundSetupScreen(initialWordLimit = pocketWordLimit, busy = busy,
             error = message, onBack = back, onStart = { count ->
                 val round = PocketPlanner.build(states, words, newBudget, System.currentTimeMillis(),
@@ -317,6 +560,21 @@ fun LearningScreen(
         PocketLearningScreen(dbHelper, pocketRound!!, retention,
             onRoundChange = { pocketRound = it }, onBack = back,
             onBusyChange = { diagnosticBusy = it })
+    } else if (pageMode == "session" && queue.getOrNull(position) != null) {
+        val current = queue[position]
+        val card = Triple(current, wordSession?.tasks?.getOrNull(position)?.definition.orEmpty(), position)
+        AnimatedContent(card, transitionSpec = {
+            (fadeIn(tween(280)) + slideInHorizontally(tween(280, easing = TeaEnterEasing)) { it / 8 })
+                .togetherWith(fadeOut(tween(150)) + slideOutHorizontally(tween(200)) { -it / 8 })
+                .using(SizeTransform(clip = false))
+        }, label = "study-word-transition") { shown ->
+            key(wordSession?.id, shown.first.word) {
+                ImmersiveWordScreen(dbHelper, shown.first.word, shown.second,
+                    shown.third + 1, queue.size, busy || shown.third != position, message, studyWallpaper, onPause = back,
+                    onRecallComplete = { correct, elapsed -> saveWordAnswer(shown.first, correct, elapsed, false, recognition = false) },
+                    onComplete = { correct, elapsed -> saveWordAnswer(shown.first, correct, elapsed, true, recognition = true) })
+            }
+        }
     } else if (pageMode == "diagnose") {
         DiagnosticScreen(
             dbHelper = dbHelper, learningWords = words.keys, wordTags = tags,
@@ -325,11 +583,16 @@ fun LearningScreen(
     } else {
     TeaListPage(
         loading = busy && pageMode != "session",
-        floatingActionButton = if (pageMode == "home") {{
-            FloatingActionButton(onClick = { showProfile = true }, containerColor = MaterialTheme.colorScheme.primaryContainer) {
-                Icon(AppSymbols.Person, "词汇知识画像")
+        expandedTitle = false,
+        header = if (pageMode == "home") ({
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text("学习", Modifier.weight(1f), fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                IconButton(onClick = { mode = "diagnose" }, enabled = !busy) { Icon(AppSymbols.Insights, "词汇能力诊断") }
+                IconButton(onClick = { showImport = true }, enabled = !busy) { Icon(AppSymbols.Add, "导入词库") }
+                FilledTonalIconButton(onClick = onShowStats, modifier = Modifier.size(44.dp)) { Icon(AppSymbols.Person, "学习统计") }
             }
-        }} else null,
+        }) else null,
         title = when (pageMode) {
             "screen" -> "快速排雷"
             "session" -> "学习与复习"
@@ -340,7 +603,7 @@ fun LearningScreen(
             "screen" -> "凭印象判断，自评不计作测试掌握"
             "session" -> "主动回忆，答对一次不代表掌握"
             "diagnose" -> "自适应选题，快速定位你的水平"
-            else -> "把今天真正值得学的词集中在一处"
+            else -> "单词、短课与专项练习"
         },
         onBack = if (pageMode != "home") back else null,
         backEnabled = !busy,
@@ -351,29 +614,15 @@ fun LearningScreen(
                 }
             }
             IconButton(onClick = { showImport = true }, enabled = !busy) { Icon(AppSymbols.Add, "导入词库") }
-            IconButton(onClick = onShowStats, enabled = !busy) { Icon(AppSymbols.BarChart, "学习统计") }
+            if (pageMode == "home") FilledTonalIconButton(onClick = onShowStats, modifier = Modifier.size(44.dp)) {
+                Icon(AppSymbols.Person, "学习统计")
+            }
+            if (pageMode != "home") {
+                IconButton(onClick = onShowStats, enabled = !busy) { Icon(AppSymbols.BarChart, "学习统计") }
+            }
         }
     ) {
         message?.let { note -> item { TeaCaption(note) } }
-        if (pageMode == "home") item {
-            val paused = pocketRound?.takeUnless { it.complete }
-            TeaCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
-                Text("随手练一小轮", style = MaterialTheme.typography.headlineMedium)
-                Text(paused?.let { "本轮 ${it.wordCount} 个词 · 随时暂停续接" } ?: "词数由你选择 · 随时暂停续接")
-                TeaCaption("听音、配对、词义、拼写和语境，换着方式练")
-                val scheduled = states.filter { it.attempts > 0 && it.due > now }
-                TeaCaption("已到期 $dueCount 个 · 已安排待复习 ${scheduled.size} 个")
-                scheduled.minOfOrNull { it.due }?.let { due ->
-                    TeaCaption("最近一次复习：${SimpleDateFormat("MM月dd日 HH:mm", Locale.CHINA).format(Date(due))}")
-                }
-                paused?.let { TeaCaption("上次完成 ${it.done.size} / ${it.tasks.size} 步，接着来就好") }
-                Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = {
-                    if (paused != null) mode = "pocket"
-                    else { message = null; mode = "pocketSetup" }
-                }) { Text(if (paused != null) "继续小练习" else "开始小练习") }
-            }
-        }
-
         when {
             pageMode == "screen" -> screeningMode(
                 current = screeningQueue.firstOrNull(),
@@ -384,6 +633,7 @@ fun LearningScreen(
                 lastScreened = lastScreened,
                 onRate = ::markScreened,
                 onUndo = ::undoLast,
+                onLearn = ::startWordPlan,
                 onFinish = back
             )
 
@@ -391,107 +641,35 @@ fun LearningScreen(
                 queue = queue,
                 position = position,
                 correct = sessionCorrect,
-                words = words,
+                definitions = wordSession?.tasks.orEmpty().associate { it.word to it.definition },
+                session = wordSession,
                 busy = busy,
                 memory = memoryByWord,
                 coordinator = coordinator,
-                onAnswered = { state, correct, elapsed, revealed ->
-                    busy = true
-                    scope.launch {
-                        try {
-                            val now = System.currentTimeMillis()
-                            val known = states.firstOrNull { it.word == state.word } ?: state
-                            // FSRS + BKT + ability, graded together; the verdict is what gets stored.
-                            val verdict = coordinator.grade(
-                                belief = BeliefMapper.from(
-                                    report = known.report.name,
-                                    attempts = known.attempts,
-                                    streak = known.streak,
-                                    updatedAt = known.updated,
-                                    now = now
-                                ),
-                                memory = memoryByWord[state.word] ?: MemoryState.unseen,
-                                ability = ability,
-                                difficulty = difficultyByWord[state.word] ?: 0.0,
-                                correct = correct,
-                                revealed = revealed,
-                                elapsedMillis = elapsed,
-                                now = now,
-                                targetRetention = retention
-                            )
-                            val updated = withContext(Dispatchers.IO) {
-                                val sense = senseOf(state.word)
-                                repo.saveReview(known, verdict, sense.first, sense.second,
-                                    correct, revealed, elapsed, now, ability.theta)
-                            }
-                            AbilityStore(context).save(verdict.ability)
-                            if (known.attempts == 0) newStudiedToday++
-                            ability = verdict.ability
-                            memoryByWord = memoryByWord + (state.word to verdict.memory)
-                            states = states.map { if (it.word == updated.word) updated else it }
-                            if (correct) sessionCorrect++
-                            position++
-                            if (dailySample?.word == state.word) prefs.edit().putString("sample_day", today).apply()
-                        } catch (e: Exception) {
-                            message = "保存失败，请重试：${e.message}"
-                        } finally {
-                            busy = false
-                        }
-                    }
-                },
+                onAnswered = { state, correct, elapsed, revealed -> saveWordAnswer(state, correct, elapsed, revealed) },
                 onFinish = back
             )
 
-            else -> homeMode(
-                stateCount = states.size,
-                plan = plan,
-                queueCount = queueCount,
-                queueAvailable = plan.isNotEmpty(),
-                unseenCount = unseen.size,
-                dueCount = dueCount,
-                fuzzyCount = fuzzyCount,
-                selfKnownCount = selfKnownCount,
-                verifiedCount = verifiedCount,
-                learningCount = learningCount,
-                unknown = unknownCount,
-                pending = pendingCount,
-                limit = limit,
-                selectedLimit = selectedLimit,
-                quickMode = quickMode,
-                onQuickModeChange = { value -> quickMode = value; prefs.edit().putBoolean("expressive_quick_mode", value).apply() },
-                bookTitle = books.filter { it.id in selectedBookIds }.joinToString("、") { it.name }.ifBlank { "个人词库" },
-                onChooseBooks = { draftBooks = selectedBookIds; showBooks = true },
-                learnDirectlyAvailable = screeningPlan.learnDirectly.size,
-                busy = busy,
-                dailySample = dailySample,
-                onLimitChange = { value ->
-                    selectedLimit = value
-                    prefs.edit().putInt("expressive_round_limit", value).apply()
-                },
-                onStart = {
-                    // Study must never wait for screening to finish. When the spaced-repetition plan
-                    // is empty, the ability estimate still tells us which words are probably unknown,
-                    // so those are used directly — that is the whole point of the diagnostic.
-                    queue = plan
-                    position = 0
-                    sessionCorrect = 0
-                    message = when {
-                        queue.isEmpty() -> "本轮暂无任务：可选择其他词书、调整每日新词上限，或等待复习到期。"
-                        plan.isEmpty() -> "按能力估计直接开始：这 ${queue.size} 个词预测为尚未掌握。"
-                        else -> null
-                    }
-                    if (queue.isNotEmpty()) mode = "session"
-                },
-                onScreen = {
-                    // The round is scoped to the queue the ability estimate actually asks about.
-                    screeningTotal = screeningQueue.size
-                    lastScreened = emptyList()
-                    message = null
-                    mode = "screen"
-                },
-                onImport = { showImport = true },
-                onShowStats = onShowStats
-            )
+            pageMode == "home" -> item {
+                StudyOverview(
+                    bookName = books.filter { it.id in selectedBookIds }.joinToString("、") { it.name }.ifBlank { "个人词库" },
+                    total = states.size, studied = states.count { it.attempts > 0 }, verified = verifiedCount,
+                    due = dueCount, newBudget = newBudget, fuzzy = fuzzyCount, busy = busy,
+                    completedLessons = CourseCatalog.all.count { courseProgress[it.id]?.complete == true },
+                    lessonTotal = CourseCatalog.all.size,
+                    paused = wordSession?.takeUnless { it.complete }?.let { WordStudyResume(it.position, it.tasks.size) },
+                    onBooks = { draftBooks = selectedBookIds; showBooks = true },
+                    favorites = favorites.size, onFavorites = { mode = "favorites" },
+                    query = studyQuery, onQuery = { studyQuery = it },
+                    onSearch = { studySearchReturn = "home"; studySearchRequest++; mode = "studySearch" },
+                    onStart = {
+                        if (wordSession?.complete == false) startWordPlan()
+                        else if (states.isEmpty()) { draftBooks = selectedBookIds; showBooks = true }
+                        else startWordPlan()
+                    }, onReview = ::startDueReview, onMore = { mode = "learningHub" }
+                )
+            }
+            else -> Unit
         }
     }
 
@@ -503,7 +681,16 @@ fun LearningScreen(
         if (mode != "home") key(mode) {
             PredictiveBackLayer(onBack = {
                 val leavingPocket = mode == "pocket"
-                mode = "home"
+                mode = when (mode) {
+                    "studySearch" -> studySearchReturn
+                    "courseLesson" -> "courses"
+                    "courses" -> courseReturnMode
+                    "session" -> wordReturnMode
+                    "pocket" -> if (homeReview) "home" else "learningHub"
+                    "pocketSetup", "screen" -> "learningHub"
+                    else -> "home"
+                }
+                if (leavingPocket) homeReview = false
                 if (leavingPocket) scope.launch {
                     busy = true
                     try { reload() } catch (e: Exception) { message = "读取失败：${e.message}" }
@@ -517,29 +704,12 @@ fun LearningScreen(
         }
     }
 
-    if (showProfile) AlertDialog(onDismissRequest = { showProfile = false }, title = { Text("词汇知识画像") }, text = {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            TeaProgressRow("已验证", verifiedCount, states.size)
-            TeaProgressRow("学习中", learningCount, states.size)
-            TeaProgressRow("模糊", fuzzyCount, states.size)
-            TeaProgressRow("陌生", unknownCount, states.size)
-            TeaCaption("自评与测试证据分别保存。同一单词在不同词书、口音下共用学习进度。")
-        }
-    }, confirmButton = { TextButton(onClick = { showProfile = false; onShowStats() }) { Text("查看统计") } },
-        dismissButton = { TextButton(onClick = { showProfile = false }) { Text("关闭") } })
+    if (profileOpen) TeaKnowledgeProfileSheet(verifiedCount, learningCount, fuzzyCount, unknownCount,
+        states.size, onProfileDismiss, onShowStats)
 
-    if (showBooks) AlertDialog(onDismissRequest = { showBooks = false }, title = { Text("选择学习词书") }, text = {
-        androidx.compose.foundation.lazy.LazyColumn {
-            items(books, key = { it.id }) { book ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(book.id in draftBooks, onCheckedChange = { checked -> draftBooks = if (checked) draftBooks + book.id else draftBooks - book.id })
-                    Text("${book.name} · ${book.wordCount}")
-                }
-            }
-            item { TeaCaption("词书来自 ECDICT 考试标签，不代表官方完整大纲。取消选择保留学习记录。") }
-        }
-    }, confirmButton = { TextButton(onClick = { onSelectedBooksChange(draftBooks); showBooks = false }) { Text("应用") } },
-        dismissButton = { TextButton(onClick = { showBooks = false }) { Text("取消") } })
+    if (showBooks) StudyBookPicker(dbHelper, books, draftBooks,
+        onSelection = { draftBooks = it }, onDismiss = { showBooks = false },
+        onApply = { onSelectedBooksChange(draftBooks); showBooks = false })
     if (showImport) AlertDialog(
         onDismissRequest = { if (!busy) showImport = false },
         title = { Text("添加个人词库") },
@@ -580,6 +750,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.screeningMode(
     lastScreened: List<Knowledge>,
     onRate: (List<Knowledge>, SelfReport) -> Unit,
     onUndo: () -> Unit,
+    onLearn: () -> Unit,
     onFinish: () -> Unit
 ) {
     if (current == null) {
@@ -589,7 +760,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.screeningMode(
                     "排雷完成",
                     if (total == 0) "先导入词库，再从已知的词开始。" else "没有需要手动判断的词了，可以直接开始今日学习。"
                 )
-                Button(onClick = onFinish, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("查看今日计划") }
+                Button(onClick = onLearn, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("开始单词学习") }
+                TextButton(onClick = onFinish, enabled = !busy) { Text("返回学习方式") }
             }
         }
         return
@@ -678,58 +850,12 @@ private fun androidx.compose.foundation.lazy.LazyListScope.screeningMode(
                     Text("先到这里", maxLines = 1)
                 }
             }
+            FilledTonalButton(onClick = onLearn, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                Text("开始单词学习")
+            }
             TeaCaption("认识或模糊的词会暂离新词队列，模糊词优先复习。自评不是测试证据。")
         }
     }
-}
-
-// --- Today's plan ----------------------------------------------------------------------
-
-@OptIn(ExperimentalLayoutApi::class)
-private fun androidx.compose.foundation.lazy.LazyListScope.homeMode(
-    stateCount: Int,
-    plan: List<Knowledge>,
-    queueCount: Int,
-    queueAvailable: Boolean,
-    unseenCount: Int,
-    dueCount: Int,
-    fuzzyCount: Int,
-    selfKnownCount: Int,
-    verifiedCount: Int,
-    learningCount: Int,
-    unknown: Int,
-    pending: Int,
-    limit: Int,
-    selectedLimit: Int?,
-    quickMode: Boolean,
-    onQuickModeChange: (Boolean) -> Unit,
-    bookTitle: String, onChooseBooks: () -> Unit,
-    learnDirectlyAvailable: Int,
-    busy: Boolean,
-    dailySample: Knowledge?,
-    onLimitChange: (Int) -> Unit,
-    onStart: () -> Unit,
-    onScreen: () -> Unit,
-    onImport: () -> Unit,
-    onShowStats: () -> Unit
-) {
-    item {
-        ExpressiveLearningPlan(dueCount, fuzzyCount, unseenCount, busy,
-            if (stateCount == 0) onImport else if (quickMode) onScreen else onStart)
-    }
-    item {
-        OutlinedButton(onClick = onChooseBooks, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-            Text("当前词书 · $bookTitle", maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-    item { LearningControls(selectedLimit, onLimitChange, quickMode, onQuickModeChange) }
-    item {
-        OutlinedButton(onClick = onImport, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-            Text("添加词库")
-        }
-    }
-    if (stateCount == 0) item { TeaEmptyState("从一本词书开始", "选择词书，或导入你有权使用的个人词库") }
-    else if (!queueAvailable && !quickMode) item { TeaCaption("今日暂无到期任务。学习记录已保存，可调整词书或稍后再来。") }
 }
 
 // --- Recall session --------------------------------------------------------------------
@@ -738,7 +864,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.sessionMode(
     queue: List<Knowledge>,
     position: Int,
     correct: Int,
-    words: Map<String, VocabularyItem>,
+    definitions: Map<String, String>,
+    session: WordLearningSession?,
     busy: Boolean,
     memory: Map<String, MemoryState>,
     coordinator: ReviewCoordinator,
@@ -753,20 +880,32 @@ private fun androidx.compose.foundation.lazy.LazyListScope.sessionMode(
                 Text("本轮完成", style = MaterialTheme.typography.headlineSmall)
                 TeaMetricRow(
                     "$position" to "完成题数",
-                    "$correct" to "回忆正确",
-                    if (position == 0) "—" to "正确率" else "$accuracy%" to "正确率"
+                    "$correct" to "独立回忆正确",
+                    if (position == 0) "—" to "独立回忆率" else "$accuracy%" to "独立回忆率"
                 )
+                session?.let {
+                    if (it.practiced > 0) TeaCaption("辅助练习正确 ${it.practiced} 个，不计入独立回忆正确。")
+                    if (it.missed.isNotEmpty()) {
+                        Text("需要巩固的词", style = MaterialTheme.typography.titleMedium)
+                        it.missed.forEach { word -> Text("$word · ${definitions[word].orEmpty()}") }
+                    }
+                }
                 TeaCaption("每次回答都已保存，下次按复习时间继续。答对一次只证明这一次的主动回忆。")
                 Button(onClick = onFinish, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("回到今日计划") }
             }
         }
         return
     }
-    item(key = "recall-${current.word}") {
+    item {
+        LinearProgressIndicator(progress = { position.toFloat() / queue.size.coerceAtLeast(1) }, modifier = Modifier.fillMaxWidth())
+        TeaCaption("已完成 $position / ${queue.size} 个词 · 暂停将从当前词继续")
+        TextButton(onClick = onFinish, enabled = !busy) { Text("暂停，稍后继续") }
+    }
+    item(key = "recall-${session?.id}-${current.word}") {
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         RecallCard(
             state = current,
-            definition = words[current.word]?.definition.orEmpty(),
+            definition = definitions[current.word].orEmpty(),
             index = position + 1,
             total = queue.size,
             busy = busy,
@@ -786,6 +925,9 @@ internal fun RecallCard(
     busy: Boolean,
     scheduleNote: String,
     previewFirst: Boolean = state.attempts == 0 && state.report != SelfReport.KNOWN,
+    focusMode: Boolean = false,
+    onPause: () -> Unit = {},
+    error: String? = null,
     onComplete: (Boolean, Long, Boolean) -> Unit
 ) {
     var answer by rememberSaveable(state.word) { mutableStateOf("") }
@@ -813,78 +955,81 @@ internal fun RecallCard(
     fun timeSpent() = activeTime[0] + if (activeTime[1] == 0L) 0 else android.os.SystemClock.elapsedRealtime() - activeTime[1]
     var elapsed by rememberSaveable(state.word) { mutableLongStateOf(0) }
 
-    LearningCard(
-        title = "$index / $total",
-        subtitle = if (scheduleNote.isNotBlank()) scheduleNote
-        else LearningEngine.reason(state, System.currentTimeMillis()).orEmpty()
-    ) {
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    fun checkAnswer(giveUp: Boolean = false) {
+        if (busy || result != null || (!giveUp && answer.isBlank())) return
+        result = !giveUp && answer.trim().equals(state.word, ignoreCase = true)
+        revealed = giveUp || previewFirst
+        elapsed = timeSpent()
+        focus.clearFocus()
+        keyboard?.hide()
+    }
+    val phase = when {
+        teaching -> "认识新词"
+        result == null -> "主动回忆"
+        else -> "回忆反馈"
+    }
+    val content: @Composable ColumnScope.() -> Unit = {
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
+        Text(phase, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         when {
             teaching -> {
-                Text(state.word, style = MaterialTheme.typography.headlineMedium)
+                Text(state.word, style = if (focusMode) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineMedium)
                 DefaultPronunciationButton(state.word)
-                if (definition.isNotBlank()) Text(definition, style = MaterialTheme.typography.bodyLarge)
+                if (definition.isNotBlank()) Text(definition, style = MaterialTheme.typography.titleLarge)
                 TeaCaption("先建立一次词义联系，再试着主动回忆。")
-                Button(onClick = { teaching = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text("记住了，试试回忆")
-                }
             }
             result == null -> {
-                Text(definition.ifBlank { state.word }, style = MaterialTheme.typography.titleLarge)
+                Text(definition.ifBlank { state.word }, style = MaterialTheme.typography.headlineSmall)
                 TeaCaption("根据所示释义，输入对应英文词。仅验证本条释义的主动回忆。")
                 OutlinedTextField(
-                    value = answer,
-                    onValueChange = { answer = it },
-                    singleLine = true,
-                    label = { Text("英文单词") },
+                    value = answer, onValueChange = { answer = it }, enabled = !busy,
+                    singleLine = true, label = { Text("英文单词") },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        autoCorrectEnabled = false, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { checkAnswer() }),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Button(
-                    enabled = answer.isNotBlank() && !busy,
-                    onClick = {
-                        result = answer.trim().equals(state.word, ignoreCase = true)
-                        revealed = previewFirst
-                        elapsed = timeSpent()
-                    },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                ) { Text("检查回答") }
-                TextButton(
-                    enabled = !busy,
-                    onClick = {
-                        // Looking at the answer is recorded as such: it is practice, not evidence, so
-                        // the memory model treats it as a lapse while mastery stays untouched.
-                        result = false
-                        revealed = true
-                        elapsed = timeSpent()
-                    }
-                ) { Text("想不起来，查看答案") }
             }
             else -> {
-                Text(
-                    if (result == true) "回忆正确" else "再建立一次联系",
+                Text(if (result == true) "回忆正确" else "再建立一次联系",
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (result == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
-                Text(state.word, style = MaterialTheme.typography.headlineMedium)
+                    color = if (result == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                Text(state.word, style = if (focusMode) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineMedium)
                 DefaultPronunciationButton(state.word)
-                TeaCaption(
-                    when {
-                        revealed -> "本次看过答案，作为练习记录，不计作独立回忆通过。"
-                        result == true -> "答对一次不代表完全掌握，之后会按记忆模型安排复习。"
-                        else -> "稍后再复习这个词，本轮先继续。"
-                    }
-                )
-                Button(
-                    enabled = !busy,
-                    onClick = { onComplete(result == true, elapsed, revealed) },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                ) { Text("保存并继续") }
+                if (definition.isNotBlank()) Text(definition, style = MaterialTheme.typography.titleLarge)
+                TeaCaption(when {
+                    revealed -> "本次看过答案，作为练习记录，不计作独立回忆通过。"
+                    result == true -> "答对一次不代表完全掌握，之后会按记忆模型安排复习。"
+                    else -> "稍后再复习这个词，本轮先继续。"
+                })
             }
         }
-        Text(
-            "已测试 ${state.attempts} 次 · 连续答对 ${state.streak} 次",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        val note = scheduleNote.ifBlank { LearningEngine.reason(state, System.currentTimeMillis()).orEmpty() }
+        if (note.isNotBlank()) TeaCaption(note)
+        TeaCaption("已测试 ${state.attempts} 次 · 连续答对 ${state.streak} 次")
     }
+    val actions: @Composable ColumnScope.() -> Unit = {
+        Button(onClick = {
+            when {
+                teaching -> teaching = false
+                result == null -> checkAnswer()
+                else -> onComplete(result == true, elapsed, revealed)
+            }
+        }, enabled = !busy && (teaching || result != null || answer.isNotBlank()),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(when {
+                teaching -> "记住了，试试回忆"
+                result == null -> "检查回答"
+                else -> "保存并继续"
+            })
+        }
+        if (!teaching && result == null) TextButton(enabled = !busy, onClick = { checkAnswer(true) },
+            modifier = Modifier.fillMaxWidth()) { Text("想不起来，查看答案") }
+        if (focusMode) TextButton(onClick = onPause, enabled = !busy,
+            modifier = Modifier.fillMaxWidth()) { Text("暂停，稍后继续") }
+    }
+    if (focusMode) StudyFocusPage(index, total, phase, busy, onPause, content, actions)
+    else LearningCard("$index / $total", "") { content(); actions() }
 }

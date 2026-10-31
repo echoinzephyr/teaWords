@@ -152,6 +152,10 @@ class AppPreferences(context: Context) {
             prefs.edit().putBoolean(KEY_DYNAMIC_COLOR, value).apply()
         }
 
+    var pureBlack: Boolean
+        get() = prefs.getBoolean("pure_black", false)
+        set(value) { prefs.edit().putBoolean("pure_black", value).apply() }
+
     var predictiveBackEnabled: Boolean
         get() = prefs.getBoolean(KEY_PREDICTIVE_BACK, false)
         set(value) { prefs.edit().putBoolean(KEY_PREDICTIVE_BACK, value).apply() }

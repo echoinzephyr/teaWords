@@ -1,6 +1,5 @@
 package com.teameow.teawords.ui.screens
 
-import androidx.activity.BackEventCompat
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.core.Animatable
@@ -37,17 +36,19 @@ internal fun PredictiveBackLayer(
     onBack: () -> Unit,
     enabled: Boolean = true,
     topLevel: Boolean = false,
+    searchTransition: Boolean = false,
+    onExitStarted: () -> Unit = {},
     content: @Composable (requestBack: () -> Unit) -> Unit
 ) {
     val predictive = LocalPredictiveBackEnabled.current
-    val visibility = remember { Animatable(0f) }
+    val visibility = remember { Animatable(if (searchTransition) 1f else 0f) }
     val preview = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     val latestBack by rememberUpdatedState(onBack)
     var phase by remember { mutableStateOf(BackPhase.Entering) }
     var gestureGeneration by remember { mutableIntStateOf(0) }
     var animationJob by remember { mutableStateOf<Job?>(null) }
-    var edge by remember { mutableIntStateOf(BackEventCompat.EDGE_LEFT) }
+    var gestureExit by remember { mutableStateOf(false) }
     val latestEnabled by rememberUpdatedState(enabled)
     val commitBack = {
         if (phase != BackPhase.Committed) {
@@ -68,9 +69,12 @@ internal fun PredictiveBackLayer(
             phase != BackPhase.Gesture) {
             gestureGeneration++
             animationJob?.cancel()
+            // A back pressed during restoration continues the page retreat.
+            gestureExit = preview.value > 0f
             phase = BackPhase.Exiting
+            onExitStarted()
             animationJob = scope.launch {
-                visibility.animateTo(0f, tween(200, easing = PageExitEasing))
+                visibility.animateTo(0f, tween(if (searchTransition) 380 else 200, easing = PageExitEasing))
                 commitBack()
             }
         }
@@ -90,15 +94,16 @@ internal fun PredictiveBackLayer(
                 visibility.snapTo(1f)
                 events.collect { event ->
                     if (generation == gestureGeneration) {
-                        edge = event.swipeEdge
                         preview.snapTo(event.progress.coerceIn(0f, 1f))
                     }
                 }
                 // Settle outside the gesture job: another back event cannot cancel a committed exit.
                 if (generation == gestureGeneration) {
+                    gestureExit = preview.value > 0f
                     phase = BackPhase.Exiting
+                    onExitStarted()
                     animationJob = scope.launch {
-                        visibility.animateTo(0f, tween(200, easing = PageExitEasing))
+                        visibility.animateTo(0f, tween(if (searchTransition) 380 else 200, easing = PageExitEasing))
                         commitBack()
                     }
                 }
@@ -131,9 +136,12 @@ internal fun PredictiveBackLayer(
                 val shown = visibility.value.coerceIn(0f, 1f)
                 val gesture = preview.value.coerceIn(0f, 1f)
                 alpha = shown
-                translationX = if (topLevel) 0f else 32.dp.toPx() * (1f - shown)
-                translationX += 24.dp.toPx() * gesture * if (edge == BackEventCompat.EDGE_LEFT) 1f else -1f
-                translationY = if (topLevel) 12.dp.toPx() * (1f - shown) else 0f
+                val finishingGesture = gestureExit && (phase == BackPhase.Exiting || phase == BackPhase.Committed)
+                // Both system edges retreat the page toward the right, reversing its entrance.
+                translationX = if (topLevel && !finishingGesture) 0f else
+                    32.dp.toPx() * (1f - shown)
+                translationX += 24.dp.toPx() * gesture
+                translationY = if (topLevel && !finishingGesture) 12.dp.toPx() * (1f - shown) else 0f
                 scaleX = (1f - 0.015f * (1f - shown)) * (1f - 0.1f * gesture)
                 scaleY = scaleX
                 shape = RoundedCornerShape((28f * gesture).dp)

@@ -12,35 +12,40 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.interaction.MutableInteractionSource
 
-/**
- * 学习页的主操作卡。设计稿给的是 380×220 的 `primaryContainer` 大色块：标题在最上、计数在标题
- * 下方，96dp 的圆形「开始」按钮压在右下角，而不是被拉伸成一整条——拉伸后按钮会变成一条横杠，
- * 既不像按钮也丢掉了「一次点击就能开始」的视觉重点。
- */
+/** The learning entry card grows with its text instead of reserving a narrow title column. */
 @Composable
 internal fun ExpressiveLearningPlan(due: Int, fuzzy: Int, unseen: Int, busy: Boolean, onStart: () -> Unit) {
+    val startInteraction = remember { MutableInteractionSource() }
     Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
-        Box(Modifier.fillMaxWidth().heightIn(min = 220.dp).padding(horizontal = 24.dp, vertical = 20.dp)) {
-            Column(
-                Modifier.align(Alignment.TopStart).fillMaxWidth(0.62f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text("开始学习", style = MaterialTheme.typography.headlineLarge)
+            Text(
+                "$due/$fuzzy/$unseen",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium)
+            )
+            Row(
+                Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Bottom
             ) {
-                Text("开始学习", style = MaterialTheme.typography.displayMedium)
-                Text(
-                    "$due/$fuzzy/$unseen",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 25.sp, fontWeight = FontWeight.Medium)
-                )
-                Text("到期 / 模糊 / 待排查", style = MaterialTheme.typography.labelMedium)
-            }
-            FilledIconButton(
-                onClick = onStart,
-                enabled = !busy,
-                modifier = Modifier.align(Alignment.BottomEnd).size(96.dp)
-            ) {
-                Icon(AppSymbols.ArrowForward, "开始学习", Modifier.size(40.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("到期 / 模糊 / 待排查", style = MaterialTheme.typography.labelMedium)
+                    Text("进入后选择单词、短课或专项练习", style = MaterialTheme.typography.labelMedium)
+                }
+                FilledIconButton(
+                    onClick = onStart,
+                    enabled = !busy,
+                    interactionSource = startInteraction,
+                    modifier = Modifier.size(72.dp).teaElasticPress(startInteraction, !busy)
+                ) {
+                    Icon(AppSymbols.ArrowForward, "开始学习", Modifier.size(32.dp))
+                }
             }
         }
     }

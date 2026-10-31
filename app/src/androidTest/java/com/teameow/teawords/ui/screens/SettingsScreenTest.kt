@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.*
@@ -24,6 +25,7 @@ class SettingsScreenTest {
     private var mode by mutableStateOf(AppThemeMode.SYSTEM)
     private var books by mutableStateOf(setOf("cet4"))
     private var predictiveBack by mutableStateOf(false)
+    private var pureBlack by mutableStateOf(false)
 
     private fun launch(compact: Boolean = false) {
         compose.setContent {
@@ -42,7 +44,7 @@ class SettingsScreenTest {
                 LocalReservedBottom provides 100.dp,
                 LocalDensity provides Density(density.density, if (compact) 1.3f else 1f)
             ) {
-                TeaWordsTheme(darkTheme = resolveDarkTheme(mode, false)) {
+                TeaWordsTheme(darkTheme = resolveDarkTheme(mode, false), pureBlack = pureBlack) {
                     Box(if (compact) Modifier.width(320.dp).height(640.dp) else Modifier) {
                         SettingsView(
                             pronunciationDialect = dialect, selectedWordbookIds = books,
@@ -60,7 +62,8 @@ class SettingsScreenTest {
                             dailyNewCapOverride = cap, onDailyNewCapChange = { cap = it },
                             targetRetentionOverride = retention, onTargetRetentionChange = { retention = it },
                             onBack = {}, predictiveBackEnabled = predictiveBack,
-                            onPredictiveBackChange = { predictiveBack = it }
+                            onPredictiveBackChange = { predictiveBack = it },
+                            pureBlack = pureBlack, onPureBlackChange = { pureBlack = it }
                         )
                     }
                 }
@@ -68,13 +71,84 @@ class SettingsScreenTest {
         }
     }
 
+    @Test fun settingsHeaderStaysPinnedAndChildCloseReturnsToParent() {
+        launch()
+        val top = compose.onNodeWithContentDescription("关闭设置").getUnclippedBoundsInRoot().top
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("检查更新"))
+        compose.onNodeWithText("个性化").assertIsDisplayed()
+        assertEquals(top, compose.onNodeWithContentDescription("关闭设置").getUnclippedBoundsInRoot().top)
+        compose.onNodeWithText("检查更新").performClick()
+        compose.onNodeWithContentDescription("关闭子设置").performClick()
+        compose.onNodeWithText("个性化").assertIsDisplayed()
+    }
+
+    @Test fun draggingChildHeaderDownReturnsToParentWithoutClosingSettings() {
+        launch()
+        compose.onNodeWithText("主页定制").performClick()
+        compose.onNodeWithTag("settings-panel-header").performTouchInput {
+            down(center); moveBy(androidx.compose.ui.geometry.Offset(0f, 340f), delayMillis = 200); up()
+        }
+        compose.onNodeWithText("个性化").assertIsDisplayed()
+        compose.onNodeWithContentDescription("关闭设置").assertIsDisplayed()
+        compose.onNodeWithContentDescription("关闭子设置").assertDoesNotExist()
+    }
+
+    @Test fun downwardContentSwipeKeepsCustomizationOpen() {
+        launch()
+        compose.onNodeWithText("主页定制").performClick()
+        compose.onNode(hasScrollToNodeAction()).performTouchInput { swipeDown() }
+        compose.onNodeWithText("主页定制").assertIsDisplayed()
+        compose.onNodeWithContentDescription("主页外观预览").assertIsDisplayed()
+        compose.onNodeWithContentDescription("返回").performClick()
+        compose.onNodeWithText("个性化").assertIsDisplayed()
+    }
+
+    @Test fun captureSettingsPagesForMaterialReview() {
+        launch()
+        fun capture(name: String) {
+            compose.waitForIdle()
+            val folder = java.io.File(compose.activity.getExternalFilesDir(null), "material-refresh").apply { mkdirs() }
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot().let { image ->
+                java.io.File(folder, "$name.png").outputStream().use { image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+            }
+        }
+        capture("settings-main")
+        compose.onNodeWithText("外观模式").performClick()
+        capture("settings-appearance")
+        compose.onNodeWithContentDescription("返回").performClick()
+        compose.onNodeWithText("主页定制").performClick()
+        compose.onNodeWithContentDescription("主页外观预览").assertIsDisplayed()
+        capture("settings-home-preview")
+        compose.onNodeWithContentDescription("返回").performClick()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("关于App"))
+        compose.onNodeWithText("关于App").performClick()
+        compose.onNodeWithText("茶词 · teaWords").assertIsDisplayed()
+        capture("settings-about")
+    }
+
+    @Test fun pureBlackAndThemePreviewSurviveReturningToTheSubpage() {
+        launch()
+        compose.onNodeWithText("外观模式").performClick()
+        compose.onNodeWithText("深色").performScrollTo().performClick()
+        compose.onNodeWithText("纯黑").performScrollTo().performClick().assertIsSelected()
+        compose.runOnIdle { assertTrue(pureBlack) }
+        compose.onNodeWithTag("settings-live-preview").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("返回").performClick()
+        compose.onNodeWithText("外观模式").performClick()
+        compose.onNodeWithText("纯黑").performScrollTo().assertIsSelected()
+        compose.onNodeWithText("标准").performClick().assertIsSelected()
+        compose.runOnIdle { assertTrue(!pureBlack) }
+    }
+
     @Test fun predictiveBackIsOffByDefaultAndCanBeEnabledInAppearance() {
         launch()
         compose.onNodeWithText("外观模式").performClick()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("预测性返回") and isToggleable())
         compose.onNode(hasText("预测性返回") and isToggleable()).assertIsOff().performClick().assertIsOn()
         compose.runOnIdle { assertTrue(predictiveBack) }
         compose.onNodeWithContentDescription("返回").performClick()
         compose.onNodeWithText("外观模式").performClick()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("预测性返回") and isToggleable())
         compose.onNode(hasText("预测性返回") and isToggleable()).assertIsOn()
     }
 
@@ -112,6 +186,25 @@ class SettingsScreenTest {
         compose.onNodeWithText("高考词汇").assertIsDisplayed().performClick()
         compose.runOnIdle { assertEquals(setOf("gk"), books) }
         val bottom = compose.onNodeWithText("高考词汇").getUnclippedBoundsInRoot().bottom
-        assertTrue("Last option must stay above the 100dp dock reservation", bottom <= 540.dp)
+        val viewportBottom = compose.onNode(hasScrollToNodeAction()).getUnclippedBoundsInRoot().bottom
+        assertTrue("The final wordbook clears the settings list viewport", bottom <= viewportBottom)
+    }
+    @Test fun roundTargetIsSavedFromMainStudySettings() {
+        val prefs = compose.activity.getSharedPreferences("learning", 0)
+        val existed = prefs.contains("expressive_round_limit")
+        val previous = prefs.getInt("expressive_round_limit", 10)
+        try {
+            launch(compact = true)
+            compose.onNodeWithText("学习策略").performScrollTo().performClick()
+            compose.onNodeWithText("每轮目标").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("15 个").performScrollTo().performClick().assertIsSelected()
+            compose.runOnIdle { assertEquals(15, prefs.getInt("expressive_round_limit", 10)) }
+            compose.onNodeWithContentDescription("返回").performClick()
+            compose.onNodeWithText("学习策略").performScrollTo().performClick()
+            compose.onNodeWithText("15 个").performScrollTo().assertIsSelected()
+        } finally {
+            if (existed) prefs.edit().putInt("expressive_round_limit", previous).commit()
+            else prefs.edit().remove("expressive_round_limit").commit()
+        }
     }
 }

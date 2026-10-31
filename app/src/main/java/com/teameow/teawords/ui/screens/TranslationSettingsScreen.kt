@@ -48,15 +48,15 @@ internal fun TranslationSettingsPage(onBack: () -> Unit) {
             finally { checking = false }
         }
     }
-    TeaListPage(title = "句子与长文翻译", containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    SettingsPageFrame(title = "句子与长文翻译", containerColor = MaterialTheme.colorScheme.background,
         subtitle = "选择翻译方式，设置好再保存", onBack = onBack, backEnabled = !busy) {
         item {
             TeaCard {
-            TranslationEngine.entries.forEach { choice ->
-                Row(Modifier.fillMaxWidth().selectable(engine == choice, role = Role.RadioButton, onClick = { if (!busy) { engine = choice; error = null; message = null } }).padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = engine == choice, onClick = null, enabled = !busy)
-                    Text(choice.label)
+            TeaSegmentedGroup {
+                TranslationEngine.entries.forEach { choice ->
+                    TeaOptionRow(title = choice.label, selected = engine == choice, enabled = !busy,
+                        trailing = { RadioButton(selected = engine == choice, onClick = null, enabled = !busy) },
+                        onClick = { engine = choice; error = null; message = null })
                 }
             }
             when (engine) {
@@ -111,8 +111,8 @@ internal fun TranslationSettingsPage(onBack: () -> Unit) {
                     TextButton(onClick = { uri.openUri("https://developers.google.com/ml-kit/language/translation/translation-terms") }) { Text("查看离线服务说明") }
                 }
             }
-                error?.let { TeaCaption(it) }
-                message?.let { TeaCaption(it) }
+                error?.let { TeaStatusMessage(it, error = true) }
+                message?.let { TeaStatusMessage(it) }
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 Button(enabled = !busy && !checking, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), onClick = {
                     val contact = email.trim()

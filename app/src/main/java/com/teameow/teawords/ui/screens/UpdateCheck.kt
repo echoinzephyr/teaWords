@@ -47,16 +47,16 @@ internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long) {
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ) {
-                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                         Icon(AppSymbols.Update, null, Modifier.size(24.dp))
                     }
                 }
@@ -170,7 +170,7 @@ internal fun RepositoryCard() {
 private fun StatusPill(icon: ImageVector, text: String, container: Color, content: Color) {
     Surface(shape = RoundedCornerShape(20.dp), color = container, contentColor = content) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -189,7 +189,7 @@ private fun NewVersionBlock(info: UpdateInfo, onOpen: () -> Unit) {
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(20.dp),
+            Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text("发现新版本 ${info.tag}", style = MaterialTheme.typography.headlineSmall)

@@ -1,5 +1,6 @@
 package com.teameow.teawords.ui.screens
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.activity.compose.BackHandler
@@ -89,6 +90,7 @@ data class BingWallpaper(val url: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") // Pages already apply their measured system and dock insets.
 fun MainScreen(
     dbHelper: DatabaseHelper,
     levelProvider: WordLevelProvider,
@@ -103,7 +105,9 @@ fun MainScreen(
     dailyNewCapOverride: Int = 0,
     onDailyNewCapChange: (Int) -> Unit = {},
     targetRetentionOverride: Double = 0.0,
-    onTargetRetentionChange: (Double) -> Unit = {}
+    onTargetRetentionChange: (Double) -> Unit = {},
+    pureBlack: Boolean = false,
+    onPureBlackChange: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val preferences = remember(appPreferences) { appPreferences ?: AppPreferences(context) }
@@ -155,6 +159,7 @@ fun MainScreen(
     var translatedText by remember { mutableStateOf<String?>(null) }
     var isSearching by remember { mutableStateOf(false) }
     var isLookupExecuted by remember { mutableStateOf(false) }
+    var searchReturning by remember { mutableStateOf(false) }
     var submittedQuery by rememberSaveable { mutableStateOf("") }
     var lookupRequestId by rememberSaveable { mutableStateOf(0L) }
     var isStarred by remember { mutableStateOf(false) }
@@ -162,6 +167,8 @@ fun MainScreen(
 
     // History and Vocabulary States
     var historyList by remember { mutableStateOf(emptyList<HistoryItem>()) }
+    var showRecentHistory by rememberSaveable { mutableStateOf(false) }
+    var showLearningProfile by rememberSaveable { mutableStateOf(false) }
     var vocabularyList by remember { mutableStateOf(emptyList<VocabularyItem>()) }
 
     // Review State
@@ -254,7 +261,8 @@ fun MainScreen(
     val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val density = LocalDensity.current
     val systemBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    var dockClearance by remember { mutableStateOf(80.dp + systemBottom) }
+    val dockBottomMargin = maxOf(21.dp, systemBottom)
+    var dockClearance by remember { mutableStateOf(70.dp + dockBottomMargin) }
     var searchJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var lookupSucceeded by remember { mutableStateOf(false) }
     val closeLookup: () -> Unit = {
@@ -271,6 +279,7 @@ fun MainScreen(
             searchQuery = q
             submittedQuery = q
             lookupRequestId++
+            searchReturning = false
             isLookupExecuted = true
         }
     }
@@ -280,25 +289,35 @@ fun MainScreen(
         isInputFocused = false
     }
     val pageStates = rememberSaveableStateHolder()
-    // The settings sheet is a dialog over the unchanged home page; keep the dock mounted behind it.
+    // Settings remain in the original sheet while the home page stays mounted underneath.
     val childVisible = showReviewStats || isLookupExecuted || reviewSession != null || showLookupReview
     // Top-level destinations alone own the navigation bar. Child screens clear system insets.
-    val showDock = !childVisible && !isInputFocused && !keyboardVisible && learningMode != "session" && learningMode != "diagnose" && learningMode != "pocket" && learningMode != "pocketSetup"
+    val showDock = !childVisible && !isInputFocused && !keyboardVisible && learningMode != "learningHub" && learningMode != "session" && learningMode != "diagnose" && learningMode != "pocket" && learningMode != "pocketSetup" && learningMode != "courses" && learningMode != "courseLesson" && learningMode != "favorites" && learningMode != "studySearch"
+    val animatedDockClearance by animateDpAsState(
+        targetValue = if (showDock) dockClearance else systemBottom,
+        animationSpec = tween(300, easing = if (showDock) TeaEnterEasing else TeaExitEasing),
+        label = "dock-clearance"
+    )
     val selectTab: (AppTab) -> Unit = { tab ->
+        showRecentHistory = false
+        showLearningProfile = false
         focusManager.clearFocus()
         keyboardController?.hide()
         isInputFocused = false
         currentTab = tab
     }
 
-    CompositionLocalProvider(LocalPredictiveBackEnabled provides predictiveBackEnabled) {
+    SharedTransitionLayout {
+    CompositionLocalProvider(LocalPredictiveBackEnabled provides predictiveBackEnabled,
+        LocalTeaSearchScope provides this,
+        LocalTeaSearchResultVisible provides (isLookupExecuted && !searchReturning)) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { _ ->
         val screen: @Composable (String, () -> Unit) -> Unit = { targetStateString, requestBack ->
           pageStates.SaveableStateProvider(targetStateString) {
             val isTopLevelPage = AppTab.entries.any { it.name == targetStateString }
-            val reservedBottomForPage: Dp? = if (isTopLevelPage && !keyboardVisible) dockClearance else null
+            val reservedBottomForPage: Dp? = if (isTopLevelPage && !keyboardVisible) animatedDockClearance else null
             CompositionLocalProvider(
                 LocalReservedBottom provides reservedBottomForPage
             ) {
@@ -316,7 +335,9 @@ fun MainScreen(
                             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
                         ) {
                             Box(Modifier.fillMaxWidth().height(sheetHeight)) {
-                                StatsDashboard(dbHelper = dbHelper, onBack = statsClose)
+                                CompositionLocalProvider(LocalReservedBottom provides null) {
+                                    StatsDashboard(dbHelper = dbHelper, onBack = statsClose)
+                                }
                             }
                         }
                     }
@@ -364,6 +385,9 @@ fun MainScreen(
                             preferences.hitokotoRefreshInterval = interval
                         },
                         themeMode = themeMode,
+                        pureBlack = pureBlack,
+                        onPureBlackChange = onPureBlackChange,
+                        dailyWallpaperUrl = bingWallpaperUrl,
                         onThemeModeChange = onThemeModeChange,
                         dynamicColor = dynamicColor,
                         onDynamicColorChange = onDynamicColorChange,
@@ -408,7 +432,9 @@ fun MainScreen(
                                         HomeWallpaperMode.DAILY -> bingWallpaperUrl
                                         HomeWallpaperMode.CUSTOM -> customWallpaperUri
                                     },
-                                    bottomClearance = if (isInputFocused || keyboardVisible) 0.dp else dockClearance
+                                    bottomClearance = if (isInputFocused || keyboardVisible) 0.dp else animatedDockClearance,
+                                    recentHistoryOpen = showRecentHistory && currentTab == AppTab.TRANSLATE,
+                                    onRecentHistoryDismiss = { showRecentHistory = false }
                                 )
                         }
                     }
@@ -441,7 +467,14 @@ fun MainScreen(
                             selectedBookIds = selectedWordbookIds,
                             onSelectedBooksChange = { ids -> selectedWordbookIds = ids; preferences.selectedWordbookIds = ids },
                             onShowStats = { showStats = true },
-                            onModeChange = { learningMode = it }
+                            onModeChange = { learningMode = it },
+                            profileOpen = showLearningProfile && currentTab == AppTab.REVIEW,
+                            onProfileDismiss = { showLearningProfile = false },
+                            studyWallpaper = when (homeWallpaperMode) {
+                                HomeWallpaperMode.NONE -> null
+                                HomeWallpaperMode.DAILY -> bingWallpaperUrl
+                                HomeWallpaperMode.CUSTOM -> customWallpaperUri
+                            }
                         )
                     }
                     "lookup-review" -> LookupReviewScreen(dbHelper, lookupReviewEntries, requestBack) { lookupReviewBusy = it }
@@ -451,36 +484,35 @@ fun MainScreen(
         }
         }
         Box(Modifier.fillMaxSize()) {
-            CoveredPage(covered = currentTab != AppTab.TRANSLATE || childVisible || showSettings || showStats) {
-                screen(AppTab.TRANSLATE.name) { }
+            TeaTopLevelPages(currentTab, covered = childVisible || showSettings || showStats) { tab ->
+                screen(tab.name) { }
             }
-            if (currentTab != AppTab.TRANSLATE) {
-                PredictiveBackLayer(onBack = { selectTab(AppTab.TRANSLATE) }, enabled = !childVisible && !showSettings && !showStats, topLevel = true) { requestBack ->
-                    AnimatedContent(
-                        targetState = currentTab,
-                        modifier = Modifier.fillMaxSize(),
-                        transitionSpec = {
-                            val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
-                            (fadeIn(tween(180)) + slideInHorizontally(tween(240)) { direction * it / 20 }) togetherWith
-                                fadeOut(tween(90))
-                        },
-                        label = "main-tab"
-                    ) { tab ->
-                        CoveredPage(covered = childVisible || showSettings || showStats || tab != currentTab) { screen(tab.name, requestBack) }
-                    }
-                }
-            }
-            if (showDock) NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
-                    alpha = if (currentTab == AppTab.TRANSLATE && homeWallpaperMode != HomeWallpaperMode.NONE) 0.68f else 1f
-                ),
-                tonalElevation = 0.dp,
-                modifier = Modifier.align(Alignment.BottomCenter)
-                    .onSizeChanged { dockClearance = with(density) { it.height.toDp() } }
+            AnimatedVisibility(
+                visible = showDock,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = slideInVertically(tween(300, easing = TeaEnterEasing)) { it } +
+                    fadeIn(tween(300, easing = TeaEnterEasing)),
+                exit = slideOutVertically(tween(300, easing = TeaExitEasing)) { it } +
+                    fadeOut(tween(300, easing = TeaExitEasing))
             ) {
-                TeaNavItem(currentTab, AppTab.TRANSLATE, AppSymbols.Search) { selectTab(AppTab.TRANSLATE) }
-                TeaNavItem(currentTab, AppTab.HISTORY, AppSymbols.Update) { selectTab(AppTab.HISTORY) }
-                TeaNavItem(currentTab, AppTab.REVIEW, AppSymbols.School) { selectTab(AppTab.REVIEW) }
+                Box(
+                    Modifier.fillMaxWidth()
+                        .onSizeChanged { dockClearance = with(density) { it.height.toDp() } }
+                        .padding(start = 21.dp, end = 21.dp, top = 8.dp, bottom = dockBottomMargin),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TeaNavigationDockRow(
+                        selectedTab = currentTab,
+                        onSelected = selectTab,
+                        onRecentHistory = { focusManager.clearFocus(); showRecentHistory = true },
+                        onLearningProfile = if (learningMode == "home") ({ showLearningProfile = true }) else null,
+                        enabled = showDock,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+                            alpha = .72f
+                        ),
+                        modifier = if (showDock) Modifier else Modifier.clearAndSetSemantics { }
+                    )
+                }
             }
             val overlay = when {
                 showStats -> "stats"
@@ -494,7 +526,8 @@ fun MainScreen(
                     if (overlay == "settings" || overlay == "stats") {
                         screen(overlay) { if (overlay == "settings") showSettings = false else showStats = false }
                     } else {
-                        PredictiveBackLayer(enabled = !lookupReviewBusy, onBack = {
+                        PredictiveBackLayer(enabled = !lookupReviewBusy, searchTransition = overlay == "result",
+                            onExitStarted = { if (overlay == "result") { searchReturning = true; isInputFocused = true } }, onBack = {
                             when (overlay) {
                                 "stats" -> showStats = false
                                 "lookup-review" -> showLookupReview = false
@@ -508,33 +541,6 @@ fun MainScreen(
     }
     }
 }
-
-@Composable
-private fun RowScope.TeaNavItem(
-    currentTab: AppTab,
-    tab: AppTab,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    enabled: Boolean = true,
-    onClick: () -> Unit
-) {
-    NavigationBarItem(
-        enabled = enabled,
-        selected = currentTab == tab,
-        onClick = onClick,
-        icon = { Icon(icon, contentDescription = tab.title) },
-        label = { Text(tab.title, style = MaterialTheme.typography.labelMedium, maxLines = 1) },
-        colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            // Without these a disabled item fades to almost nothing and leaves the pill looking
-            // like an empty white block.
-            disabledIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-        )
-    )
 }
 
 // --- SCREEN COMPONENTS ---
@@ -607,7 +613,7 @@ fun ResultView(
 
         if (isSearching) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+                TeaLoadingIndicator(color = MaterialTheme.colorScheme.secondary)
             }
             return
         }
@@ -1311,7 +1317,7 @@ fun ReviewTypeCard(
                 )
             }
             if (isLoading) {
-                CircularProgressIndicator(
+                TeaLoadingIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.secondary
                 )

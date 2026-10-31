@@ -30,7 +30,8 @@ class LookupNavigationTest {
             assertEquals(paragraph, model.state.value.input)
             assertEquals(paragraph, shared)
         }
-        compose.onNodeWithText("查词与翻译").assertIsDisplayed()
+        compose.onNodeWithTag("lookup-search-input").assertIsDisplayed()
+        compose.onNodeWithText("查词与翻译").assertDoesNotExist()
         compose.onNode(hasSetTextAction()).performTextReplacement("apple")
         compose.runOnIdle { assertEquals(true, model.state.value.dictionaryMode); assertEquals("apple", shared) }
         compose.onNodeWithContentDescription("查询").assertIsDisplayed()

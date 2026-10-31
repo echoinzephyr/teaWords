@@ -137,7 +137,7 @@ fun DiagnosticScreen(
         onBack()
     }
 
-    TeaListPage(
+    TeaListPage(expandedTitle = false,
         loading = loading,
         title = "词汇能力诊断",
         subtitle = "自适应选题 · 答对更难的问题会更快定位水平",

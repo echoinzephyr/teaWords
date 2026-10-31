@@ -21,7 +21,7 @@ class PredictiveBackLayerTest {
     private var commits = 0
     private var parentMounts = 0
 
-    private fun mount(predictive: Boolean = true) {
+    private fun mount(predictive: Boolean = true, topLevel: Boolean = false) {
         compose.setContent {
             CompositionLocalProvider(LocalPredictiveBackEnabled provides predictive) {
             var visible by remember { mutableStateOf(true) }
@@ -29,8 +29,10 @@ class PredictiveBackLayerTest {
                 DisposableEffect(Unit) { parentMounts++; onDispose { } }
                 Text("Source page")
                 if (visible) {
-                    PredictiveBackLayer(onBack = { commits++; visible = false }) { back ->
-                        Button(onClick = back, modifier = Modifier.testTag("back")) { Text("Back") }
+                    PredictiveBackLayer(onBack = { commits++; visible = false }, topLevel = topLevel) { back ->
+                        Box(Modifier.fillMaxSize().testTag("page")) {
+                            Button(onClick = back, modifier = Modifier.testTag("back")) { Text("Back") }
+                        }
                     }
                 }
             }
@@ -111,6 +113,54 @@ class PredictiveBackLayerTest {
         compose.waitForIdle()
         compose.onNodeWithTag("back").assertDoesNotExist()
         assertEquals(1, commits)
+    }
+
+    private fun verifyExitDirection(edge: Int, topLevel: Boolean = false) {
+        mount(topLevel = topLevel)
+        val initial = compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot
+        compose.mainClock.autoAdvance = false
+        compose.runOnIdle {
+            compose.activity.onBackPressedDispatcher.dispatchOnBackStarted(
+                BackEventCompat(if (edge == BackEventCompat.EDGE_RIGHT) 400f else 0f, 200f, 0f, edge))
+        }
+        compose.runOnIdle {
+            compose.activity.onBackPressedDispatcher.dispatchOnBackProgressed(
+                BackEventCompat(if (edge == BackEventCompat.EDGE_RIGHT) 300f else 100f, 200f, .6f, edge))
+        }
+        compose.mainClock.advanceTimeByFrame()
+        compose.waitForIdle()
+        val previewed = compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot
+        assertTrue("Both edges must retreat the page to the right", previewed.center.x > initial.center.x)
+        compose.runOnIdle { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        compose.mainClock.advanceTimeBy(80)
+        compose.waitForIdle()
+        val exiting = compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot
+        assertTrue("Release must continue retreating to the right", exiting.center.x > previewed.center.x)
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertEquals(1, commits)
+    }
+
+    @Test fun rightEdgeReleaseContinuesRight() = verifyExitDirection(BackEventCompat.EDGE_RIGHT)
+    @Test fun leftEdgeReleaseContinuesRight() = verifyExitDirection(BackEventCompat.EDGE_LEFT)
+    @Test fun topLevelRightEdgeReleaseContinuesRight() = verifyExitDirection(BackEventCompat.EDGE_RIGHT, topLevel = true)
+
+    @Test fun rightEdgeCancellationRestoresPosition() {
+        mount()
+        val before = compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot
+        compose.runOnIdle {
+            compose.activity.onBackPressedDispatcher.dispatchOnBackStarted(
+                BackEventCompat(400f, 200f, 0f, BackEventCompat.EDGE_RIGHT))
+        }
+        compose.runOnIdle {
+            compose.activity.onBackPressedDispatcher.dispatchOnBackProgressed(
+                BackEventCompat(300f, 200f, .6f, BackEventCompat.EDGE_RIGHT))
+        }
+        compose.waitForIdle()
+        compose.runOnIdle { compose.activity.onBackPressedDispatcher.dispatchOnBackCancelled() }
+        compose.waitForIdle()
+        assertEquals(before, compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot)
+        assertEquals(0, commits)
     }
 
     @Test fun backDuringEntranceIsNotLost() {

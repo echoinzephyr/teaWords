@@ -170,8 +170,8 @@ class LocalDictionary(
     }
 
     fun exact(text: String): LocalEntry? =
-        (engineSearch(text, null)?.firstOrNull { it.match == MatchKind.EXACT || it.match == MatchKind.NORMALIZED })
-            ?: rows("SELECT * FROM lex_words WHERE normalized=?", arrayOf(LexicalText.normalize(text))).firstOrNull()
+        rows("SELECT * FROM lex_words WHERE normalized=?", arrayOf(LexicalText.normalize(text))).firstOrNull()
+            ?: engineSearch(text, null)?.firstOrNull { it.match == MatchKind.EXACT || it.match == MatchKind.NORMALIZED }
 
     fun resolve(text: String): List<LocalEntry> {
         val q = LexicalText.normalize(text)
@@ -186,7 +186,9 @@ class LocalDictionary(
         val normalized = LexicalText.normalize(word)
         require(normalized.isNotEmpty() && normalized.length <= 160)
         db.insertWithOnConflict("lex_words", null, ContentValues().apply { put("normalized", normalized); put("word", word.trim()) }, SQLiteDatabase.CONFLICT_IGNORE)
-        val old = exact(normalized)!!
+        // Upserts must target the local row. `exact` may return a bundled dictionary entry
+        // whose id belongs to a different database after the dictionary engine is opened.
+        val old = rows("SELECT * FROM lex_words WHERE normalized=?", arrayOf(normalized)).first()
         val values = ContentValues().apply {
             if (zh.isNotBlank() && (old.zh.isBlank() || source.startsWith("ECDICT"))) put("zh", zh.replace("\\n", "\n"))
             if (en.isNotBlank()) put("en", en.replace("\\n", "\n"))
@@ -209,7 +211,7 @@ class LocalDictionary(
                 db.insertWithOnConflict("lex_forms", null, ContentValues().apply { put("form", LexicalText.normalize(value)); put("word_id", old.id); put("kind", parts[0]) }, SQLiteDatabase.CONFLICT_IGNORE)
             }
         }
-        val current = exact(normalized)!!
+        val current = rows("SELECT * FROM lex_words WHERE normalized=?", arrayOf(normalized)).first()
         LexicalText.chineseTokens(current.zh).forEach { token -> db.insertWithOnConflict("lex_zh", null, ContentValues().apply { put("token", token); put("word_id", old.id) }, SQLiteDatabase.CONFLICT_IGNORE) }
         db.execSQL("INSERT OR REPLACE INTO lex_fts(docid, lemma, definition) VALUES(?,?,?)", arrayOf(old.id, normalized, current.en))
         return old.id

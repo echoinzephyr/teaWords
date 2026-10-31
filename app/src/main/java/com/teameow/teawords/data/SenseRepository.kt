@@ -317,13 +317,14 @@ class SenseRepository(private val helper: DatabaseHelper) {
         intervalDays: Double? = null,
         reps: Int? = null,
         lapses: Int? = null,
-        resolvedWord: String? = null
+        resolvedWord: String? = null,
+        countReview: Boolean = true
     ) {
         db.beginTransaction()
         try {
             val current = knowledgeFor(listOf(senseId))[senseId] ?: SenseKnowledge.unseen(senseId)
             val streak = when {
-                mode.startsWith("POCKET_") -> if (correct || mode == "POCKET_STUDY") current.correctStreak else 0
+                mode.startsWith("POCKET_") || mode == "RECOGNITION" -> if (correct || mode == "POCKET_STUDY") current.correctStreak else 0
                 correct && !revealed -> current.correctStreak + 1
                 else -> 0
             }
@@ -346,7 +347,7 @@ class SenseRepository(private val helper: DatabaseHelper) {
                 if (intervalDays == null && current.intervalDays > 0) put("interval_days", current.intervalDays)
             }
             // Recognition self-reports estimate ability; they are not recall or mastery evidence.
-            if (mode != MODE_DIAGNOSTIC) {
+            if (mode != MODE_DIAGNOSTIC && countReview) {
                 db.insertWithOnConflict(TABLE_USER_SENSE_KNOWLEDGE, null, values, SQLiteDatabase.CONFLICT_REPLACE)
                     .also { check(it != -1L) { "义项状态保存失败" } }
             }
@@ -465,7 +466,8 @@ class SenseRepository(private val helper: DatabaseHelper) {
         masteryBefore: Double?,
         masteryAfter: Double?,
         abilityBefore: Double?,
-        abilityAfter: Double?
+        abilityAfter: Double?,
+        countReview: Boolean = true
     ) {
         recordSenseAnswer(
             wordId = wordId, senseId = senseId, mode = mode, correct = correct, revealed = revealed,
@@ -473,7 +475,8 @@ class SenseRepository(private val helper: DatabaseHelper) {
             abilityBefore = abilityBefore, abilityAfter = abilityAfter,
             masteryBefore = masteryBefore, masteryAfter = masteryAfter,
             difficulty = difficulty, stability = stability, dueAt = dueAt,
-            intervalDays = intervalDays, reps = reps, lapses = lapses, resolvedWord = word
+            intervalDays = intervalDays, reps = reps, lapses = lapses, resolvedWord = word,
+            countReview = countReview
         )
     }
 
@@ -564,9 +567,9 @@ class SenseRepository(private val helper: DatabaseHelper) {
 
     // --- Evidence log ----------------------------------------------------------------------
 
-    /** Reviews that can be replayed for a future parameter fit: sense, mode and grade known. */
+    /** Only graded scheduler updates can be replayed; auxiliary steps are not spaced reviews. */
     fun replayableRecordCount(): Int = db.rawQuery(
-        "SELECT COUNT(*) FROM $TABLE_TEST_RECORDS WHERE sense_id IS NOT NULL AND mode IS NOT NULL",
+        "SELECT COUNT(*) FROM $TABLE_TEST_RECORDS WHERE sense_id IS NOT NULL AND mode IS NOT NULL AND grade IS NOT NULL",
         null
     ).use { it.moveToFirst(); it.getInt(0) }
 

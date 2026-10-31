@@ -57,12 +57,14 @@ class MainActivity : ComponentActivity() {
             // Read on every composition so choosing a mode in settings re-themes immediately.
             var mode by remember { mutableStateOf(preferences.themeMode) }
             var dynamicColor by remember { mutableStateOf(preferences.dynamicColor) }
+            var pureBlack by remember { mutableStateOf(preferences.pureBlack) }
             var strategy by remember { mutableStateOf(preferences.studyStrategy) }
             var dailyCap by remember { mutableIntStateOf(preferences.dailyNewCapOverride) }
             var retention by remember { mutableStateOf(preferences.targetRetentionOverride) }
             TeaWordsTheme(
                 darkTheme = resolveDarkTheme(mode, isSystemInDarkTheme()),
-                dynamicColor = dynamicColor
+                dynamicColor = dynamicColor,
+                pureBlack = pureBlack
             ) {
               ProvidePronunciation {
                 MainScreen(
@@ -76,6 +78,8 @@ class MainActivity : ComponentActivity() {
                         mode = it
                     },
                     dynamicColor = dynamicColor,
+                    pureBlack = pureBlack,
+                    onPureBlackChange = { preferences.pureBlack = it; pureBlack = it },
                     onDynamicColorChange = {
                         preferences.dynamicColor = it
                         dynamicColor = it

@@ -39,7 +39,7 @@ class PocketLearningScreenTest {
         compose.onNodeWithText("苹果", useUnmergedTree = true).performClick()
         compose.waitUntil(5000) { PocketLearningRepository(helper!!).load()!!.done.size == 1 }
         compose.onNodeWithText("答对了！apple · 苹果").assertIsDisplayed()
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("暂停，稍后继续"))
+        compose.onNodeWithContentDescription("更多").performClick()
         compose.onNodeWithText("暂停，稍后继续").performClick()
         assertTrue(paused)
         assertEquals(1, PocketLearningRepository(helper!!).load()!!.position)
@@ -95,5 +95,19 @@ class PocketLearningScreenTest {
         compose.waitUntil(5000) { PocketLearningRepository(helper!!).load()!!.complete }
         compose.onNodeWithText("答对了！apple · 苹果").assertIsDisplayed()
         assertEquals(1, PocketLearningRepository(helper!!).load()!!.correct)
+    }
+
+    @Test fun wholeWordTypingRequiresCorrectionAndRecordsTheError() {
+        show(PocketRound("typing", listOf(PocketTask("apple", "苹果", PocketKind.TYPING))))
+        compose.onNode(hasSetTextAction()).performTextInput("apxle")
+        compose.onNodeWithText("完成默写").assertIsNotEnabled()
+        compose.onNode(hasSetTextAction()).performTextReplacement("apple")
+        compose.onNodeWithText("完成默写").performClick()
+        compose.waitUntil(5000) { PocketLearningRepository(helper!!).load()!!.complete }
+        val stats = PocketLearningRepository(helper!!).typingStats("typing")
+        assertEquals(1, stats.words)
+        assertEquals(1, stats.errors)
+        assertEquals(5, stats.chars)
+        assertEquals(0, LearningRepository(helper!!).states().first { it.word == "apple" }.streak)
     }
 }

@@ -15,6 +15,22 @@ class ReviewCoordinatorTest {
     private val now = 1_800_000_000_000L
     private val coordinator = ReviewCoordinator()
 
+    @Test fun recognitionSchedulesPracticeWithoutUpgradingMasteryOrAbility() {
+        val belief = KnowledgeBelief.unseen(now)
+        val ability = AbilityEstimator.initial
+        val correct = coordinator.gradeRecognition(belief, MemoryState.unseen, ability, true, now)
+        assertEquals(belief, correct.knowledge)
+        assertEquals(ability, correct.ability)
+        assertEquals(ReviewGrade.HARD, correct.grade)
+        assertTrue(correct.memory.reps > 0)
+        assertTrue(correct.intervalDays!! <= 1.0)
+        val missed = coordinator.gradeRecognition(belief, correct.memory, ability, false, now + 1000)
+        assertEquals(ReviewGrade.AGAIN, missed.grade)
+        assertEquals(belief, missed.knowledge)
+        assertEquals(ability, missed.ability)
+        assertTrue(missed.memory.lapses > correct.memory.lapses)
+    }
+
     private fun grade(
         correct: Boolean,
         revealed: Boolean = false,

@@ -33,17 +33,26 @@ class PocketLearningTest {
         assertEquals(listOf("apple", "book"), saved.tasks[1].options)
     }
 
+    @Test fun correctedTypingStoresOneReviewAndItsMetrics() = withDb { helper ->
+        val repo = PocketLearningRepository(helper)
+        repo.start(PocketRound("typing", listOf(PocketTask("apple", "苹果", PocketKind.TYPING))))
+        assertTrue(repo.answer("typing", 0, true, false, 3000, ability, .9, typingErrors = 1).complete)
+        assertEquals(1, repo.typingStats("typing").errors)
+        assertEquals(1, SenseRepository(helper).replayableRecordCount())
+    }
+
     @Test fun choiceAnswersDoNotVerifyRecallOrCountAsThreeSpacedReviews() = withDb { helper ->
         val repo = PocketLearningRepository(helper)
         repo.start(round())
         repeat(3) { repo.answer("round", it, true, false, 500, ability, .9) }
         val knowledge = LearningRepository(helper).states().first { it.word == "apple" }
-        assertEquals(3, knowledge.attempts)
+        assertEquals(1, knowledge.attempts)
         assertEquals(0, knowledge.streak)
         assertFalse(knowledge.verified)
         val senses = SenseRepository(helper)
         val ids = senses.ensurePrimarySense("apple")
         assertEquals(1, senses.memoryFor(ids.second)!!.reps)
+        assertEquals(1, senses.replayableRecordCount())
         assertEquals(0, senses.verifiedSenseCount())
         assertTrue(knowledge.due > System.currentTimeMillis())
         assertEquals(knowledge.due, senses.memoryFor(ids.second)!!.dueAt)
@@ -72,7 +81,7 @@ class PocketLearningTest {
         try { repo.answer("round", 0, true, false, 500, ability, .9); fail("Expected duplicate rejection") }
         catch (_: IllegalStateException) { }
         assertEquals(saved, repo.load())
-        assertEquals(1, LearningRepository(helper).states().first { it.word == "apple" }.attempts)
+        assertEquals(0, LearningRepository(helper).states().first { it.word == "apple" }.attempts)
     }
 
     @Test fun intermediateActivityPreservesPreviousReviewClock() = withDb { helper ->

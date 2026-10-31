@@ -108,13 +108,14 @@ class LearningRepository(private val helper: DatabaseHelper) {
     fun saveReview(
         state: Knowledge, verdict: com.teameow.teawords.algorithm.ReviewVerdict,
         wordId: Long, senseId: Long, correct: Boolean, revealed: Boolean,
-        elapsed: Long, now: Long, abilityBefore: Double, mode: String = "RECALL"
+        elapsed: Long, now: Long, abilityBefore: Double, mode: String = "RECALL",
+        countReview: Boolean = true
     ): Knowledge {
         val answered = LearningEngine.answer(state, correct && !revealed, now)
         val updated = answered.copy(
             intervalHours = verdict.intervalDays?.times(24.0) ?: state.intervalHours,
             due = verdict.dueAt ?: state.due,
-            streak = if (mode.startsWith("POCKET_")) {
+            streak = if (mode.startsWith("POCKET_") || mode == "RECOGNITION") {
                 if (correct || mode == "POCKET_STUDY") state.streak else 0
             } else answered.streak
         )
@@ -124,16 +125,21 @@ class LearningRepository(private val helper: DatabaseHelper) {
             SenseRepository(helper).recordReview(
                 wordId = wordId, senseId = senseId, word = state.word, mode = mode,
                 correct = correct, revealed = revealed, elapsedMillis = elapsed, now = now,
-                grade = verdict.grade.ordinal, difficulty = verdict.memory.difficulty,
-                stability = verdict.memory.stability, dueAt = verdict.dueAt,
-                intervalDays = verdict.intervalDays, reps = verdict.memory.reps, lapses = verdict.memory.lapses,
+                grade = if (countReview) verdict.grade.ordinal else null,
+                difficulty = if (countReview) verdict.memory.difficulty else null,
+                stability = if (countReview) verdict.memory.stability else null,
+                dueAt = if (countReview) verdict.dueAt else null,
+                intervalDays = if (countReview) verdict.intervalDays else null,
+                reps = if (countReview) verdict.memory.reps else null,
+                lapses = if (countReview) verdict.memory.lapses else null,
                 masteryBefore = null, masteryAfter = verdict.knowledge.mastery,
-                abilityBefore = abilityBefore, abilityAfter = verdict.ability.theta
+                abilityBefore = abilityBefore, abilityAfter = verdict.ability.theta,
+                countReview = countReview
             )
-            save(updated, "test", correct && !revealed, elapsed, recordEvidence = false)
+            if (countReview) save(updated, "test", correct && !revealed, elapsed, recordEvidence = false)
             database.setTransactionSuccessful()
         } finally { database.endTransaction() }
-        return updated
+        return if (countReview) updated else state
     }
     fun totals(since: Long = 0): Totals = helper.readableDatabase.rawQuery(
         "SELECT COUNT(correct), COALESCE(SUM(correct),0), COALESCE(SUM(elapsed),0)/1000, COALESCE(SUM(CASE WHEN kind='screen' THEN 1 ELSE 0 END),0) FROM learning_events WHERE timestamp>=?", arrayOf(since.toString())

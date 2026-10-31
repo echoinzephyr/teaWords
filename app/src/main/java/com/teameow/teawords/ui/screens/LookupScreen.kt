@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -63,10 +64,13 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
         if (consumedRequest != requestKey || model.state.value.input.isEmpty()) { model.open(initialText, external); consumedRequest = requestKey }
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { file -> if (file != null) model.importEcdict(file) }
-    TeaListPage(title = "查词与翻译", onBack = onBack, actions = {
+    val searchActions: @Composable RowScope.() -> Unit = {
         Box {
             IconButton(onClick = { moreExpanded = true }) { Icon(Icons.Default.MoreVert, "词典选项") }
             val sections = buildList {
+                add(TeaMenuSection(listOf(TeaMenuOption(if (historyVisible) "关闭历史" else "查询历史", AppSymbols.History) {
+                    moreExpanded = false; historyVisible = !historyVisible
+                })))
                 add(TeaMenuSection(buildList {
                     add(TeaMenuOption("输入方式", AppSymbols.Translate,
                         supportingText = if (state.automaticMode) "自动识别" else if (state.dictionaryMode) "手动查词" else "手动翻译", opensMenu = true) {
@@ -121,26 +125,40 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
                 }, "查询范围")
             ))
         }
-        IconButton(onClick = { historyVisible = !historyVisible }) { Icon(Icons.Default.History, if (historyVisible) "关闭历史" else "查询历史") }
-    }) {
-        item {
-            OutlinedTextField(
+    }
+    TeaListPage(title = "", expandedTitle = false, header = {
+        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            TextField(
                 value = state.input,
                 onValueChange = { model.input(it); onInputChange(it) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f).teaSharedSearch(visible = LocalTeaSearchResultVisible.current || LocalTeaSearchScope.current == null)
+                    .testTag("lookup-search-input"),
                 placeholder = { Text("输入单词或句子") },
+                leadingIcon = { IconButton(onClick = onBack) { Icon(AppSymbols.ArrowBack, "返回") } },
+                shape = RoundedCornerShape(28.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent),
                 minLines = 1, maxLines = 4,
                 keyboardOptions = KeyboardOptions(imeAction = if (state.dictionaryMode) ImeAction.Search else ImeAction.Default),
                 keyboardActions = KeyboardActions(onSearch = { submit() }),
                 trailingIcon = {
-                    IconButton(
-                        enabled = !state.busy && state.input.isNotBlank() && (state.dictionaryMode || state.available),
-                        onClick = ::submit
-                    ) { Icon(AppSymbols.Search, if (state.dictionaryMode) "查询" else "翻译") }
+                    Row {
+                        if (state.input.isNotBlank()) IconButton(onClick = { model.input(""); onInputChange("") }) {
+                            Icon(AppSymbols.Close, "清空输入")
+                        }
+                        IconButton(enabled = !state.busy && state.input.isNotBlank() && (state.dictionaryMode || state.available),
+                            onClick = ::submit) { Icon(AppSymbols.Search, if (state.dictionaryMode) "查询" else "翻译") }
+                    }
                 }
             )
-            if (state.external) TeaCaption("来自其他应用 · 本次输入不保存查询历史")
+            searchActions()
         }
+    }) {
+        if (state.external) item { TeaCaption("来自其他应用 · 本次输入不保存查询历史") }
         if (state.busy) item {
             TeaCard {
                 TeaProgressBar()
@@ -170,7 +188,7 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
             }
             if (!state.busy && state.input.isNotBlank() && state.entries.isEmpty() && state.suggestions.isEmpty()) item {
                 TeaCard {
-                    TeaEmptyState("离线词典未找到匹配", "可尝试原形、较短关键词、调整查询范围，或导入更多词典数据。")
+                    TeaEmptyState("离线词典未找到匹配", "可尝试原形、较短关键词、调整查询范围，或导入更多词典数据。", icon = AppSymbols.Search)
                     TextButton(onClick = { model.mode(false); if (model.state.value.available) model.translate() }) { Text("改用句子翻译") }
                 }
             }

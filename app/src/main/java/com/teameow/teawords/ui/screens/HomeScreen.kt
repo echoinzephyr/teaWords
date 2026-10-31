@@ -48,9 +48,10 @@ fun HomeView(
     historyList: List<HistoryItem>, homeTitle: String, homeSubtitle: String,
     onHistoryClick: (String) -> Unit, onClearHistory: () -> Unit,
     onMenuClick: () -> Unit, onPersonClick: () -> Unit,
-    wallpaperUrl: String? = null, bottomClearance: Dp = 0.dp
+    wallpaperUrl: String? = null, bottomClearance: Dp = 0.dp,
+    recentHistoryOpen: Boolean = false, onRecentHistoryDismiss: () -> Unit = {}
 ) {
-    var recentOpen by rememberSaveable { mutableStateOf(false) }
+    val resultVisible = LocalTeaSearchResultVisible.current
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var inputEverFocused by remember { mutableStateOf(false) }
@@ -186,12 +187,13 @@ fun HomeView(
                         }
                     }
                 }
-                if (searchOpen || isInputFocused) TextField(
+                if (searchOpen || isInputFocused || resultVisible) TextField(
                     value = searchQuery, onValueChange = onQueryChange,
                     modifier = Modifier.align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                         .heightIn(min = 56.dp)
+                        .teaSharedSearch(visible = !resultVisible)
                         .focusRequester(requester).onFocusChanged {
                             if (it.isFocused) {
                                 inputEverFocused = true
@@ -252,34 +254,25 @@ fun HomeView(
                             style = MaterialTheme.typography.bodySmall, color = mutedColor,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    FilledIconButton(
-                        onClick = { focus.clearFocus(); recentOpen = true }, modifier = Modifier.size(56.dp)
-                    ) { Icon(AppSymbols.Schedule, "最近查阅", Modifier.size(24.dp)) }
                 }
             }
         }
     }
-    if (recentOpen) {
-        ModalBottomSheet(onDismissRequest = { recentOpen = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-        ) {
-            Column(Modifier.fillMaxWidth().heightIn(min = 280.dp, max = 480.dp).padding(horizontal = 16.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("最近查阅", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-                    FilledTonalIconButton(onClick = { confirmClear = true }, enabled = historyList.isNotEmpty()) {
-                        Icon(AppSymbols.Delete, "清空最近查阅")
-                    }
-                }
+    if (recentHistoryOpen) {
+        TeaActionSheet("最近查阅", onRecentHistoryDismiss, actions = {
+            IconButton(onClick = { confirmClear = true }, enabled = historyList.isNotEmpty()) {
+                Icon(AppSymbols.Delete, "清空最近查阅")
+            }
+        }) {
+            Column(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 16.dp)) {
                 if (historyList.isEmpty()) TeaEmptyState("还没有查阅记录", "查过的单词和翻译会出现在这里")
-                else LazyColumn(Modifier.weight(1f, fill = false)) {
+                else LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 16.dp)) {
                     items(historyList, key = { "${it.word}:${it.timestamp}" }) { entry ->
-                        Surface(onClick = { recentOpen = false; onHistoryClick(entry.word) }, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                        Surface(onClick = { onRecentHistoryDismiss(); onHistoryClick(entry.word) }, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                             Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(entry.word, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                SuggestionChip(onClick = { recentOpen = false; onHistoryClick(entry.word) }, label = {
+                                SuggestionChip(onClick = { onRecentHistoryDismiss(); onHistoryClick(entry.word) }, label = {
                                     // 设计稿在历史行上标的是查询方向，而不是内部的「查词 / 翻译」模式名。
                                     Text(if (LexicalText.isChinese(entry.word)) "中译英" else "英译中")
                                 })
@@ -288,9 +281,6 @@ fun HomeView(
                         }
                         HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
                     }
-                }
-                FilledIconButton(onClick = { recentOpen = false }, modifier = Modifier.align(Alignment.End).padding(vertical = 8.dp).size(56.dp)) {
-                    Icon(AppSymbols.ArrowDownward, "收起最近查阅")
                 }
             }
         }

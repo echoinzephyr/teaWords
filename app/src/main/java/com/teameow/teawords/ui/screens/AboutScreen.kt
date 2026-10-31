@@ -14,8 +14,8 @@ import com.teameow.teawords.data.UpdateChecker
 
 @Composable
 fun AboutIdentity() {
-    Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 32.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Image(painterResource(R.drawable.teawords_logo), "茶词图标", Modifier.size(80.dp))
         Text("茶词 · teaWords", style = MaterialTheme.typography.headlineMedium)
         Text("版本 ${installedVersionName()}", style = MaterialTheme.typography.bodyMedium)
@@ -27,7 +27,7 @@ fun AboutIdentity() {
 fun AboutCredits() {
     val uri = LocalUriHandler.current
     var libraries by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TeaCard {
             Text("用茶词做什么", style = MaterialTheme.typography.titleLarge)
             Text("查词 · 离线查英文单词、中文释义和词形。")
@@ -56,6 +56,7 @@ fun AboutCredits() {
         TeaCard {
             TextButton(onClick = { libraries = !libraries }) { Text(if (libraries) "收起开源组件与致谢" else "开源组件与致谢") }
             if (libraries) {
+                AboutSource("KernelSU Style UI Kit", "Material 页面与分组列表设计参考 · GPL-3.0", "https://github.com/chenaizhang/KernelSU-Style-UI-Kit")
                 Text("Jetpack Compose / Material 3 · 界面与交互")
                 Text("OkHttp / Gson · 网络请求与数据解析")
                 Text("Coil · 图片加载")
@@ -70,11 +71,7 @@ fun AboutCredits() {
 @Composable
 private fun AboutSource(name: String, summary: String, url: String) {
     val uri = LocalUriHandler.current
-    TextButton(onClick = { uri.openUri(url) }, shape = MaterialTheme.shapes.small, modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(name, style = MaterialTheme.typography.titleMedium)
-            Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+    TeaSegmentedGroup {
+        TeaOptionRow(title = name, summary = summary, onClick = { uri.openUri(url) })
     }
 }

@@ -1,9 +1,11 @@
 package com.teameow.teawords.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +13,13 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.background
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,6 +37,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -101,13 +111,18 @@ fun SettingsView(
     pronunciationPreferenceError: String? = null,
     onRetryPronunciationPreference: () -> Unit = {},
     predictiveBackEnabled: Boolean = false,
-    onPredictiveBackChange: (Boolean) -> Unit = {}
+    onPredictiveBackChange: (Boolean) -> Unit = {},
+    pureBlack: Boolean = false,
+    onPureBlackChange: (Boolean) -> Unit = {},
+    dailyWallpaperUrl: String? = null
 ) {
     var currentPage by rememberSaveable { mutableStateOf(SettingsPage.Main) }
     val pageStates = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
     val mainListState = rememberLazyListState()
     val version = installedVersionName()
     val settingsContext = LocalContext.current
+    val learningPrefs = remember(settingsContext) { settingsContext.getSharedPreferences("learning", 0) }
+    var roundLimit by remember { mutableIntStateOf(learningPrefs.getInt("expressive_round_limit", 10).takeIf { it in listOf(10, 15, 20) } ?: 10) }
     val translationPrefs = remember(settingsContext) { TranslationPreferences(settingsContext) }
     val translationSummary = remember(currentPage) { translationPrefs.load().engine.label }
     // 动态取色需要 Android 12+；不支持时开关禁用，而不是假装能开。
@@ -140,12 +155,12 @@ fun SettingsView(
     val screen: @Composable (SettingsPage, () -> Unit) -> Unit = { page, back ->
         pageStates.SaveableStateProvider(page.name) {
             if (page == SettingsPage.Translation) TranslationSettingsPage(onBack = back)
-            else TeaListPage(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            else SettingsPageFrame(
+                containerColor = MaterialTheme.colorScheme.background,
                 title = when (page) {
                     SettingsPage.Main -> "设置"
                     SettingsPage.Interface -> "主页定制"
-                    SettingsPage.Appearance -> "外观模式"
+                    SettingsPage.Appearance -> "主题"
                     SettingsPage.Strategy -> "学习策略"
                     SettingsPage.Pronunciation -> "发音偏好"
                     SettingsPage.Translation -> "句子与长文翻译"
@@ -158,101 +173,43 @@ fun SettingsView(
                     SettingsPage.Main -> null
                     SettingsPage.About -> "查词、翻译，慢慢记住"
                     SettingsPage.Update -> "下载更新，通过系统确认安装"
-                    else -> "修改后自动保存"
+                    else -> null
                 },
                 onBack = back
             ) {
                 when (page) {
-                    SettingsPage.Main -> {
-                        item { SettingsHeading("个性化") }
-                        item {
-                            SettingsGroup {
-                                SettingsRow(AppSymbols.Palette, "外观模式", "${themeMode.label} · ${if (dynamicColor && dynamicColorSupported) "动态取色" else "Purple"}") { currentPage = SettingsPage.Appearance }
-                                SettingsRow(AppSymbols.Wallpaper, "主页定制", "${homeWallpaperMode.label} · ${if (homeSubtitleMode == SubtitleMode.CUSTOM) "自定义文字" else "一言"}") { currentPage = SettingsPage.Interface }
-                            }
-                        }
-                        item { SettingsHeading("偏好") }
-                        item {
-                            SettingsGroup {
-                                SettingsRow(AppSymbols.Book5, "学习策略", "${studyStrategy.label} · 调整节奏") { currentPage = SettingsPage.Strategy }
-                                SettingsRow(AppSymbols.BookmarkFlag, "词书管理", books.joinToString("、") { it.subtitle }.ifEmpty { "未选词书 · 点击选择" }) { currentPage = SettingsPage.Wordbooks }
-                                SettingsRow(AppSymbols.Search, "句子与长文翻译", translationSummary) { currentPage = SettingsPage.Translation }
-                                SettingsRow(AppSymbols.VoiceSelection, "发音偏好", "默认${pronunciationDialect.label} · 美音 / 英音") { currentPage = SettingsPage.Pronunciation }
-                            }
-                        }
-                        item { SettingsHeading("关于") }
-                        item {
-                            SettingsGroup {
-                                SettingsRow(AppSymbols.Info, "关于茶词", "版本 $version · 功能与服务说明") { currentPage = SettingsPage.About }
-                                SettingsRow(AppSymbols.Update, "检查更新", "与 GitHub 公开仓库比较版本") { currentPage = SettingsPage.Update }
-                                SettingsRow(AppSymbols.Feedback, "日志获取", "便于提交 BUG") { currentPage = SettingsPage.Logs }
-                            }
-                        }
-                    }
+                    SettingsPage.Main -> Unit
                     SettingsPage.Appearance -> {
+                        val light = com.teameow.teawords.ui.theme.settingsColorScheme(settingsContext, false, dynamicColor, false)
+                        val dark = com.teameow.teawords.ui.theme.settingsColorScheme(settingsContext, true, dynamicColor, false)
+                        val black = com.teameow.teawords.ui.theme.settingsColorScheme(settingsContext, true, dynamicColor, true)
+                        item { SettingsLivePreview(MaterialTheme.colorScheme) }
+                        item { SettingsThemeControls(themeMode, pureBlack, light, dark, black, onThemeModeChange, onPureBlackChange) }
                         item {
-                            Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                                Row(
-                                    Modifier.fillMaxWidth()
-                                        .toggleable(predictiveBackEnabled, role = Role.Switch, onValueChange = onPredictiveBackChange)
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                SettingsOptionHeading(AppSymbols.Palette, "主题色彩")
+                                Row(Modifier.fillMaxWidth().toggleable(dynamicColor && dynamicColorSupported,
+                                    enabled = dynamicColorSupported, role = Role.Switch, onValueChange = onDynamicColorChange),
+                                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Text("预测性返回", style = MaterialTheme.typography.titleMedium)
-                                        TeaCaption("侧滑时预览上一页，松手返回或取消。默认关闭；手势预览需要 Android 14 及以上与系统手势导航。")
-                                    }
-                                    Switch(predictiveBackEnabled, onCheckedChange = null)
-                                }
-                            }
-                        }
-                        item {
-                            Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                AppThemeMode.entries.forEach { option ->
-                                    SettingsChoice(
-                                        option.label,
-                                        when (option) {
-                                            AppThemeMode.SYSTEM -> "跟随系统的浅色 / 深色设置"
-                                            AppThemeMode.LIGHT -> "始终使用浅色 Purple 配色"
-                                            AppThemeMode.DARK -> "始终使用深色 Purple 配色"
-                                        },
-                                        themeMode == option
-                                    ) { onThemeModeChange(option) }
-                                }
-                            }
-                        }
-                        item {
-                            Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                                Row(
-                                    Modifier.fillMaxWidth()
-                                        .toggleable(dynamicColor && dynamicColorSupported, role = Role.Switch) { onDynamicColorChange(it) }
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Text("动态取色 · Material You", style = MaterialTheme.typography.titleMedium)
-                                        TeaCaption(
-                                            if (dynamicColorSupported) "用系统壁纸生成的配色替换 Purple 品牌配色；深浅两套都跟随。"
-                                            else "需要 Android 12 及以上；当前系统不支持，开关不可用。"
-                                        )
+                                        Text("动态取色", style = MaterialTheme.typography.bodyLarge)
+                                        TeaCaption(if (dynamicColorSupported) "跟随系统壁纸的颜色；关闭时使用品牌紫" else "需要 Android 12 及以上")
                                     }
                                     Switch(dynamicColor && dynamicColorSupported, onCheckedChange = null, enabled = dynamicColorSupported)
                                 }
                             }
                         }
                         item {
-                            TeaCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
-                                Text(
-                                    if (dynamicColor && dynamicColorSupported) "动态取色" else "Purple",
-                                    style = MaterialTheme.typography.headlineMedium
-                                )
-                                Text(
-                                    "当前外观：${themeMode.label} · ${if (dynamicColor && dynamicColorSupported) "取色自系统壁纸" else "品牌配色"}",
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text("Material 3 Expressive", style = MaterialTheme.typography.labelLarge)
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                SettingsOptionHeading(AppSymbols.ArrowBack, "返回手势")
+                                Row(Modifier.fillMaxWidth().toggleable(predictiveBackEnabled, role = Role.Switch, onValueChange = onPredictiveBackChange),
+                                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("预测性返回", style = MaterialTheme.typography.bodyLarge)
+                                        TeaCaption("侧滑预览上一页，松手返回；需要 Android 14 及以上")
+                                    }
+                                    Switch(predictiveBackEnabled, onCheckedChange = null)
+                                }
                             }
                         }
                     }
@@ -269,51 +226,49 @@ fun SettingsView(
                             }
                         }
                         item {
-                            TeaCard {
-                                Text("每日新词上限", style = MaterialTheme.typography.titleMedium)
-                                TeaCaption("控制每天新增的学习量，到期复习不受此上限影响。")
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text("每轮目标", style = MaterialTheme.typography.titleMedium)
                                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    listOf(0, 5, 10, 20, 40).forEach { value ->
-                                        FilterChip(dailyNewCapOverride == value, { onDailyNewCapChange(value) }, label = { Text(if (value == 0) "按策略" else "$value 个") })
+                                    listOf(10, 15, 20).forEach { count ->
+                                        SettingsValueChip(roundLimit == count, {
+                                            roundLimit = count
+                                            learningPrefs.edit().putInt("expressive_round_limit", count).apply()
+                                        }, label = { Text("$count 个") })
                                     }
                                 }
                             }
                         }
                         item {
-                            TeaCard {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text("每日新词上限", style = MaterialTheme.typography.titleMedium)
+                                TeaCaption("控制每天新增的学习量，到期复习不受此上限影响。")
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf(0, 5, 10, 20, 40).forEach { value ->
+                                        SettingsValueChip(dailyNewCapOverride == value, { onDailyNewCapChange(value) }, label = { Text(if (value == 0) "按策略" else "$value 个") })
+                                    }
+                                }
+                            }
+                        }
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text("目标记忆保持率", style = MaterialTheme.typography.titleMedium)
                                 TeaCaption("目标越高，复习越频繁；选择「按策略」可自动安排。")
                                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     listOf(0.0, 0.85, 0.90, 0.94).forEach { value ->
                                         // Preferences stores Float: equality with a Double fails after relaunch.
-                                        FilterChip(abs(targetRetentionOverride - value) < 0.001, { onTargetRetentionChange(value) }, label = { Text(if (value == 0.0) "按策略" else "${(value * 100).roundToInt()}%") })
+                                        SettingsValueChip(abs(targetRetentionOverride - value) < 0.001, { onTargetRetentionChange(value) }, label = { Text(if (value == 0.0) "按策略" else "${(value * 100).roundToInt()}%") })
                                     }
                                 }
                             }
                         }
                     }
                     SettingsPage.Interface -> {
-                        item { SettingsHeading("背景") }
-                        item {
-                            Card(shape = RoundedCornerShape(20.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                                Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) {
-                                    if (homeWallpaperMode == HomeWallpaperMode.CUSTOM && customWallpaperUri != null) {
-                                        AsyncImage(customWallpaperUri, "自定义壁纸预览", Modifier.fillMaxSize(),
-                                            contentScale = ContentScale.Crop)
-                                    } else {
-                                        Icon(AppSymbols.Wallpaper, null, Modifier.size(56.dp),
-                                            tint = MaterialTheme.colorScheme.primary)
-                                    }
-                                }
-                                Column(Modifier.padding(16.dp)) {
-                                    Text(homeWallpaperMode.label, style = MaterialTheme.typography.titleLarge)
-                                    Text(if (homeWallpaperMode == HomeWallpaperMode.DAILY) "每天联网更新"
-                                        else if (homeWallpaperMode == HomeWallpaperMode.CUSTOM) "已保存在本机"
-                                        else "使用主题背景", style = MaterialTheme.typography.bodyMedium)
-                                }
-                            }
-                        }
+                        item { SettingsHomePreview(when (homeWallpaperMode) {
+                            HomeWallpaperMode.NONE -> null
+                            HomeWallpaperMode.DAILY -> dailyWallpaperUrl
+                            HomeWallpaperMode.CUSTOM -> customWallpaperUri
+                        }, homeTitle, homeSubtitle) }
+                        item { SettingsOptionHeading(AppSymbols.Wallpaper, "背景") }
                         item {
                             Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 SettingsChoice("纯色背景", "让文字和控件更醒目", homeWallpaperMode == HomeWallpaperMode.NONE) {
@@ -419,7 +374,7 @@ fun SettingsView(
                         }
                         items(LearningWordbook.available, key = { it.id }) { book ->
                             val selected = book.id in selectedWordbookIds
-                            Surface(shape = RoundedCornerShape(20.dp), color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow) {
+                            Surface(shape = RoundedCornerShape(20.dp), color = if (selected) MaterialTheme.colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent) {
                                 Row(Modifier.fillMaxWidth().toggleable(selected, role = Role.Checkbox) { checked ->
                                     onSelectedWordbooksChange(if (checked) selectedWordbookIds + book.id else selectedWordbookIds - book.id)
                                 }.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -451,75 +406,87 @@ fun SettingsView(
     }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val closeSheet: () -> Unit = { scope.launch { sheetState.hide(); onBack() } }
+    var headerDrag by remember { mutableFloatStateOf(0f) }
+    var draggingHeader by remember { mutableStateOf(false) }
+    var dragFromMain by remember { mutableStateOf(true) }
+    val threshold = with(androidx.compose.ui.platform.LocalDensity.current) { 80.dp.toPx() }
+    val headerOffset by animateFloatAsState(headerDrag,
+        if (draggingHeader) snap() else spring(dampingRatio = 1f, stiffness = 500f), label = "settings-header-drag")
+    val dragBy: (Float) -> Unit = { delta ->
+        if (!draggingHeader) dragFromMain = currentPage == SettingsPage.Main
+        draggingHeader = true; headerDrag = (headerDrag + delta).coerceAtLeast(0f)
+    }
+    val releaseDrag: () -> Unit = {
+        if (headerDrag >= threshold) {
+            if (currentPage == SettingsPage.Main) closeSheet() else currentPage = SettingsPage.Main
+        }
+        draggingHeader = false; headerDrag = 0f
+    }
     ModalBottomSheet(
+        modifier = Modifier.graphicsLayer { if (dragFromMain && currentPage == SettingsPage.Main) translationY = headerOffset },
         onDismissRequest = { if (currentPage == SettingsPage.Main) onBack() else currentPage = SettingsPage.Main },
         sheetState = sheetState,
+        sheetGesturesEnabled = false,
+        dragHandle = null,
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         properties = ModalBottomSheetProperties(shouldDismissOnBackPress = currentPage == SettingsPage.Main)
     ) {
         BackHandler(currentPage != SettingsPage.Main) { currentPage = SettingsPage.Main }
+        CompositionLocalProvider(LocalSettingsHeaderDrag provides dragBy, LocalSettingsHeaderRelease provides releaseDrag) {
         Box(Modifier.fillMaxWidth()) {
-            val height = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 72.dp)
-                .coerceIn(320.dp, 800.dp)
-            AnimatedContent(
-                targetState = currentPage,
-                modifier = Modifier.fillMaxWidth().height(height),
-                transitionSpec = {
-                    val direction = if (targetState == SettingsPage.Main) -1 else 1
-                    (slideInHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 480f)) { direction * it } +
-                        fadeIn(animationSpec = spring())) togetherWith
-                        (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.9f, stiffness = 480f)) { -direction * it / 3 } +
-                            fadeOut(animationSpec = spring()))
-                },
-                label = "settings-secondary-page"
-            ) { page ->
-            if (page == SettingsPage.Main) {
-                LazyColumn(
-                    Modifier.fillMaxSize(),
-                    state = mainListState,
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+            val height = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 12.dp)
+                .coerceAtLeast(240.dp)
+            var lastPage by remember { mutableStateOf(SettingsPage.Appearance) }
+            if (currentPage != SettingsPage.Main) SideEffect { lastPage = currentPage }
+            Box(Modifier.fillMaxWidth().height(height)) {
+                CoveredPage(covered = currentPage != SettingsPage.Main) {
+                    Column(Modifier.fillMaxSize()) {
+                        SettingsPanelHeader("个性化", onClose = closeSheet)
+                        LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = mainListState,
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     item {
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text("个性化", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
-                            FilledTonalIconButton(onClick = closeSheet, modifier = Modifier.size(56.dp)) {
-                                Icon(AppSymbols.Close, "关闭设置")
-                            }
+                        SettingsMenuGroup {
+                            SettingsMenuRow(AppSymbols.Palette, "外观模式", themeMode.label) { currentPage = SettingsPage.Appearance }
+                            SettingsMenuRow(AppSymbols.Wallpaper, "主页定制", "${homeWallpaperMode.label} · ${if (homeSubtitleMode == SubtitleMode.CUSTOM) "自定义文字" else "一言"}") { currentPage = SettingsPage.Interface }
                         }
                     }
+                    item { SettingsMenuHeading("偏好") }
                     item {
-                        SettingsGroup {
-                            SettingsRow(AppSymbols.Palette, "外观模式", themeMode.label) { currentPage = SettingsPage.Appearance }
-                            SettingsRow(AppSymbols.Wallpaper, "主页定制", "${homeWallpaperMode.label} · ${if (homeSubtitleMode == SubtitleMode.CUSTOM) "自定义文字" else "一言"}") { currentPage = SettingsPage.Interface }
+                        SettingsMenuGroup {
+                            SettingsMenuRow(AppSymbols.Book5, "学习策略", "调整节奏") { currentPage = SettingsPage.Strategy }
+                            SettingsMenuRow(AppSymbols.BookmarkFlag, "词书管理", books.joinToString("、") { it.subtitle }.ifEmpty { "未选词书" }) { currentPage = SettingsPage.Wordbooks }
+                            SettingsMenuRow(AppSymbols.VoiceSelection, "发音偏好", "美音 · 英音") { currentPage = SettingsPage.Pronunciation }
+                            SettingsMenuRow(AppSymbols.Search, "句子与长文翻译", translationSummary) { currentPage = SettingsPage.Translation }
                         }
                     }
-                    item { SettingsHeading("偏好") }
+                    item { SettingsMenuHeading("关于") }
                     item {
-                        SettingsGroup {
-                            SettingsRow(AppSymbols.Book5, "学习策略", "调整节奏") { currentPage = SettingsPage.Strategy }
-                            SettingsRow(AppSymbols.BookmarkFlag, "词书管理", books.joinToString("、") { it.subtitle }.ifEmpty { "未选词书" }) { currentPage = SettingsPage.Wordbooks }
-                            SettingsRow(AppSymbols.VoiceSelection, "发音偏好", "美音 · 英音") { currentPage = SettingsPage.Pronunciation }
-                            SettingsRow(AppSymbols.Search, "句子与长文翻译", translationSummary) { currentPage = SettingsPage.Translation }
+                        SettingsMenuGroup {
+                            SettingsMenuRow(AppSymbols.Info, "关于App", "你想知道的") { currentPage = SettingsPage.About }
+                            SettingsMenuRow(AppSymbols.Feedback, "日志获取", "便于提交 BUG") { currentPage = SettingsPage.Logs }
+                            SettingsMenuRow(AppSymbols.Update, "检查更新", "版本 $version") { currentPage = SettingsPage.Update }
                         }
                     }
-                    item { SettingsHeading("关于") }
-                    item {
-                        SettingsGroup {
-                            SettingsRow(AppSymbols.Info, "关于App", "你想知道的") { currentPage = SettingsPage.About }
-                            SettingsRow(AppSymbols.Feedback, "日志获取", "便于提交 BUG") { currentPage = SettingsPage.Logs }
-                            SettingsRow(AppSymbols.Update, "检查更新", "版本 $version") { currentPage = SettingsPage.Update }
+
                         }
                     }
                 }
-            } else {
-                Box(Modifier.fillMaxSize()) {
-                    screen(page) { currentPage = SettingsPage.Main }
+                androidx.compose.animation.AnimatedVisibility(visible = currentPage != SettingsPage.Main,
+                    enter = slideInVertically(spring(dampingRatio = .9f, stiffness = 450f)) { it / 3 } + fadeIn(),
+                    exit = slideOutVertically(spring(dampingRatio = 1f, stiffness = 500f)) { it / 3 } + fadeOut()) {
+                    Surface(Modifier.fillMaxSize().graphicsLayer { if (!dragFromMain) translationY = headerOffset },
+                        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow, shadowElevation = 12.dp) {
+                        CompositionLocalProvider(LocalSettingsInSheet provides true, LocalReservedBottom provides null) {
+                            screen(if (currentPage == SettingsPage.Main) lastPage else currentPage) { currentPage = SettingsPage.Main }
+                        }
+                    }
                 }
-            }
             }
         }
+    }
     }
     if (confirmRemoveWallpaper) AlertDialog(
         onDismissRequest = { confirmRemoveWallpaper = false },
@@ -537,41 +504,60 @@ fun SettingsView(
 
 @Composable
 private fun SettingsHeading(text: String) {
-    Text(text, Modifier.padding(top = 8.dp, bottom = 4.dp), style = MaterialTheme.typography.headlineMedium)
-}
-
-@Composable
-private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
-    Column(Modifier.clip(RoundedCornerShape(28.dp)), verticalArrangement = Arrangement.spacedBy(3.dp), content = content)
-}
-
-@Composable
-private fun SettingsRow(icon: ImageVector, title: String, summary: String, onClick: () -> Unit) {
-    Surface(onClick = onClick, shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        ListItem(
-            headlineContent = { Text(title, style = MaterialTheme.typography.bodyLarge) },
-            supportingContent = { Text(summary, style = MaterialTheme.typography.bodyMedium) },
-            leadingContent = {
-                Surface(shape = androidx.compose.foundation.shape.CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                    Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) { Icon(icon, null, Modifier.size(24.dp)) }
-                }
-            },
-            trailingContent = { Icon(AppSymbols.ChevronRight, null) },
-            colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            modifier = Modifier.heightIn(min = 72.dp)
-        )
-    }
+    Text(text, Modifier.padding(top = 8.dp, bottom = 4.dp), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable
 private fun SettingsChoice(title: String, description: String, selected: Boolean, onClick: () -> Unit) {
-    Surface(shape = RoundedCornerShape(20.dp), color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow) {
-        Row(Modifier.fillMaxWidth().selectable(selected, role = Role.RadioButton, onClick = onClick).padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Surface(shape = RoundedCornerShape(16.dp), color = if (selected) MaterialTheme.colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent,
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = .4f) else MaterialTheme.colorScheme.outlineVariant)) {
+        Row(Modifier.fillMaxWidth().selectable(selected, role = Role.RadioButton, onClick = onClick).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(description, style = MaterialTheme.typography.bodyMedium)
+                Text(title, style = MaterialTheme.typography.bodyLarge)
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             RadioButton(selected, onClick = null)
         }
+    }
+}
+
+@Composable
+private fun SettingsMenuHeading(text: String) {
+    Text(text, Modifier.padding(top = 8.dp, bottom = 4.dp), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+}
+
+@Composable
+private fun SettingsMenuGroup(content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.clip(RoundedCornerShape(24.dp)), content = content)
+}
+
+@Composable
+private fun SettingsMenuRow(icon: ImageVector, title: String, summary: String, onClick: () -> Unit) {
+    Column {
+        TeaOptionRow(title = title, summary = summary, icon = icon, onClick = onClick)
+        HorizontalDivider(Modifier.padding(start = 56.dp), thickness = .5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .4f))
+    }
+}
+
+
+
+/** A flat option with a themed pressed fill instead of the default grey ripple/elevation. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsValueChip(selected: Boolean, onClick: () -> Unit, label: @Composable () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val fill by animateColorAsState(
+        if (pressed) MaterialTheme.colorScheme.primary.copy(alpha = .08f) else Color.Transparent,
+        animationSpec = spring(dampingRatio = 1f, stiffness = 900f), label = "settings-option-press")
+    CompositionLocalProvider(LocalRippleConfiguration provides null) {
+        FilterChip(selected, onClick, label = label, interactionSource = interaction,
+            shape = MaterialTheme.shapes.small,
+            colors = FilterChipDefaults.filterChipColors(containerColor = fill,
+                selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer),
+            elevation = FilterChipDefaults.filterChipElevation(elevation = 0.dp, pressedElevation = 0.dp,
+                focusedElevation = 0.dp, hoveredElevation = 0.dp, draggedElevation = 0.dp, disabledElevation = 0.dp))
     }
 }
