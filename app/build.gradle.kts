@@ -12,6 +12,9 @@ android {
         applicationId = "com.teameow.teawords"
         minSdk = 24
         targetSdk = 35
+        val wordbookUrl = providers.gradleProperty("wordbookBaseUrl").orElse("").get()
+        require(wordbookUrl.none { it == '"' || it == '\\' || it.isISOControl() }) { "Invalid wordbookBaseUrl" }
+        buildConfigField("String", "WORDBOOK_BASE_URL", "\"$wordbookUrl\"")
         versionCode = 4
         versionName = "1.2.1"
 
@@ -37,13 +40,22 @@ android {
         }
         release {
             if (releaseKeyStore != null) signingConfig = signingConfigs.getByName("distribution")
-            isMinifyEnabled = false
+            // Explicit opt-in only: install the optimized build alongside the user's normal app.
+            providers.gradleProperty("verificationReleaseSuffix").orNull?.let {
+                require(it.matches(Regex("\\.[a-z][a-z0-9.]*")))
+                applicationIdSuffix = it
+                signingConfig = signingConfigs.getByName("debug")
+            }
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+    sourceSets.getByName("androidTest").assets.srcDir("../tools/dictionary/reference")
+    sourceSets.getByName("androidTest").assets.srcDir("../tools/out/wordbooks/public")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -53,6 +65,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -69,7 +82,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.material)
-    implementation("com.google.mlkit:translate:17.0.3")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

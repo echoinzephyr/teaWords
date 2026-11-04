@@ -35,6 +35,7 @@ import com.teameow.teawords.ui.LookupViewModel
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> Unit, requestId: Long = 0L, onInputChange: (String) -> Unit = {}, model: LookupViewModel = viewModel(key = if (external) "lookup-external" else "lookup-internal")) {
+    DisposableEffect(model) { onDispose { model.cancel() } }
     val state by model.state.collectAsState()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
@@ -169,10 +170,15 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
                 }
             }
         }
-        state.error?.let { item { TeaCaption(it) } }
+        if (state.onlineBusy) item { LinearProgressIndicator(Modifier.fillMaxWidth()); TeaCaption("正在补充在线词典…") }
+        state.notice?.let { item { TeaStatusMessage(it) } }
+        state.error?.let { item { TeaCard {
+            TeaStatusMessage(it, error = true)
+            TextButton(onClick = model::search) { Text("重试") }
+        } } }
         if (state.dictionaryMode) {
             if (!state.dictionaryReady && state.books.isEmpty()) item {
-                TeaCard { TeaCaption("离线词典尚未安装完成，安装期间查询结果可能不完整。") }
+                TeaCard { TeaCaption("本地词库正在准备；可联网查词，也可下载词书后离线使用。") }
             }
             // Spelling suggestions are a different claim from a result: the query itself was not found.
             if (!state.busy && state.entries.isEmpty() && state.suggestions.isNotEmpty()) item {
@@ -186,14 +192,54 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
                     TeaCaption("按编辑距离排序的拼写建议，不是词典释义。")
                 }
             }
-            if (!state.busy && state.input.isNotBlank() && state.entries.isEmpty() && state.suggestions.isEmpty()) item {
+            if (!state.busy && !state.onlineBusy && state.error == null && state.input.isNotBlank() && state.entries.isEmpty() && state.suggestions.isEmpty() && state.onlineEntry == null && state.onlineSuggestions.isEmpty()) item {
                 TeaCard {
-                    TeaEmptyState("离线词典未找到匹配", "可尝试原形、较短关键词、调整查询范围，或导入更多词典数据。", icon = AppSymbols.Search)
+                    TeaEmptyState("未找到匹配词条", "可尝试原形、较短关键词，或下载更多词书。", icon = AppSymbols.Search)
                     TextButton(onClick = { model.mode(false); if (model.state.value.available) model.translate() }) { Text("改用句子翻译") }
                 }
             }
+            if (state.onlineSuggestions.isNotEmpty()) item {
+                TeaCard {
+                    Text("在线搜索建议", style = MaterialTheme.typography.titleMedium)
+                    state.onlineSuggestions.forEach { candidate ->
+                        TextButton(onClick = { onInputChange(candidate.word); model.open(candidate.word) }) {
+                            Column(Modifier.fillMaxWidth()) {
+                                Text(candidate.word)
+                                if (candidate.explanation.isNotBlank()) TeaCaption(candidate.explanation)
+                            }
+                        }
+                    }
+                    TeaCaption("有道在线建议 · 点击查询详细释义")
+                }
+            }
+            state.onlineEntry?.let { online -> item {
+                TeaCard {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(online.word, style = MaterialTheme.typography.headlineMedium)
+                            TeaCaption("有道在线词典" + if (state.scope != null) " · 不受本地词书范围限制" else "")
+                        }
+                        IconButton(enabled = !state.busy, onClick = { state.selected?.let { model.star(it, !state.starred) } ?: model.starOnline(online) }) {
+                            Icon(if (state.starred) AppSymbols.FavoriteFilled else AppSymbols.Favorite, "收藏单词")
+                        }
+                        CompactPronunciationButton(online.word)
+                    }
+                    if (online.detail.uk.isNotBlank()) TeaCaption("英 /${online.detail.uk}/")
+                    if (online.detail.us.isNotBlank()) TeaCaption("美 /${online.detail.us}/")
+                    Text(online.detail.definition, style = MaterialTheme.typography.bodyLarge)
+                    if (online.detail.phrases.isNotEmpty()) {
+                        TeaSectionLabel("常用短语")
+                        online.detail.phrases.forEach { (phrase, meaning) -> Text("$phrase\n$meaning") }
+                    }
+                    if (online.detail.forms.isNotEmpty()) {
+                        TeaSectionLabel("词形变化")
+                        online.detail.forms.forEach { (name, value) -> TeaCaption("$name · $value") }
+                    }
+                    TextButton(onClick = { clipboard.setText(AnnotatedString(online.detail.definition)) }) { Text("复制释义") }
+                }
+            } }
             val selected = state.selected
-            if (selected != null) item {
+            if (selected != null && state.onlineEntry == null) item {
                 WordHeroCard(
                     entry = selected,
                     starred = state.starred,
@@ -240,7 +286,6 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
                 TeaCaption(when (state.translationEngine) {
                     TranslationEngine.MYMEMORY -> "在线翻译 · 原文会发送给 MyMemory，无需下载模型"
                     TranslationEngine.DEEPSEEK -> "DeepSeek 翻译 · 原文会发送给 DeepSeek，按账户用量计费"
-                    TranslationEngine.DEVICE -> if (state.available) "设备端离线翻译 · 原文留在本机" else "离线模型尚未就绪，可切换在线翻译"
                 })
                 if (!state.available) TeaCaption("请在「设置 → 句子与长文翻译」中准备离线模型或配置翻译服务。")
                 if (state.input.length > TranslationText.MAX_INPUT_CHARS) TeaCaption("原文 ${state.input.length} 字符；单次上限 20,000，请分次提交。")
@@ -255,9 +300,7 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
                         TeaCaption("本次翻译尚未完成，当前只显示已完成的部分。")
                         if (!state.busy) TextButton(onClick = model::translate) { Text("继续翻译") }
                     }
-                    if (state.translationEngine == TranslationEngine.DEVICE) TextButton(onClick = { uri.openUri("https://translate.google.com") }) {
-                        Text("powered by Google Translate")
-                    }
+
                 }
             }
             item {

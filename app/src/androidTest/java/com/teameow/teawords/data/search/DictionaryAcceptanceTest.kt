@@ -59,8 +59,8 @@ class DictionaryAcceptanceTest {
         @JvmStatic
         fun setUp() {
             context = InstrumentationRegistry.getInstrumentation().targetContext
-            installer = BundledDictionaryInstaller(context)
-            installer.install(force = false)
+            installer = BundledDictionaryInstaller(context, InstrumentationRegistry.getInstrumentation().context, "dictionary.db")
+            installer.install(force = true)
             repository = WordSearchRepository(installer)
             assertTrue("the shipped dictionary must open", repository.open())
             engine = DefaultDictionarySearchEngine(repository)

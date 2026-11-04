@@ -4,7 +4,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class StudyDictionaryTest {
-    @Test fun onlineLookupCanBeReopenedFromLocalCache() {
+    @Test fun onlineLookupDoesNotWriteNewDiskCache() = kotlinx.coroutines.runBlocking {
         org.junit.Assume.assumeTrue(androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("onlineDictionary") == "true")
         val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
         val name = "online-dictionary-${System.nanoTime()}.db"
@@ -17,7 +17,7 @@ class StudyDictionaryTest {
             assertTrue(entry.phrases.isNotEmpty())
             helper.close()
             val reopened = DatabaseHelper(context, name)
-            try { assertEquals(entry, StudyDictionary(reopened).cached("ACCESS")) }
+            try { assertNull(StudyDictionary(reopened).cached("ACCESS")) }
             finally { reopened.close() }
         } finally { helper.close(); context.deleteDatabase(name) }
     }

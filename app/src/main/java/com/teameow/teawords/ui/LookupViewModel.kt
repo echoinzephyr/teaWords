@@ -22,6 +22,10 @@ data class LookupState(
     val input: String = "", val dictionaryMode: Boolean = true, val automaticMode: Boolean = true, val source: String = "en",
     val entries: List<LocalEntry> = emptyList(), val selected: LocalEntry? = null,
     val knowledge: Knowledge? = null, val translation: String = "", val candidates: List<Pair<LocalEntry, Knowledge>> = emptyList(),
+    val onlineBusy: Boolean = false,
+    val onlineEntry: OnlineWordEntry? = null,
+    val onlineSuggestions: List<OnlineSuggestion> = emptyList(),
+    val notice: String? = null,
     val busy: Boolean = false, val status: String = "", val error: String? = null,
     val available: Boolean = false, val count: Long = 0, val history: List<QueryRecord> = emptyList(),
     val historyEnabled: Boolean = true, val external: Boolean = false,
@@ -43,20 +47,22 @@ data class LookupState(
 ) { val onlineTranslation get() = translationEngine.online }
 
 class LookupViewModel(application: Application) : AndroidViewModel(application) {
+    private var onlineDictionary = OnlineDictionary.shared
+    internal constructor(application: Application, dictionary: OnlineDictionary) : this(application) {
+        onlineDictionary = dictionary
+    }
     private val helper = DatabaseHelper(application)
     private val dictionary = LocalDictionary(helper)
     private val senses = SenseRepository(helper)
-    private val deviceProvider = lazy { DeviceTranslationProvider() }
     private val prefs = application.getSharedPreferences("lookup_privacy", 0)
     private val translationPreferences = TranslationPreferences(application)
     private val secretStore = TranslationSecretStore(application)
     private val deepSeekProvider = DeepSeekTranslationProvider(apiKey = secretStore::read)
-    private val initialEngine = runCatching { TranslationEngine.valueOf(prefs.getString("translation_engine", null).orEmpty()) }.getOrElse {
-        if (prefs.getBoolean("translation_online", true)) TranslationEngine.MYMEMORY else TranslationEngine.DEVICE
-    }
+    private val initialEngine = translationPreferences.load().engine
     private val onlineProvider = OnlineTranslationProvider(contactEmail = { prefs.getString("translation_contact", "").orEmpty() })
     private val mutable = MutableStateFlow(LookupState(
         historyEnabled = prefs.getBoolean("history", true),
+        notice = if (translationPreferences.consumeMigrationNotice()) "为减小安装包，设备端翻译已移除，现已切换为 MyMemory 在线翻译。" else null,
         translationEngine = initialEngine,
         hasTranslationKey = secretStore.configured(),
         available = initialEngine == TranslationEngine.MYMEMORY || (initialEngine == TranslationEngine.DEEPSEEK && secretStore.configured()),
@@ -112,7 +118,7 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
     fun open(text: String, external: Boolean = false) {
         cancel()
         refreshTranslationPreferences()
-        mutable.update { it.copy(input = text, automaticMode = true, dictionaryMode = LexicalText.dictionaryMode(text), source = if (LexicalText.isChinese(text)) "zh" else "en", entries = emptyList(), selected = null, translation = "", candidates = emptyList(), suggestions = emptyList(), external = external, error = null) }
+        mutable.update { it.copy(input = text, automaticMode = true, dictionaryMode = LexicalText.dictionaryMode(text), source = if (LexicalText.isChinese(text)) "zh" else "en", entries = emptyList(), selected = null, translation = "", candidates = emptyList(), suggestions = emptyList(), onlineEntry = null, onlineSuggestions = emptyList(), external = external, error = null) }
         search()
     }
     fun input(value: String) {
@@ -122,7 +128,7 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
             dictionaryMode = if (it.automaticMode) LexicalText.dictionaryMode(value) else it.dictionaryMode,
             source = if (LexicalText.isChinese(value)) "zh" else "en",
             translation = "", candidates = emptyList(), entries = emptyList(), selected = null,
-            suggestions = emptyList(), error = null) }
+            suggestions = emptyList(), onlineEntry = null, onlineSuggestions = emptyList(), error = null) }
         if (wasDictionary && !state.value.dictionaryMode && !state.value.onlineTranslation) availability()
     }
     fun automaticMode() {
@@ -160,57 +166,69 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
             }
             catch (e: CancellationException) { throw e }
             catch (e: Exception) { mutable.update { it.copy(error = e.message ?: "操作失败，请重试") } }
-            finally { if (currentCoroutineContext().isActive) mutable.update { it.copy(busy = false, status = "") } }
+            finally { if (currentCoroutineContext().isActive) mutable.update { it.copy(busy = false, onlineBusy = false, status = "") } }
         }
     }
-    fun cancel() { job?.cancel(); mutable.update { it.copy(busy = false, status = "") } }
+    fun cancel() { job?.cancel(); mutable.update { it.copy(busy = false, onlineBusy = false, status = "") } }
     private suspend fun refresh() {
         val data = withContext(Dispatchers.IO) { dictionary.count() to dictionary.history() }
         mutable.update { it.copy(count = data.first, history = data.second) }
     }
     fun search() {
         val snapshot = state.value
+        if (snapshot.input.isBlank()) return
         if (!snapshot.dictionaryMode) { availability(translateWhenReady = true); return }
-        run("正在查询离线词典…") {
+        run("正在读取本地词条…", awaitReady = false) {
+            withTimeoutOrNull(SEED_WAIT_MS) { seededOnce.await() }
             val result = withContext(Dispatchers.IO) { dictionary.search(snapshot.input, snapshot.scope) }
+            currentCoroutineContext().ensureActive()
             val selected = result.firstOrNull { LexicalText.normalize(it.word) == LexicalText.normalize(snapshot.input) } ?: result.singleOrNull()
-            // Suggestions are only meaningful when nothing matched; the engine produces them for exactly
-            // that case, so asking on a hit would be wasted work.
             val suggestions = withContext(Dispatchers.IO) {
                 if (result.isNotEmpty()) emptyList()
-                else DictionaryGateway.engineOrNull()
-                    ?.suggest(snapshot.input.trim())
-                    ?.map { hit -> LocalEntry(hit.wordId, hit.word, hit.phonetic, hit.zh, hit.en, hit.pos, hit.tags, hit.forms, hit.frequency, "ECDICT", hit.match, hit.books) }
-                    .orEmpty()
+                else DictionaryGateway.engineOrNull()?.suggest(snapshot.input.trim())?.map { hit ->
+                    LocalEntry(hit.wordId, hit.word, hit.phonetic, hit.zh, hit.en, hit.pos, hit.tags, hit.forms, hit.frequency, "ECDICT", hit.match, hit.books)
+                }.orEmpty()
             }
             val detail = withContext(Dispatchers.IO) {
-                if (snapshot.historyEnabled && !snapshot.external && snapshot.input.isNotBlank()) dictionary.record(snapshot.input, "词典", "en↔zh", selected?.id, selected?.word)
-                selected?.let { entry ->
-                    // Word book tags are the only difficulty signal available for most words, so the prior
-                    // is stored with its origin and an explicit "not calibrated" flag the UI can show.
-                    val prior = DifficultyPrior.forWord(entry.word, entry.tags)
-                    senses.saveDifficulty(entry.id, "RECOGNITION", prior.value, prior.source, prior.calibrated)
-                    dictionary.knowledge(entry.word) to helper.isInVocabulary(LexicalText.normalize(entry.word))
-                }
+                if (snapshot.historyEnabled && !snapshot.external) dictionary.record(snapshot.input, "词典", "en↔zh", selected?.id, selected?.word)
+                dictionary.knowledge(selected?.word ?: snapshot.input) to helper.isInVocabulary(LexicalText.normalize(selected?.word ?: snapshot.input))
             }
-            mutable.update {
-                it.copy(
-                    entries = result, selected = selected,
-                    knowledge = detail?.first, starred = detail?.second == true,
-                    suggestions = suggestions
-                )
-            }; refresh()
+            currentCoroutineContext().ensureActive()
+            mutable.update { it.copy(entries = result, selected = selected, knowledge = detail.first,
+                starred = detail.second, suggestions = suggestions, onlineEntry = null, onlineSuggestions = emptyList(),
+                busy = false, onlineBusy = true,
+                status = "正在补充在线词典…") }
+            refresh()
+            // Nothing from this answer is written to lex_words, senses or learning evidence.
+            val answer = onlineDictionary.lookup(snapshot.input)
+            currentCoroutineContext().ensureActive()
+            if (state.value.input == snapshot.input) mutable.update {
+                it.copy(onlineEntry = answer.entry, onlineSuggestions = answer.suggestions, onlineBusy = false)
+            }
         }
     }
+    fun starOnline(entry: OnlineWordEntry) { run("保存单词…", awaitReady = false) {
+        withContext(Dispatchers.IO) {
+            // An explicit bookmark keeps the headword only. Downloaded open-data books supply offline definitions.
+            val word = LexicalText.normalize(entry.word)
+            if (helper.isInVocabulary(word)) helper.removeVocabulary(word) else helper.addVocabulary(word, "", "")
+            val starred = helper.isInVocabulary(word)
+            mutable.update { it.copy(starred = starred) }
+        }
+    } }
     fun select(entry: LocalEntry) { run("读取词条…") {
+        mutable.update { it.copy(onlineEntry = null, onlineSuggestions = emptyList()) }
         val snapshot = state.value
         withContext(Dispatchers.IO) {
             if (snapshot.historyEnabled && !snapshot.external) dictionary.record(entry.word, "词典", "en↔zh", entry.id, entry.word)
         }
         val knowledge = withContext(Dispatchers.IO) { dictionary.knowledge(entry.word) }
         val starred = withContext(Dispatchers.IO) { helper.isInVocabulary(LexicalText.normalize(entry.word)) }
-        mutable.update { it.copy(selected = entry, knowledge = knowledge, starred = starred) }
+        mutable.update { it.copy(selected = entry, knowledge = knowledge, starred = starred, busy = false, onlineBusy = true) }
         refresh()
+        val answer = onlineDictionary.lookup(entry.word)
+        currentCoroutineContext().ensureActive()
+        mutable.update { it.copy(onlineEntry = answer.entry, onlineSuggestions = answer.suggestions, onlineBusy = false) }
     } }
     fun mark(entry: LocalEntry, report: SelfReport) { run("保存你的选择…") {
         val knowledge = withContext(Dispatchers.IO) { dictionary.mark(entry, report); dictionary.knowledge(entry.word) }
@@ -240,18 +258,8 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
             available = settings.engine == TranslationEngine.MYMEMORY || (settings.engine == TranslationEngine.DEEPSEEK && settings.hasKey)) }
     }
     fun availability(translateWhenReady: Boolean = false) {
-        if (state.value.onlineTranslation) {
-            mutable.update { it.copy(available = it.translationEngine == TranslationEngine.MYMEMORY || it.hasTranslationKey) }
-            // Text shared from another app remains on screen until the user presses Translate.
-            if (translateWhenReady && state.value.available && !state.value.external && state.value.input.isNotBlank()) translate()
-            return
-        }
-        run("检查离线模型…", awaitReady = false) {
-            val available = withTimeoutOrNull(8_000) { deviceProvider.value.isAvailable() }
-                ?: throw IllegalStateException("离线模型检查超时，可在翻译设置中切换在线翻译。")
-            mutable.update { it.copy(available = available) }
-            if (available && translateWhenReady && !state.value.external && state.value.input.isNotBlank()) translate()
-        }
+        mutable.update { it.copy(available = it.translationEngine == TranslationEngine.MYMEMORY || it.hasTranslationKey) }
+        if (translateWhenReady && state.value.available && !state.value.external && state.value.input.isNotBlank()) translate()
     }
     // Translation never waits for dictionary installation. Only history is saved after it is ready.
     fun translate() {
@@ -261,18 +269,16 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
             mutable.update { it.copy(error = "单次最多翻译 20,000 个字符，请分成几次提交；原文没有被截断。") }
             return
         }
-        run(if (snapshot.onlineTranslation) "正在联网翻译…" else "正在设备上翻译…", awaitReady = false) {
+        run("正在联网翻译…", awaitReady = false) {
             val target = if (snapshot.source == "en") "zh" else "en"
             mutable.update { it.copy(translation = "", translationComplete = false,
                 translationAttribution = when (snapshot.translationEngine) {
                     TranslationEngine.MYMEMORY -> "MyMemory · 在线机器翻译"
                     TranslationEngine.DEEPSEEK -> "DeepSeek · 长文翻译"
-                    TranslationEngine.DEVICE -> "Google Translate · 设备端机器翻译"
                 }) }
             val provider: TranslationProvider = when (snapshot.translationEngine) {
                 TranslationEngine.MYMEMORY -> onlineProvider
                 TranslationEngine.DEEPSEEK -> deepSeekProvider
-                TranslationEngine.DEVICE -> deviceProvider.value
             }
             val result = withContext(Dispatchers.IO) {
                 provider.translate(snapshot.input, snapshot.source, target) { progress ->
@@ -309,7 +315,7 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
         }
         refresh(); mutable.update { it.copy(status = "导入 $count 条词条") }
     } }
-    override fun onCleared() { cancel(); onlineProvider.release(); deepSeekProvider.release(); if (deviceProvider.isInitialized()) deviceProvider.value.release(); helper.close(); super.onCleared() }
+    override fun onCleared() { cancel(); onlineProvider.release(); deepSeekProvider.release(); helper.close(); super.onCleared() }
 
     private companion object {
         /** Bounded first-launch wait; the index keeps building in the background afterwards. */

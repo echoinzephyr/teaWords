@@ -166,9 +166,9 @@ class UpdateChecker(
     private fun repositoryPage() = "https://github.com/$owner/$repo"
 
     companion object {
-        const val OWNER = "Cydiacoft"
+        const val OWNER = "echoinzephyr"
         const val REPO = "teaWords"
-        const val PAGE_URL = "https://github.com/Cydiacoft/teaWords"
-        const val RELEASES_URL = "https://github.com/Cydiacoft/teaWords/releases"
+        const val PAGE_URL = "https://github.com/echoinzephyr/teaWords"
+        const val RELEASES_URL = "https://github.com/echoinzephyr/teaWords/releases"
     }
 }

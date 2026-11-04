@@ -75,6 +75,7 @@ fun LearningScreen(
         prefs.getInt("pocket_word_limit", PocketPlanner.DEFAULT_WORD_LIMIT).coerceIn(1, PocketPlanner.MAX_WORD_LIMIT)
     ) }
 
+    var bookRevision by remember { mutableIntStateOf(0) }
     var books by remember { mutableStateOf(emptyList<com.teameow.teawords.data.search.WordSearchRepository.BookInfo>()) }
     var tags by remember { mutableStateOf(emptyMap<String, String>()) }
     var favorites by remember { mutableStateOf(emptyList<VocabularyItem>()) }
@@ -136,7 +137,7 @@ fun LearningScreen(
         tags = result.second.tags
     }
 
-    LaunchedEffect(selectedBookIds) {
+    LaunchedEffect(selectedBookIds, bookRevision) {
         busy = true
         try { reload() } catch (e: Exception) { message = "读取失败：${e.message}" }
         finally { busy = false }
@@ -590,7 +591,6 @@ fun LearningScreen(
                 Text("学习", Modifier.weight(1f), fontSize = 26.sp, fontWeight = FontWeight.Bold)
                 IconButton(onClick = { mode = "diagnose" }, enabled = !busy) { Icon(AppSymbols.Insights, "词汇能力诊断") }
                 IconButton(onClick = { showImport = true }, enabled = !busy) { Icon(AppSymbols.Add, "导入词库") }
-                FilledTonalIconButton(onClick = onShowStats, modifier = Modifier.size(44.dp)) { Icon(AppSymbols.Person, "学习统计") }
             }
         }) else null,
         title = when (pageMode) {
@@ -614,9 +614,6 @@ fun LearningScreen(
                 }
             }
             IconButton(onClick = { showImport = true }, enabled = !busy) { Icon(AppSymbols.Add, "导入词库") }
-            if (pageMode == "home") FilledTonalIconButton(onClick = onShowStats, modifier = Modifier.size(44.dp)) {
-                Icon(AppSymbols.Person, "学习统计")
-            }
             if (pageMode != "home") {
                 IconButton(onClick = onShowStats, enabled = !busy) { Icon(AppSymbols.BarChart, "学习统计") }
             }
@@ -709,7 +706,7 @@ fun LearningScreen(
 
     if (showBooks) StudyBookPicker(dbHelper, books, draftBooks,
         onSelection = { draftBooks = it }, onDismiss = { showBooks = false },
-        onApply = { onSelectedBooksChange(draftBooks); showBooks = false })
+        onApply = { onSelectedBooksChange(draftBooks); bookRevision++; showBooks = false })
     if (showImport) AlertDialog(
         onDismissRequest = { if (!busy) showImport = false },
         title = { Text("添加个人词库") },

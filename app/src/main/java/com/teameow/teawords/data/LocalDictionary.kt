@@ -49,9 +49,6 @@ class LocalDictionary(
     private val shipped: ShippedDictionarySource = ShippedDictionarySource.processWide
 ) {
     companion object {
-        /** Rows per bulk statement while building the bundled index. */
-        private const val BULK_CHUNK = 400
-
         /** Results per lookup. Enough to see the family, few enough to stay readable. */
         const val SEARCH_LIMIT = 30
 
@@ -216,123 +213,6 @@ class LocalDictionary(
         db.execSQL("INSERT OR REPLACE INTO lex_fts(docid, lemma, definition) VALUES(?,?,?)", arrayOf(old.id, normalized, current.en))
         return old.id
     }
-    fun seed(context: Context, progress: (Int) -> Unit = {}) {
-        val seeded = db.rawQuery("SELECT 1 FROM lex_meta WHERE key='bundled-v1'", null).use { it.moveToFirst() }
-        if (seeded) return
-        val rows = mutableListOf<Triple<String, String, String>>()   // normalized, display, zh
-        val phonetics = mutableListOf<Triple<String, String, String>>() // normalized, phonetic, tag
-        listOf("cet4", "cet6").forEach { book ->
-            val source = "原项目 $book.txt"
-            context.assets.open("$book.txt").bufferedReader().useLines { lines -> lines.forEach { line ->
-                val parts = line.trim().split(Regex("\\s+"), limit = 2)
-                if (parts.size == 2 && parts[0].matches(Regex("[A-Za-z]+(?:[-'][A-Za-z]+)*"))) {
-                    val definition = WordImport.cleanDefinition(parts[1])
-                    if (definition.isNotBlank()) {
-                        val normalized = LexicalText.normalize(parts[0])
-                        val phonetic = Regex("\\[([^]]+)]").find(parts[1])?.groupValues?.get(1).orEmpty()
-                        rows += Triple(normalized, parts[0].trim(), definition)
-                        phonetics += Triple(normalized, phonetic, book)
-                    }
-                }
-            } }
-            source(source, "原工程附带词表，授权范围待核验")
-        }
-        // Words the user imported in-app keep their own definition; they are only filled in if missing.
-        val userRows = mutableListOf<Triple<String, String, String>>()
-        helper.readableDatabase.rawQuery("SELECT word, definition FROM vocabulary", null).use { c ->
-            while (c.moveToNext()) {
-                val word = c.getString(0) ?: continue
-                val definition = c.getString(1).orEmpty()
-                if (definition.isNotBlank()) userRows += Triple(LexicalText.normalize(word), word, definition)
-            }
-        }
-        // Set-based bulk load: the previous per-word upsert issued tens of thousands of statements and
-        // took minutes, which is unusable on first launch. This runs the same work as a few statements.
-        db.beginTransaction()
-        try {
-            bulkInsertLexWords(rows.distinctBy { it.first })
-            progress(rows.size)
-            applySeedAttributes(phonetics)
-            val userNormalized = userRows.distinctBy { it.first }
-            bulkInsertLexWords(userNormalized)
-            progress(rows.size + userNormalized.size)
-            rebuildDerivedTables()
-            db.execSQL("UPDATE learning_knowledge SET word_id=(SELECT id FROM lex_words WHERE normalized=lower(trim(learning_knowledge.word))) WHERE word_id IS NULL")
-            db.execSQL("INSERT OR REPLACE INTO lex_meta(key,value) VALUES('bundled-v1','1')")
-            db.setTransactionSuccessful()
-        } finally { db.endTransaction() }
-        if (cleanLegacyDefinitions() > 0) db.execSQL("INSERT OR REPLACE INTO lex_meta(key,value) VALUES('clean-pos-v1','1')")
-    }
-
-    private fun bulkInsertLexWords(batch: List<Triple<String, String, String>>) {
-        batch.chunked(BULK_CHUNK).forEach { chunk ->
-            val placeholders = chunk.joinToString(",") { "(?,?,?,'','','','','','','')" }
-            val args = chunk.flatMap { listOf(it.first, it.second, it.third) }.toTypedArray()
-            db.execSQL(
-                "INSERT OR IGNORE INTO lex_words(normalized,word,zh,phonetic,en,pos,tags,forms,frequency,source) VALUES $placeholders",
-                args
-            )
-        }
-    }
-
-    /** Bundled books may lack the phonetic for a word an in-app import already created. */
-    private fun applySeedAttributes(batch: List<Triple<String, String, String>>) {
-        batch.chunked(BULK_CHUNK).forEach { chunk ->
-            chunk.forEach { (normalized, phonetic, book) ->
-                if (phonetic.isNotBlank()) {
-                    db.execSQL("UPDATE lex_words SET phonetic=? WHERE normalized=? AND phonetic=''", arrayOf(phonetic, normalized))
-                }
-                db.execSQL(
-                    "UPDATE lex_words SET tags=trim(tags || ' ' || ?), source=? WHERE normalized=? AND instr(tags, ?)=0",
-                    arrayOf(book, "原项目 $book.txt", normalized, book)
-                )
-            }
-        }
-    }
-
-    /** Rebuilds senses, Chinese reverse tokens and the FTS index from lex_words in a few statements. */
-    private fun rebuildDerivedTables() {
-        db.execSQL("DELETE FROM lex_senses WHERE source LIKE '原项目 %' OR source=''")
-        db.execSQL("DELETE FROM lex_zh WHERE word_id IN (SELECT id FROM lex_words WHERE source LIKE '原项目 %')")
-        db.execSQL("DELETE FROM lex_fts WHERE docid IN (SELECT id FROM lex_words WHERE source LIKE '原项目 %')")
-        db.execSQL("INSERT INTO lex_senses(word_id, source, language, ordinal, definition) SELECT id, source, 'zh', 0, zh FROM lex_words WHERE zh<>'' AND source LIKE '原项目 %'")
-        db.execSQL("INSERT INTO lex_fts(docid, lemma, definition) SELECT id, normalized, en FROM lex_words WHERE source LIKE '原项目 %'")
-        helper.readableDatabase.rawQuery("SELECT id, zh FROM lex_words WHERE zh<>'' AND source LIKE '原项目 %'", null).use { c ->
-            val insert = "INSERT OR IGNORE INTO lex_zh(token, word_id) VALUES(?,?)"
-            while (c.moveToNext()) {
-                val id = c.getLong(0)
-                LexicalText.chineseTokens(c.getString(1).orEmpty()).distinct().forEach { token ->
-                    db.execSQL(insert, arrayOf(token, id))
-                }
-            }
-        }
-    }
-
-    /**
-     * One-off repair for installs indexed by an earlier build that stored "a.有病的" as if the
-     * part-of-speech shorthand were part of the meaning. Only rows whose Chinese column starts
-     * with such a marker are touched, and the pass runs at most once per install.
-     */
-    private fun cleanLegacyDefinitions(): Int {
-        val marker = db.rawQuery("SELECT 1 FROM lex_meta WHERE key='clean-pos-v1'", null).use { it.moveToFirst() }
-        if (marker) return 0
-        // Drop everything up to and including the part-of-speech marker: "a.有病的" -> "有病的".
-        val prefixes = listOf("pron", "pl", "sing", "pt", "pp", "adv", "adj", "prep", "conj", "num", "int", "art", "aux", "abbr", "n", "v", "vi", "vt", "a", "ad")
-        val where = prefixes.joinToString(" OR ") { "zh GLOB '$it.[^a-zA-Z]*'" }
-        db.beginTransaction()
-        try {
-            db.execSQL("UPDATE lex_words SET zh=trim(substr(zh, instr(zh, '.')+1)) WHERE $where")
-            db.execSQL("INSERT OR REPLACE INTO lex_meta(key,value) VALUES('clean-pos-v1','1')")
-            db.setTransactionSuccessful()
-        } finally { db.endTransaction() }
-        return 1
-    }
-
-    /** True when the word is already indexed from the same book, so seeding can skip the rewrite. */
-    private fun indexed(word: String, source: String, tag: String): Boolean = db.rawQuery(
-        "SELECT 1 FROM lex_words WHERE normalized=? AND source=? AND zh<>'' AND (?='' OR instr(tags,?)>0) LIMIT 1",
-        arrayOf(LexicalText.normalize(word), source, tag, tag)
-    ).use { it.moveToFirst() }
     /** Copies the live database to the app cache so a debug build can be inspected with adb pull. */
     fun exportTo(context: Context, name: String) {
         db.execSQL("VACUUM INTO ?", arrayOf(java.io.File(context.cacheDir, name).absolutePath))

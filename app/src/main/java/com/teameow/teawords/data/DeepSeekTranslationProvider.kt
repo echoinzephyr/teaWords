@@ -12,8 +12,8 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 enum class TranslationEngine(val label: String) {
-    MYMEMORY("MyMemory · 免配置"), DEEPSEEK("DeepSeek · 长文翻译"), DEVICE("Google · 设备端离线");
-    val online get() = this != DEVICE
+    MYMEMORY("MyMemory · 免配置"), DEEPSEEK("DeepSeek · 长文翻译");
+    val online get() = true
 }
 
 /** Sends the entire passage together to keep context across sentences and paragraphs. */

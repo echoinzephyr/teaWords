@@ -30,18 +30,18 @@ fun AboutCredits() {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TeaCard {
             Text("用茶词做什么", style = MaterialTheme.typography.titleLarge)
-            Text("查词 · 离线查英文单词、中文释义和词形。")
+            Text("查词 · 查询已下载词书，联网补充释义、音标和短语。")
             Text("翻译 · 中英句子与长文翻译，支持复制译文。")
             Text("回望 · 巩固查过的生词，暂不包含句子。")
             Text("学习 · 选择词书，快速排雷，再通过回忆练习巩固。")
         }
         TeaCard {
             Text("数据与翻译服务", style = MaterialTheme.typography.titleLarge)
-            AboutSource("ECDICT", "内置离线词典 · MIT 许可证", "https://github.com/skywind3000/ECDICT")
+            AboutSource("ECDICT", "按需下载词书 · MIT 许可证", "https://github.com/skywind3000/ECDICT")
+            AboutSource("有道词典", "在线释义、音标和搜索建议", "https://dict.youdao.com/")
             AboutSource("MyMemory", "免配置在线翻译，有每日免费额度", "https://mymemory.translated.net/doc/usagelimits.php")
             AboutSource("DeepSeek", "可选长文翻译 · 需本人 API 密钥并按用量计费", "https://api-docs.deepseek.com/quick_start/pricing/")
-            AboutSource("Google ML Kit", "可选设备端翻译 · 需先下载语言模型", "https://developers.google.com/ml-kit/language/translation/translation-terms")
-            TeaCaption("查词使用本地词典。在线翻译会把原文发送给所选服务商；设备端离线翻译在本机处理。")
+            TeaCaption("查词使用本地词书并向有道请求在线补充；在线补充只在内存中缓存。在线翻译会把原文发送给所选服务商。")
             TeaCaption("查阅记录与学习进度保存在本机，可在查询历史中关闭记录。外部应用分享的输入不保存查询历史。")
         }
         TeaCard {

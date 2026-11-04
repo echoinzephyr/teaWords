@@ -5,25 +5,19 @@ import android.database.sqlite.SQLiteDatabase
 import java.io.File
 
 /**
- * Installs the pre-built dictionary that ships in `assets/dictionary.db`.
- *
- * Why a pre-built file instead of parsing a CSV at runtime: the dataset has 770,611 source rows and
- * the shipped subset has 57,841 entries with 197,766 senses and 465,982 reverse-lookup tokens.
- * Building those indexes on a phone would take minutes and would have to be redone whenever the data
- * changed. The build tool produces the file once; the app only copies it.
- *
- * It is deliberately a **separate database file** from `teawords.db`, which holds the user's learning
- * records. Updating the dictionary therefore cannot touch knowledge state: the installer replaces the
- * dictionary file alone and the user database keeps its own `word_id` values, which are stable because
- * the build tool assigns ids from a deterministic scan of the source.
- *
- * The copy is streamed with a progress callback: 61 MB must not be read into memory, and the UI needs
- * to show that something is happening on first launch.
+ * Copies the compact, empty dictionary plus stable word identities on first use.
+ * Existing full dictionaries remain usable: only missing or incompatible files are installed.
+ * Downloads fill this separate reference database; personal progress stays in teawords.db.
+ * Tests may supply the full reference through their own APK's assets.
  */
-class BundledDictionaryInstaller(private val context: Context) {
+class BundledDictionaryInstaller(
+    private val context: Context,
+    private val assetContext: Context = context,
+    private val assetName: String = ASSET_NAME
+) {
 
     companion object {
-        const val ASSET_NAME = "dictionary.db"
+        const val ASSET_NAME = "dictionary-index.db"
         const val DB_NAME = "dictionary.db"
         /**
          * Must equal `dictionary_meta.schema_version` inside the shipped asset.
@@ -72,7 +66,7 @@ class BundledDictionaryInstaller(private val context: Context) {
         if (temp.exists()) temp.delete()
 
         var copied = 0L
-        context.assets.open(ASSET_NAME).use { input ->
+        assetContext.assets.open(assetName).use { input ->
             temp.outputStream().use { output ->
                 val buffer = ByteArray(BUFFER)
                 val total = runCatching { input.available().toLong() }.getOrDefault(0L)

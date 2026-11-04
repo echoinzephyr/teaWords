@@ -111,23 +111,27 @@ class WordIdMigration(private val helper: DatabaseHelper) {
         }.getOrDefault(false)
 
     private fun rebind(database: SQLiteDatabase, dictionaryBuiltAt: String): Report {
+        val identity = database.rawQuery("SELECT 1 FROM dict.sqlite_master WHERE name='word_identity'", null)
+            .use { it.moveToFirst() }
+        // The compact index preserves the original IDs even before any wordbook is downloaded.
+        val reference = if (identity) "word_identity" else "lex_words"
         // `learning_knowledge` stores the normalised word, so it rebinds by text and cannot be misled by a
         // stale number. The tables without text go through the old inline index to find that text first.
         val knowledge = update(database,
             "UPDATE learning_knowledge SET word_id = " +
-                "(SELECT d.id FROM dict.lex_words d WHERE d.normalized = learning_knowledge.word) " +
-                "WHERE EXISTS (SELECT 1 FROM dict.lex_words d WHERE d.normalized = learning_knowledge.word)"
+                "(SELECT d.id FROM dict.$reference d WHERE d.normalized = learning_knowledge.word) " +
+                "WHERE EXISTS (SELECT 1 FROM dict.$reference d WHERE d.normalized = learning_knowledge.word)"
         )
         val userOnly = update(database,
             "UPDATE learning_knowledge SET word_id = -abs(word_id) " +
                 "WHERE word_id IS NOT NULL AND word_id > 0 " +
-                "AND NOT EXISTS (SELECT 1 FROM dict.lex_words d WHERE d.normalized = learning_knowledge.word)"
+                "AND NOT EXISTS (SELECT 1 FROM dict.$reference d WHERE d.normalized = learning_knowledge.word)"
         )
         // Sense units, test records and item difficulty only carry the number, so the old index supplies
         // the text. A word the dictionary lacks keeps its old id, negated.
-        val senses = rebindByLegacyId(database, "sense_units")
-        val records = rebindByLegacyId(database, "test_records")
-        val difficulty = rebindByLegacyId(database, "item_difficulty")
+        val senses = rebindByLegacyId(database, "sense_units", reference)
+        val records = rebindByLegacyId(database, "test_records", reference)
+        val difficulty = rebindByLegacyId(database, "item_difficulty", reference)
         database.execSQL(
             "INSERT OR REPLACE INTO lex_meta(key,value) VALUES(?,?)",
             arrayOf(BINDING_KEY, dictionaryBuiltAt)
@@ -157,20 +161,20 @@ class WordIdMigration(private val helper: DatabaseHelper) {
      * a different word for any dictionary id below the old index's maximum, silently negating rows that had
      * just been mapped correctly.
      */
-    private fun rebindByLegacyId(database: SQLiteDatabase, table: String): Int {
+    private fun rebindByLegacyId(database: SQLiteDatabase, table: String, reference: String): Int {
         val negated = update(database,
             "UPDATE $table SET word_id = -abs(word_id) WHERE word_id > 0 " +
                 "AND NOT EXISTS (" +
-                "SELECT 1 FROM dict.lex_words d JOIN main.lex_words o ON o.normalized = d.normalized " +
+                "SELECT 1 FROM dict.$reference d JOIN main.lex_words o ON o.normalized = d.normalized " +
                 "WHERE o.id = $table.word_id)"
         )
         // Only rows still holding a positive (original) id are mapped, so the negated ones are untouched.
         val matched = update(database,
             "UPDATE $table SET word_id = (" +
-                "SELECT d.id FROM dict.lex_words d JOIN main.lex_words o ON o.normalized = d.normalized " +
+                "SELECT d.id FROM dict.$reference d JOIN main.lex_words o ON o.normalized = d.normalized " +
                 "WHERE o.id = $table.word_id) " +
                 "WHERE word_id > 0 AND EXISTS (" +
-                "SELECT 1 FROM dict.lex_words d JOIN main.lex_words o ON o.normalized = d.normalized " +
+                "SELECT 1 FROM dict.$reference d JOIN main.lex_words o ON o.normalized = d.normalized " +
                 "WHERE o.id = $table.word_id)"
         )
         return matched + negated

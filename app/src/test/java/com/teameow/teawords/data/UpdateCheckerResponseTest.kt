@@ -14,7 +14,7 @@ class UpdateCheckerResponseTest {
         val info = checker(mapOf("/releases/latest" to (200 to """{
             "tag_name":"v1.2.0","assets":[
                 {"name":"notes.txt","browser_download_url":"https://example.com/notes","size":100},
-                {"name":"teaWords-1.2.0.apk","browser_download_url":"https://github.com/Cydiacoft/teaWords/releases/download/v1.2.0/teaWords-1.2.0.apk","size":1234,"digest":"sha256:$digest"}
+                {"name":"teaWords-1.2.0.apk","browser_download_url":"https://github.com/echoinzephyr/teaWords/releases/download/v1.2.0/teaWords-1.2.0.apk","size":1234,"digest":"sha256:$digest"}
             ]}"""))).latest().getOrThrow()!!
         assertEquals(1234L, info.apk!!.size)
         assertEquals(digest, info.apk!!.sha256)
@@ -24,7 +24,7 @@ class UpdateCheckerResponseTest {
             val info = checker(mapOf("/releases/latest" to (200 to """{"tag_name":"v1.2.0","assets":$assets}"""))).latest().getOrThrow()!!
             assertNull(info.apk)
         }
-        assertFalse(trustedUpdateUrl("http://github.com/Cydiacoft/teaWords/releases/download/v1.2.0/update.apk"))
+        assertFalse(trustedUpdateUrl("http://github.com/echoinzephyr/teaWords/releases/download/v1.2.0/update.apk"))
         assertFalse(trustedUpdateUrl("https://github.com/another/project/releases/download/v1.2.0/update.apk"))
     }
     private fun checker(responses: Map<String, Pair<Int, String>>) = UpdateChecker(

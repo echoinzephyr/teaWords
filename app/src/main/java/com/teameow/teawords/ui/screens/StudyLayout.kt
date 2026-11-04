@@ -110,13 +110,40 @@ private val StudyPetalShape = GenericShape { size, _ ->
 
 @Composable
 internal fun StudyBookCover(label: String, modifier: Modifier = Modifier, compact: Boolean = false) {
-    Surface(modifier.width(if (compact) 36.dp else 48.dp).height(if (compact) 52.dp else 68.dp), shape = RoundedCornerShape(topStart = 3.dp, topEnd = 8.dp,
-        bottomStart = 3.dp, bottomEnd = 8.dp), color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
-        Row {
-            Surface(Modifier.width(5.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.primary.copy(alpha = .3f)) {}
-            Box(Modifier.weight(1f).fillMaxHeight().padding(4.dp), contentAlignment = Alignment.Center) {
-                Text(label.take(8), style = MaterialTheme.typography.labelSmall, fontSize = if (compact) 9.sp else MaterialTheme.typography.labelSmall.fontSize, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    val code = when {
+        label.contains("四级") || label.contains("CET4", true) -> "CET-4"
+        label.contains("六级") || label.contains("CET6", true) -> "CET-6"
+        label.contains("雅思") || label.contains("IELTS", true) -> "IELTS"
+        label.contains("托福") || label.contains("TOEFL", true) -> "TOEFL"
+        label.contains("GRE", true) -> "GRE"
+        label.contains("考研") || label.equals("ky", true) -> "考研"
+        label.contains("中考") || label.equals("zk", true) -> "中考"
+        label.contains("高考") || label.equals("gk", true) -> "高考"
+        else -> "词汇"
+    }
+    val colors = MaterialTheme.colorScheme
+    val tint = when (code) {
+        "CET-4", "中考" -> colors.primary
+        "CET-6", "考研" -> colors.tertiary
+        else -> colors.secondary
+    }
+    Surface(modifier.width(if (compact) 48.dp else 56.dp).height(if (compact) 68.dp else 80.dp),
+        shape = RoundedCornerShape(topStart = 3.dp, topEnd = 7.dp, bottomStart = 3.dp, bottomEnd = 7.dp),
+        color = tint, contentColor = if (tint == colors.primary) colors.onPrimary else if (tint == colors.tertiary) colors.onTertiary else colors.onSecondary) {
+        Box {
+            androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                drawRect(Color.Black.copy(alpha = .15f), size = androidx.compose.ui.geometry.Size(size.width * .1f, size.height))
+                drawCircle(Color.White.copy(alpha = .13f), radius = size.width * .9f,
+                    center = androidx.compose.ui.geometry.Offset(size.width * 1.1f, size.height * .8f))
+                drawLine(Color.White.copy(alpha = .45f), androidx.compose.ui.geometry.Offset(size.width * .22f, size.height * .28f),
+                    androidx.compose.ui.geometry.Offset(size.width * .82f, size.height * .28f), strokeWidth = 2f)
+            }
+            Column(Modifier.fillMaxSize().padding(start = 9.dp, end = 4.dp, top = 10.dp, bottom = 8.dp),
+                verticalArrangement = Arrangement.SpaceBetween) {
+                Text("ENGLISH", fontSize = 6.sp, maxLines = 1, softWrap = false)
+                Text(code, fontSize = if (code.length > 4) 9.sp else 12.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 1, softWrap = false)
+                Text("VOCABULARY", fontSize = 5.sp, maxLines = 1, softWrap = false)
             }
         }
     }

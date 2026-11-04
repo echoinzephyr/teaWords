@@ -37,7 +37,7 @@ class DictionarySearchInstrumentedTest {
         @JvmStatic
         fun openDictionary() {
             val context = InstrumentationRegistry.getInstrumentation().targetContext
-            repository = WordSearchRepository(BundledDictionaryInstaller(context))
+            repository = WordSearchRepository(BundledDictionaryInstaller(context, InstrumentationRegistry.getInstrumentation().context, "dictionary.db"))
             // Copy the 61 MB asset if this is a fresh install; the app does the same on first launch.
             assertTrue("the bundled dictionary must open", repository.open())
             engine = DefaultDictionarySearchEngine(repository)

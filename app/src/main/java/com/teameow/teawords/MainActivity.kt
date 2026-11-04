@@ -43,10 +43,7 @@ class MainActivity : ComponentActivity() {
         // Preload word level lists in background
         Thread { levelProvider.loadIfNeeded() }.start()
 
-        // Install the shipped 61 MB dictionary on the app's own path, not on the first query: the copy
-        // takes seconds on a cold start, and doing it inside a search would look like the app hanging.
-        // It runs on a plain thread because it is a file copy with no need for a coroutine scope that
-        // outlives this activity.
+        // Open the compact index off the main thread; network downloads are always user initiated.
         Thread {
             DictionaryGateway.open(this) { progress ->
                 Log.i("MainActivity", "dictionary install ${progress.percent}% done=${progress.done}")

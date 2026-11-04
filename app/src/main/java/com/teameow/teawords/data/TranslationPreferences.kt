@@ -9,10 +9,17 @@ class TranslationPreferences(context: Context) {
     private val prefs = context.getSharedPreferences("lookup_privacy", 0)
     private val secrets = TranslationSecretStore(context)
     fun load(): TranslationSettings {
-        val engine = runCatching { TranslationEngine.valueOf(prefs.getString("translation_engine", null).orEmpty()) }.getOrElse {
-            if (prefs.getBoolean("translation_online", true)) TranslationEngine.MYMEMORY else TranslationEngine.DEVICE
-        }
+        val raw = prefs.getString("translation_engine", null)
+        val legacyDevice = raw == "DEVICE" || (raw == null && !prefs.getBoolean("translation_online", true))
+        val engine = runCatching { TranslationEngine.valueOf(raw.orEmpty()) }.getOrDefault(TranslationEngine.MYMEMORY)
+        if (legacyDevice) prefs.edit().putString("translation_engine", TranslationEngine.MYMEMORY.name)
+            .putBoolean("device_translation_removed_notice", true).apply()
         return TranslationSettings(engine, prefs.getString("translation_contact", "").orEmpty(), secrets.configured())
+    }
+    fun consumeMigrationNotice(): Boolean {
+        val pending = prefs.getBoolean("device_translation_removed_notice", false)
+        if (pending) prefs.edit().remove("device_translation_removed_notice").apply()
+        return pending
     }
     fun save(engine: TranslationEngine, email: String, newKey: String = "", clearKey: Boolean = false) {
         require(engine != TranslationEngine.MYMEMORY || TranslationSettingsPolicy.validEmail(email)) { "请填写有效的本人邮箱，或留空。" }

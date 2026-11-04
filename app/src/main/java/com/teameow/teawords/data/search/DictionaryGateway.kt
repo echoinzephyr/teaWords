@@ -7,19 +7,7 @@ import com.teameow.teawords.data.DatabaseHelper
 import com.teameow.teawords.data.WordIdMigration
 import java.util.concurrent.atomic.AtomicBoolean
 
-/**
- * Owns the shipped dictionary and the search engine for the whole process.
- *
- * The dictionary is a single 61 MB read-only file that several entry points need — the main screen, the
- * lookup screen, and the `PROCESS_TEXT` / `SEND` activities that Android can start without the main
- * activity existing at all. Copying or opening it once per screen would waste tens of megabytes and
- * several seconds, so there is exactly one owner and every caller borrows it.
- *
- * Opening is deliberately **not** done lazily on first query. The first open also installs the asset,
- * which takes seconds; doing that inside a search would look like the app hanging. [open] is called once
- * from the app's start-up path with a progress callback instead, and callers that arrive early are told
- * the dictionary is still being installed rather than shown an empty result.
- */
+/** Process owner of the downloaded-word dictionary and its local search engine. */
 object DictionaryGateway {
 
     /** What the caller should show while the dictionary is being installed. */
@@ -44,14 +32,14 @@ object DictionaryGateway {
     fun isReady(): Boolean = engine != null
 
     /**
-     * Installs the bundled dictionary when needed and opens it. Blocking: call from `Dispatchers.IO`.
+     * Installs the compact dictionary index when needed and opens it. Blocking: call from `Dispatchers.IO`.
      *
      * @return true when the dictionary is usable afterwards.
      */
     fun open(context: Context, onProgress: (Progress) -> Unit = {}): Boolean {
         repository?.let { if (it.isOpen()) return true }
         // Only one installer may run at a time; a second caller waits for the first to finish rather than
-        // starting a competing 61 MB copy.
+        // starting a competing index copy.
         if (!opening.compareAndSet(false, true)) {
             return waitForReady()
         }

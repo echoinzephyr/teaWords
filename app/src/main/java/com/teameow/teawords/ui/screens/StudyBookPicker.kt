@@ -19,11 +19,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import com.teameow.teawords.data.OnlineWordbooks
 import com.teameow.teawords.data.DatabaseHelper
 import com.teameow.teawords.data.LearningRepository
 import com.teameow.teawords.data.search.DictionaryGateway
 import com.teameow.teawords.data.search.WordSearchRepository.BookInfo
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.withContext
 
 private fun bookCategory(book: BookInfo): String = when (book.category) {
@@ -38,6 +40,14 @@ private fun bookCategory(book: BookInfo): String = when (book.category) {
 @Composable
 internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, selected: Set<String>,
     onSelection: (Set<String>) -> Unit, onDismiss: () -> Unit, onApply: () -> Unit) {
+    val context = LocalContext.current
+    val downloads = remember(context) { OnlineWordbooks(context) }
+    val scope = rememberCoroutineScope()
+    var downloading by remember { mutableStateOf(false) }
+    var downloadStatus by remember { mutableStateOf("") }
+    var task by remember { mutableStateOf<Job?>(null) }
+    var downloaded by remember { mutableStateOf<Set<String>>(emptySet()) }
+    fun dismiss() { task?.cancel(); onDismiss() }
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     var query by rememberSaveable { mutableStateOf("") }
@@ -55,6 +65,7 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
                 dictionary?.countBookWords(books.map { it.id }.toSet()) to counts
             }
             unionCount = snapshot.first; learned = snapshot.second
+            downloaded = withContext(Dispatchers.IO) { books.filter { downloads.isDownloaded(it.id) }.map { it.id }.toSet() }
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { error = "学习进度暂时无法读取，仍可选择词书。" }
     }
@@ -62,15 +73,15 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
     val ordered = books.sortedWith(compareBy({ listOf("cet4", "cet6", "ielts", "toefl", "gre", "zk", "gk", "ky").indexOf(it.id).let { n -> if (n < 0) Int.MAX_VALUE else n } }, { it.name }))
     val filtered = ordered.filter { book -> (category == "全部" || bookCategory(book) == category) &&
         (query.isBlank() || listOf(book.name, book.id, book.description).any { it.contains(query.trim(), ignoreCase = true) }) }
-    ModalBottomSheet(onDismissRequest = onDismiss,
+    ModalBottomSheet(onDismissRequest = ::dismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = null,
         containerColor = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxWidth().height((LocalConfiguration.current.screenHeightDp - 12).dp.coerceAtLeast(240.dp)).imePadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDismiss) { Icon(AppSymbols.ArrowBack, "取消选择词书") }
+                IconButton(onClick = ::dismiss) { Icon(AppSymbols.ArrowBack, "取消选择词书") }
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("选择词书", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text("${books.size} 本" + (unionCount?.let { " · $it 个不重复词条" } ?: " · 正在统计词数"),
+                    Text("${books.size} 本" + (unionCount?.let { " · $it 个已下载词条" } ?: " · 正在统计词数"),
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Icon(AppSymbols.Book5, null, Modifier.padding(12.dp))
@@ -97,12 +108,13 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
                                 val checked = book.id in selected
                                 Surface(color = if (checked) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow) {
                                     Row(Modifier.fillMaxWidth().toggleable(checked, role = Role.Checkbox,
-                                        onValueChange = { onSelection(if (it) selected + book.id else selected - book.id) })
+                                        enabled = !downloading, onValueChange = { onSelection(if (it) selected + book.id else selected - book.id) })
                                         .padding(12.dp), verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         StudyBookCover(book.id.uppercase(), compact = true)
                                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(book.name, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                            TeaCaption(if (book.id in downloaded) "已下载 · 可离线学习" else "尚未下载")
                                             TeaCaption("${book.wordCount} 词" + (learned[book.id]?.let { " · 已学 $it 词" } ?: ""))
                                         }
                                         Checkbox(checked, onCheckedChange = null)
@@ -112,11 +124,33 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
                         }
                     }
                 }
-                item { TeaCaption("词书来自 ECDICT 考试标签，不代表官方完整大纲；切换或取消选择保留已有学习记录。") }
+                item { TeaCaption("词书按需下载，下载后可离线学习。词书来自 ECDICT 考试标签，不代表官方完整大纲；切换或取消选择保留已有学习记录。") }
             }
             Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                Button(onClick = { focus.clearFocus(); keyboard?.hide(); onApply() }, modifier = Modifier.fillMaxWidth().padding(16.dp).heightIn(min = 48.dp)) {
-                    Text(if (selected.isEmpty()) "仅学习个人词库" else "应用选择 · ${selected.size} 本")
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!downloads.configured && selected.any { it !in downloaded }) TeaCaption("词书下载服务尚未上线；可继续使用已下载词书或导入个人词表。")
+                    if (downloading) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                        TeaCaption(downloadStatus)
+                        TextButton(onClick = { task?.cancel() }) { Text("暂停下载") }
+                    }
+                    error?.let { TeaStatusMessage(it, error = true) }
+                    Button(enabled = !downloading, onClick = {
+                        focus.clearFocus(); keyboard?.hide(); error = null
+                        task = scope.launch {
+                            downloading = true
+                            try {
+                                downloads.ensureDownloaded(selected) { title, done, total ->
+                                    downloadStatus = if (total > 0) "$title · ${done * 100 / total}%" else "$title · ${done / 1024} KB"
+                                }
+                                onApply()
+                            } catch (cancelled: CancellationException) { throw cancelled }
+                            catch (failure: Exception) { error = failure.message ?: "下载失败，请重试；已有词书仍可使用。" }
+                            finally { downloading = false }
+                        }
+                    }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                        Text(if (selected.isEmpty()) "仅学习个人词库" else if (selected.any { it !in downloaded }) "下载并应用 · ${selected.size} 本" else "应用选择 · ${selected.size} 本")
+                    }
                 }
             }
         }
