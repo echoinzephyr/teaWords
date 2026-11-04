@@ -8,7 +8,7 @@
 
 当前版本 **1.1.0**（versionCode 2），适用于 Android 7.0 及以上。
 
-从 [GitHub Releases](https://github.com/echoinzephyr/teaWords/releases/latest) 下载已签名的 `teaWords-1.2.0.apk`。无需下载翻译模型即可使用默认在线翻译；更新记录见 [CHANGELOG](CHANGELOG.md)。
+从 [GitHub Releases](https://github.com/echoinzephyr/teaWords/releases/tag/v1.2.2-rc.1) 下载已签名的 `teaWords-1.2.2-rc.1.apk`。无需下载翻译模型即可使用默认在线翻译；更新记录见 [CHANGELOG](CHANGELOG.md)。
 
 1.2.0 起，设置中的“检查更新”支持直接下载 APK，显示后台下载进度并在完成后打开系统安装确认。首次安装需允许茶词安装应用；发布包会校验版本、校验和及签名，使用相同发布签名更新可保留数据。
 
