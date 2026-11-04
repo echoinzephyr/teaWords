@@ -83,4 +83,26 @@ class UpdateCheckerResponseTest {
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull()!!.message!!.contains("403"))
     }
+    @Test fun `beta opt in includes RC even while latest stable already exists`() = runBlocking {
+        val info = checker(mapOf("/releases" to (200 to """[
+          {"tag_name":"v1.2.1"}, {"tag_name":"v1.2.2-rc.2","prerelease":true},
+          {"tag_name":"v1.2.2-rc.10","prerelease":true}, {"tag_name":"v9.0","draft":true}
+        ]"""))).latest(includePrereleases = true).getOrThrow()!!
+        assertEquals("v1.2.2-rc.10", info.tag)
+        assertTrue(info.prerelease)
+    }
+    @Test fun `stable fallback tags cannot leak RC when beta is disabled`() = runBlocking {
+        val info = checker(mapOf("/releases/latest" to (404 to "{}"), "/releases" to (200 to "[]"),
+            "/tags" to (200 to """[{"name":"v2.0-rc.1"},{"name":"v1.2.1"}]"""))).latest().getOrThrow()!!
+        assertEquals("v1.2.1", info.tag)
+    }
+    @Test fun `beta falls back to stable when it is newer than every prerelease`() = runBlocking {
+        val info = checker(mapOf("/releases" to (200 to """[{"tag_name":"v1.2.2-rc.1","prerelease":true},{"tag_name":"v1.2.2"}]""")))
+            .latest(true).getOrThrow()!!
+        assertEquals("v1.2.2", info.tag); assertFalse(info.prerelease)
+    }
+    @Test fun `private repository is a failed check rather than no update`() = runBlocking {
+        val result = checker(mapOf("/releases" to (404 to "{}"))).latest(true)
+        assertTrue(result.isFailure)
+    }
 }

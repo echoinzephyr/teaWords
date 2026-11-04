@@ -13,7 +13,7 @@ import com.google.gson.Gson
 import java.io.File
 import java.security.MessageDigest
 
-data class PendingAppUpdate(val id: Long, val tag: String, val fileName: String, val asset: UpdateApk)
+data class PendingAppUpdate(val id: Long, val tag: String, val fileName: String, val asset: UpdateApk, val prerelease: Boolean = false)
 
 sealed interface AppDownloadStatus {
     data class Progress(val downloaded: Long, val total: Long, val waiting: Boolean = false) : AppDownloadStatus
@@ -48,7 +48,7 @@ class AppUpdateManager(context: Context) {
             .setMimeType("application/vnd.android.package-archive")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalFilesDir(app, Environment.DIRECTORY_DOWNLOADS, "updates/$fileName"))
-        return PendingAppUpdate(id, info.tag, fileName, asset).also {
+        return PendingAppUpdate(id, info.tag, fileName, asset, info.prerelease).also {
             check(prefs.edit().putString("pending", gson.toJson(it)).commit()) { "无法保存下载记录" }
         }
     }

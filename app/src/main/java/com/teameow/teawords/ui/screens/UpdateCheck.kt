@@ -9,7 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import com.teameow.teawords.data.AppPreferences
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.teameow.teawords.data.UpdateChecker
@@ -38,6 +41,9 @@ internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long) {
     val uri = LocalUriHandler.current
     val scope = rememberCoroutineScope()
     val checker = remember { UpdateChecker() }
+    val context = LocalContext.current
+    val preferences = remember(context) { AppPreferences(context) }
+    var receiveBeta by remember { mutableStateOf(preferences.receiveBetaUpdates) }
     var outcome by remember { mutableStateOf<UpdateOutcome?>(null) }
     val checking = outcome is UpdateOutcome.Checking
 
@@ -63,15 +69,25 @@ internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     // 页面顶栏已经写了「检查更新」，卡片里不再重复标题，只说当前装的是什么。
                     Text("当前版本 $currentVersion ($currentVersionCode)", style = MaterialTheme.typography.titleLarge)
-                    Text("GitHub 公开仓库 Cydiacoft/teaWords", style = MaterialTheme.typography.bodyMedium)
+                    Text("GitHub · echoinzephyr/teaWords", style = MaterialTheme.typography.bodyMedium)
                 }
+            }
+
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("接收 Beta 更新", style = MaterialTheme.typography.titleMedium)
+                    Text("包含 Beta、RC 等预发布版本", style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(modifier = Modifier.testTag("beta-updates-switch"), checked = receiveBeta, enabled = !checking, onCheckedChange = {
+                    receiveBeta = it; preferences.receiveBetaUpdates = it; outcome = null
+                })
             }
 
             when (val state = outcome) {
                 null -> Unit
                 UpdateOutcome.Checking -> {
                     LinearProgressIndicator(Modifier.fillMaxWidth())
-                    Text("正在读取公开仓库的发布信息…", style = MaterialTheme.typography.bodyMedium)
+                    Text("正在读取发布信息…", style = MaterialTheme.typography.bodyMedium)
                 }
                 UpdateOutcome.NoRelease -> StatusPill(
                     icon = AppSymbols.Info,
@@ -87,7 +103,7 @@ internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long) {
                         content = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Text(
-                        "仓库本身可以直接在浏览器里打开。",
+                        "如为私有仓库，请在浏览器中登录有访问权限的 GitHub 账号。",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -104,7 +120,9 @@ internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long) {
                 }
             }
 
-            UpdateDownloadBlock((outcome as? UpdateOutcome.Found)?.info, currentVersion)
+            key(receiveBeta) {
+                UpdateDownloadBlock((outcome as? UpdateOutcome.Found)?.info, currentVersion, receiveBeta)
+            }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -114,7 +132,7 @@ internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long) {
                     onClick = {
                         outcome = UpdateOutcome.Checking
                         scope.launch {
-                            outcome = checker.latest().fold(
+                            outcome = checker.latest(includePrereleases = receiveBeta).fold(
                                 onSuccess = { info ->
                                     if (info == null) UpdateOutcome.NoRelease
                                     else UpdateOutcome.Found(info, isNewerVersion(info.tag, currentVersion))
@@ -193,6 +211,7 @@ private fun NewVersionBlock(info: UpdateInfo, onOpen: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text("发现新版本 ${info.tag}", style = MaterialTheme.typography.headlineSmall)
+            if (info.prerelease) Text("预发布版本 · Beta / RC", style = MaterialTheme.typography.labelMedium)
             info.name.takeIf { it.isNotBlank() && it != info.tag }?.let {
                 Text(it, style = MaterialTheme.typography.titleSmall)
             }

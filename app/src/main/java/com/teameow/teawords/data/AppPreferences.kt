@@ -81,6 +81,10 @@ class AppPreferences(context: Context) {
             prefs.edit().putString(KEY_SELECTED_WORDBOOK_IDS, value.joinToString(",")).apply()
         }
 
+    var receiveBetaUpdates: Boolean
+        get() = prefs.getBoolean("receive_beta_updates", false)
+        set(value) { prefs.edit().putBoolean("receive_beta_updates", value).apply() }
+
     var homeTitle: String
         get() = prefs.getString(KEY_HOME_TITLE, "茶词") ?: "茶词"
         set(value) {

@@ -64,4 +64,13 @@ class UpdateCheckerVersionTest {
         assertFalse(isNewerVersion("1.0-rc1", "1.0.0"))
         assertFalse(isNewerVersion("1.0+build.10", "1.0+build.1"))
     }
+    @Test fun `orders prerelease identifiers numerically and keeps stable above them`() {
+        assertTrue(isNewerVersion("1.2.2-rc.10", "1.2.2-rc.2"))
+        assertTrue(isNewerVersion("1.2.2-rc.2", "1.2.2-rc.1"))
+        assertTrue(isNewerVersion("1.2.2-rc.1", "1.2.2-beta.9"))
+        assertTrue(isNewerVersion("1.2.2", "1.2.2-rc.10"))
+        assertFalse(isNewerVersion("1.2.2-rc.10", "1.2.2"))
+        assertFalse(isNewerVersion("1.2.2-rc.1+build.2", "1.2.2-rc.1+build.1"))
+        assertFalse(isNewerVersion("1.2.2-rc.2", "1.2.2-rc.10"))
+    }
 }

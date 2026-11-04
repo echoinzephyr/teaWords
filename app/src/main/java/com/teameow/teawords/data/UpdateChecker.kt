@@ -21,7 +21,8 @@ data class UpdateInfo(
     val publishedAt: String?,
     /** true 表示这条来自 tag 而不是正式 release，发布说明自然为空。 */
     val fromTag: Boolean = false,
-    val apk: UpdateApk? = null
+    val apk: UpdateApk? = null,
+    val prerelease: Boolean = false
 )
 
 data class UpdateApk(val name: String, val url: String, val size: Long, val sha256: String? = null)
@@ -46,6 +47,7 @@ internal fun versionParts(raw: String?): List<Int> {
 }
 
 fun isComparableVersion(raw: String?): Boolean = versionParts(raw).any { it > 0 }
+fun isPrereleaseVersion(raw: String?): Boolean = VERSION.matchEntire(raw?.trim().orEmpty())?.groupValues?.get(2)?.isNotEmpty() == true
 
 /**
  * [latest] 是否比 [current] 新。解析不出有意义版本号时一律返回 false：
@@ -63,7 +65,24 @@ fun isNewerVersion(latest: String?, current: String?): Boolean {
     // A stable release supersedes a prerelease of the same numeric version.
     val remotePre = VERSION.matchEntire(latest!!.trim())!!.groupValues[2]
     val localPre = VERSION.matchEntire(current!!.trim())!!.groupValues[2]
-    return remotePre.isEmpty() && localPre.isNotEmpty()
+    if (remotePre == localPre) return false
+    if (remotePre.isEmpty()) return true
+    if (localPre.isEmpty()) return false
+    val remoteIds = remotePre.split('.')
+    val localIds = localPre.split('.')
+    for (index in 0 until minOf(remoteIds.size, localIds.size)) {
+        val a = remoteIds[index]; val b = localIds[index]
+        if (a == b) continue
+        val aNumber = a.all { it in '0'..'9' }; val bNumber = b.all { it in '0'..'9' }
+        val comparison = when {
+            aNumber && bNumber -> a.toBigInteger().compareTo(b.toBigInteger())
+            aNumber -> -1
+            bNumber -> 1
+            else -> a.compareTo(b)
+        }
+        if (comparison != 0) return comparison > 0
+    }
+    return remoteIds.size > localIds.size
 }
 
 /**
@@ -78,11 +97,11 @@ class UpdateChecker(
     private val owner: String = OWNER,
     private val repo: String = REPO
 ) {
-    suspend fun latest(): Result<UpdateInfo?> = withContext(Dispatchers.IO) {
+    suspend fun latest(includePrereleases: Boolean = false): Result<UpdateInfo?> = withContext(Dispatchers.IO) {
         try {
-            releaseLatest()?.let { return@withContext Result.success(it) }
-            releaseList()?.let { return@withContext Result.success(it) }
-            tagList()?.let { return@withContext Result.success(it) }
+            if (!includePrereleases) releaseLatest()?.let { return@withContext Result.success(it) }
+            releaseList(includePrereleases)?.let { return@withContext Result.success(it) }
+            tagList(includePrereleases)?.let { return@withContext Result.success(it) }
             Result.success(null)
         } catch (e: CancellationException) {
             throw e
@@ -115,22 +134,33 @@ class UpdateChecker(
         return releaseInfo(JsonParser.parseString(body).asJsonObject)
     }
 
-    private fun releaseList(): UpdateInfo? {
-        val (code, body) = get("/releases")
-        require(code in 200..299) { "GitHub 返回 HTTP $code" }
-        return JsonParser.parseString(body).asJsonArray.mapNotNull { releaseInfo(it.asJsonObject) }
-            .reduceOrNull { best, next -> if (isNewerVersion(next.tag, best.tag)) next else best }
+    private fun releaseList(includePrereleases: Boolean): UpdateInfo? {
+        var best: UpdateInfo? = null
+        for (page in 1..10) {
+            val (code, body) = get("/releases?per_page=100&page=$page")
+            require(code != 404) { "仓库不存在或为私有仓库，当前应用无法匿名读取更新；请登录 GitHub 后打开发布页。" }
+            require(code in 200..299) { "GitHub 返回 HTTP $code" }
+            val entries = JsonParser.parseString(body).asJsonArray
+            entries.mapNotNull { releaseInfo(it.asJsonObject, includePrereleases) }.forEach { next ->
+                if (best == null || isNewerVersion(next.tag, best!!.tag)) best = next
+            }
+            if (entries.size() < 100) break
+        }
+        return best
     }
 
     private fun JsonObject.text(key: String): String =
         get(key)?.takeUnless { it.isJsonNull }?.asString.orEmpty()
 
-    private fun releaseInfo(json: JsonObject): UpdateInfo? {
-        if (json.get("draft")?.asBoolean == true || json.get("prerelease")?.asBoolean == true) return null
+    private fun releaseInfo(json: JsonObject, includePrereleases: Boolean = false): UpdateInfo? {
+        if (json.get("draft")?.asBoolean == true) return null
         val tag = json.text("tag_name")
+        val prerelease = json.get("prerelease")?.asBoolean == true || isPrereleaseVersion(tag)
+        if (prerelease && !includePrereleases) return null
         if (!isComparableVersion(tag)) return null
         return UpdateInfo(
             tag = tag,
+            prerelease = prerelease,
             name = json.text("name"),
             notes = json.text("body"),
             pageUrl = json.text("html_url").ifBlank { repositoryPage() },
@@ -147,11 +177,11 @@ class UpdateChecker(
         )
     }
 
-    private fun tagList(): UpdateInfo? {
+    private fun tagList(includePrereleases: Boolean): UpdateInfo? {
         val (code, body) = get("/tags")
         require(code in 200..299) { "GitHub 返回 HTTP $code" }
         val name = JsonParser.parseString(body).asJsonArray.map { it.asJsonObject.text("name") }
-            .filter { isComparableVersion(it) }
+            .filter { isComparableVersion(it) && (includePrereleases || !isPrereleaseVersion(it)) }
             .reduceOrNull { best, next -> if (isNewerVersion(next, best)) next else best } ?: return null
         return UpdateInfo(
             tag = name,
@@ -159,6 +189,7 @@ class UpdateChecker(
             notes = "",
             pageUrl = "https://github.com/$owner/$repo/releases/tag/$name",
             publishedAt = null,
+            prerelease = isPrereleaseVersion(name),
             fromTag = true
         )
     }

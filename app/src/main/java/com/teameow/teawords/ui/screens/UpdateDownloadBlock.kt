@@ -26,12 +26,12 @@ import java.io.File
 import java.util.Locale
 
 @Composable
-internal fun UpdateDownloadBlock(info: UpdateInfo?, currentVersion: String) {
+internal fun UpdateDownloadBlock(info: UpdateInfo?, currentVersion: String, includePrereleases: Boolean = false) {
     val context = LocalContext.current
     val manager = remember { AppUpdateManager(context) }
     val scope = rememberCoroutineScope()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    var pending by remember { mutableStateOf(manager.pending()?.takeIf { isNewerVersion(it.tag, currentVersion) }) }
+    var pending by remember { mutableStateOf(manager.pending()?.takeIf { isNewerVersion(it.tag, currentVersion) && (includePrereleases || (!it.prerelease && !isPrereleaseVersion(it.tag))) }) }
     var status by remember { mutableStateOf<AppDownloadStatus?>(null) }
     var verified by remember { mutableStateOf<File?>(null) }
     var verifying by remember { mutableStateOf(false) }
@@ -102,7 +102,7 @@ internal fun UpdateDownloadBlock(info: UpdateInfo?, currentVersion: String) {
         }
     }
     val source = info?.takeIf { it.apk != null && isNewerVersion(it.tag, currentVersion) } ?: pending?.let {
-        UpdateInfo(it.tag, it.tag, "", UpdateChecker.RELEASES_URL, null, apk = it.asset)
+        UpdateInfo(it.tag, it.tag, "", UpdateChecker.RELEASES_URL, null, apk = it.asset, prerelease = it.prerelease)
     }
     if (source == null && pending == null) return
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
