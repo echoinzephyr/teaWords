@@ -8,6 +8,7 @@ import json
 import pathlib
 import re
 import sys
+from teaching_source import GUIDES, QUESTIONS
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 HERE = pathlib.Path(__file__).resolve().parent
@@ -30,8 +31,9 @@ def build():
             assert candidates, (i + 1, 'missing locator', text)
             return next((s['id'] for s in candidates if answer and normalize(s['english']) == normalize(answer)), candidates[0]['id'])
         questions = []
-        for number, line in enumerate(edit['questions'][i].splitlines(), 1):
-            kind, prompt, answers, options, explanation, locator = line.split('|')
+        for number, line in enumerate(QUESTIONS[i].splitlines()):
+            kind, prompt, answers, options, explanation, locator, hint = line.split('|')
+            phase = ['understand', 'guided', 'transfer', 'listen'][number // 2]
             accepted = answers.split('~')
             segment_id = locate(locator, accepted[0] if kind == 'dictation' else None)
             if kind == 'dictation':
@@ -40,8 +42,17 @@ def build():
                 for answer in list(accepted):
                     for short, full in [("I'm", 'I am'), ("It's", 'It is'), ("That's", 'That is')]:
                         if short in answer: accepted.append(answer.replace(short, full))
-            questions.append(dict(id=f'q{number:02}', type=kind, prompt=prompt, answers=accepted,
-                                  options=options.split('~') if options else [], explanation=explanation, segmentId=segment_id))
+            # New identities prevent old worksheet answers from being counted as new transfer evidence.
+            choices=options.split('~') if options else []
+            choices.sort(key=lambda choice: hashlib.sha256(f'{i}:{number}:{choice}'.encode('utf8')).digest())
+            questions.append(dict(id=f'{phase}-{number % 2 + 1}', type=kind, phase=phase, hint=hint,
+                                  prompt=prompt, answers=accepted, options=choices,
+                                  explanation=explanation, segmentId=segment_id))
+            if phase == 'transfer':
+                assert not any(normalize(s['english']) in [normalize(a) for a in accepted] for s in segments), (i+1, prompt)
+        guide = dict(GUIDES[i])
+        guide['points'] = [dict(expression=a, meaning=b, useWhen=c, contrast=d, example=e, segmentId=locate(f))
+                           for a,b,c,d,e,f in (line.split('|') for line in guide['points'].splitlines())]
         phrases = []
         for entry in edit['phrases'][i].split(';'):
             english, chinese = entry.split('|')
@@ -59,7 +70,7 @@ def build():
                       # Same pinned bytes on VOA's Akamai delivery host; retain the article's original media URL.
                       audio=dict(original['audio'], sourceUrl=original['audio']['url'],
                                  url=original['audio']['url'].replace('voa-audio.voanews.eu', 'voa-audio-ns.akamaized.net')),
-                      segments=segments, keyPhrases=phrases, explanations=explanations, questions=questions)
+                      segments=segments, keyPhrases=phrases, explanations=explanations, questions=questions, teaching=guide)
         assert len(questions) >= 6 and all(sum(q['type']==kind for q in questions)>=2 for kind in ['comprehension','dictation','expression'])
         assert 6 <= len(phrases) <= 10 and 1 <= len(explanations) <= 2
         previous = 0
@@ -68,7 +79,7 @@ def build():
             previous = s['endMs']
         lessons.append(lesson)
     assert len(lessons) == 12
-    return dict(schemaVersion=1,contentVersion='2026.11.05.2', title='入门英语', lessons=lessons)
+    return dict(schemaVersion=1,contentVersion='2026.11.05.3', title='入门英语', lessons=lessons)
 
 if __name__ == '__main__':
     data = (json.dumps(build(), ensure_ascii=False, indent=2) + '\n').encode('utf8')
@@ -78,4 +89,4 @@ if __name__ == '__main__':
         path = OUTPUT/name
         if '--check' in sys.argv: assert path.read_bytes() == content, f'Outdated course pack: {path}'
         else: path.write_bytes(content)
-    print(f'12 lessons / 72 exercises / text {len(data)} bytes; SHA256 {digest.decode().strip()}')
+    print(f'12 lessons / 96 exercises / text {len(data)} bytes; SHA256 {digest.decode().strip()}')

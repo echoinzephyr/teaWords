@@ -6,6 +6,17 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CoursePersistenceTest {
+    @Test fun retiredQuestionAnswersCannotCompleteTheNewLearningPath() {
+        val context=ApplicationProvider.getApplicationContext<Context>();val name="course-retired-${System.nanoTime()}.db"
+        try { DatabaseHelper(context,name).use { helper ->
+            val repo=CourseRepository(helper);val lesson=CourseCatalog.all.first()
+            helper.writableDatabase.execSQL("INSERT INTO course_v2_answers VALUES(?, 'q01','old answer',1,1)",arrayOf(lesson.id))
+            assertTrue(repo.progress(lesson.id).answers.isEmpty())
+            lesson.questions.forEach{repo.submit(lesson,it.id,"wrong",0)}
+            val state=repo.progress(lesson.id)
+            assertTrue(state.attemptedAll);assertFalse(state.complete);assertEquals(8,state.mistakes.size)
+        } } finally {context.deleteDatabase(name)}
+    }
     @Test fun checkpointAnswersRetriesAndDraftSurviveReopenWithoutTouchingVocabulary() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val name = "course-${System.nanoTime()}.db"; val lesson = CourseCatalog.all.first()
@@ -32,7 +43,7 @@ class CoursePersistenceTest {
                 lesson.questions.drop(1).forEach { repo.submit(lesson,it.id,it.answers.first(),0) }
                 assertTrue(repo.progress(lesson.id).complete)
                 assertTrue(repo.progress(lesson.id).mistakes.isEmpty())
-                repo.save(lesson.id, repo.progress(lesson.id).checkpoint.copy(draft="offline draft",speed=0.75f))
+                repo.save(lesson.id, repo.progress(lesson.id).checkpoint.copy(draft="offline draft",speed=0.75f,guideVersion=2,guidedStage=4,drafts=mapOf("transfer-1" to "my saved answer"),roundIds=listOf("transfer-1"),reviewAt=123456789L))
                 assertEquals(before, learning.states())
                 assertTrue(helper.isInVocabulary("untouched"))
                 helper.readableDatabase.rawQuery("SELECT note FROM study_word_notes WHERE word='untouched'",null).use {
@@ -41,8 +52,9 @@ class CoursePersistenceTest {
             }
             DatabaseHelper(context,name).use { helper ->
                 val p = CourseRepository(helper).progress(lesson.id)
-                assertTrue(p.complete); assertEquals(6,p.answers.size)
+                assertTrue(p.complete); assertEquals(lesson.questions.size,p.answers.size)
                 assertEquals(2,p.answers[lesson.questions.first().id]!!.attempt)
+                assertEquals("my saved answer",p.checkpoint.drafts["transfer-1"]);assertEquals(4,p.checkpoint.guidedStage)
                 assertEquals("offline draft",p.checkpoint.draft); assertEquals(6000,p.checkpoint.positionMs)
                 assertEquals(0,LearningRepository(helper).states().single().attempts)
             }

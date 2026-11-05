@@ -31,6 +31,32 @@ class CourseCatalogTest {
             }
         }
     }
+    @Test fun transferChangesContextAndEveryLessonHasAnExplicitTeachingGoal() {
+        CourseCatalog.all.forEach { lesson ->
+            assertEquals(8,lesson.questions.size)
+            assertEquals(3,lesson.teaching.points.size)
+            lesson.questions.filter{it.phase=="transfer"}.forEach { q ->
+                assertTrue(q.options.isEmpty())
+                assertFalse(lesson.segments.any{q.accepts(it.english)})
+                assertTrue(q.hint.isNotBlank())
+            }
+        }
+    }
+    @Test fun wrongAnswersAreAttemptedButNeverCountAsPassingTheLesson() {
+        val lesson=CourseCatalog.all.first()
+        val wrong=lesson.questions.associate{it.id to CourseRepository.Answer("wrong",false,1)}
+        val state=CourseRepository.Progress(answers=wrong,total=lesson.questions.size)
+        assertTrue(state.attemptedAll);assertFalse(state.complete)
+        assertFalse(CourseReviewTiming.due(state,100))
+        val right=state.copy(answers=wrong.mapValues{CourseRepository.Answer("right",true,2)},
+            checkpoint=CourseRepository.Checkpoint(reviewAt=100))
+        assertTrue(right.complete)
+        assertTrue(CourseReviewTiming.due(right,100))
+        assertFalse(CourseReviewTiming.due(right,99))
+        assertEquals(86_400_000L,CourseReviewTiming.next(0,0))
+        assertEquals(259_200_000L,CourseReviewTiming.next(0,1))
+        assertEquals(604_800_000L,CourseReviewTiming.next(0,2))
+    }
     @Test fun invalidAudioTimelineAndSourceAreRejected() {
         val pack = CourseCatalog.pack; val first = pack.lessons.first()
         val bad = first.copy(segments = first.segments.mapIndexed { i,s -> if (i==0) s.copy(endMs=first.audio.durationMs+1) else s })

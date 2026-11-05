@@ -52,79 +52,115 @@ class CourseScreensTest {
         preservedAudio?.let { cachedAudio().apply { parentFile!!.mkdirs() }.writeBytes(it) }
     }
 
-    @Test fun directoryShowsNewRouteAndSearchesAcrossUnits() {
+    private fun seedAudio() {
+        val audio=cachedAudio().apply { parentFile!!.mkdirs() }
+        InstrumentationRegistry.getInstrumentation().context.assets.open("course-welcome.mp3").use { input -> audio.outputStream().use { input.copyTo(it) } }
+    }
+    private fun capture(name:String) {
+        compose.waitForIdle()
+        val directory=File(testContext.filesDir,"course-teaching").apply{mkdirs()}
+        val image=InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        File(directory,"$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}
+    }
+    @Test fun directoryShowsMissionAndSearchesAcrossUnits() {
         val db=database()
-        compose.setContent { androidx.compose.runtime.CompositionLocalProvider(LocalContext provides testContext) { TeaWordsTheme { CourseListScreen(db,onBack={},onOpen={}) } } }
+        compose.setContent { TeaWordsTheme { CourseListScreen(db,onBack={},onOpen={}) } }
         compose.onNodeWithText("入门英语").assertExists()
         compose.onNodeWithText("找课程").performTextInput("family")
         compose.onNodeWithText("Meet My Family").assertExists()
-        compose.onNodeWithText("Welcome!").assertDoesNotExist()
     }
-    @Test fun freeTabsAndFeedbackPersistAndSummaryRetriesOnlyMistakes() {
+    @Test fun lessonTeachesBeforeTransferAndFinishesWithAnHonestReviewPlan() {
         val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
-        lesson.questions.forEach { repo.submit(lesson,it.id,if(it==lesson.questions.first()) "wrong" else it.answers.first(),0) }
-        compose.setContent { androidx.compose.runtime.CompositionLocalProvider(LocalContext provides testContext) { TeaWordsTheme { CourseLessonScreen(db,lesson,onBack={}) } } }
-        compose.onNodeWithText("总结",useUnmergedTree=true).performClick()
-        compose.onNodeWithText("本课已完成").assertExists()
-        compose.onNodeWithText("重练 1 道错题").performClick()
+        seedAudio()
+        compose.setContent { TeaWordsTheme { CourseLessonScreen(db,lesson,onBack={}) } }
+        compose.onNodeWithText("开始学习").performClick()
+        fun answerQuestion(q:CourseQuestion) {
+            if(q.type=="dictation") {
+                compose.onNodeWithTag("tea-exercise-content").performScrollToNode(hasText("听题目原声"))
+                compose.onNodeWithText("听题目原声").performClick()
+            }
+            if(q.options.isEmpty()) {
+                compose.onNodeWithTag("tea-exercise-content").performScrollToNode(hasText("你的答案"))
+                compose.onNodeWithText("你的答案").performTextInput(q.answers.first())
+            } else {
+                compose.onNodeWithTag("tea-exercise-content").performScrollToNode(hasText(q.answers.first()))
+                compose.onNodeWithText(q.answers.first()).performClick()
+            }
+            compose.onNodeWithText("提交答案").performClick()
+            compose.onNodeWithText("这次答对了").assertExists()
+            compose.onNodeWithText("继续").performClick()
+        }
+        lesson.questions.filter{it.phase=="understand"}.forEach(::answerQuestion)
+        compose.onNodeWithText(lesson.teaching.points.first().expression).assertExists()
+        repeat(2){compose.onNodeWithText("下一个表达").performClick()}
+        compose.onNodeWithText("带着提示试一试").performClick()
+        lesson.questions.filter{it.phase in setOf("guided","transfer","listen")}.forEach(::answerQuestion)
+        compose.onNodeWithText("本轮已过关").assertExists()
+        assertTrue(repo.progress(lesson.id).complete)
+        compose.waitUntil(5000){repo.progress(lesson.id).checkpoint.reviewAt>System.currentTimeMillis()}
+    }
+    @Test fun allWrongAnswersRemainPendingAndWrongQuestionRetryCanRepairThem() {
+        val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
+        lesson.questions.forEach { repo.submit(lesson,it.id,if(it==lesson.questions.first())"wrong" else it.answers.first(),0) }
+        compose.setContent { TeaWordsTheme { CourseLessonScreen(db,lesson,onBack={}) } }
+        compose.onNodeWithText("练过了，再巩固一下").assertExists()
+        assertFalse(repo.progress(lesson.id).complete)
+        compose.onNodeWithText("巩固 1 道错题").performClick()
+        compose.onNodeWithTag("tea-exercise-content").performScrollToNode(hasText(lesson.questions.first().answers.first()))
         compose.onNodeWithText(lesson.questions.first().answers.first()).performClick()
-        compose.onNodeWithText("提交答案").performScrollTo().performClick()
-        compose.waitUntil(5000) { repo.progress(lesson.id).mistakes.isEmpty() }
-        assertEquals(6,repo.progress(lesson.id).answers.size)
+        compose.onNodeWithText("提交答案").performClick()
+        compose.onNodeWithText("继续").performClick()
+        compose.onNodeWithText("本轮已过关").assertExists()
+        assertEquals(8,repo.progress(lesson.id).answers.size)
     }
-    @Test fun unavailableAudioKeepsDictationAndDraftWithoutRevealingTranslation() {
+    @Test fun missingAudioKeepsListeningDraftAndNeverSubstitutesChinese() {
         val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
-        repo.save(lesson.id,CourseRepository.Checkpoint(section=2,question=2,draft="I am",started=true))
-        compose.setContent { androidx.compose.runtime.CompositionLocalProvider(LocalContext provides testContext) { TeaWordsTheme { CourseLessonScreen(db,lesson,onBack={}) } } }
-        compose.onNodeWithText("你的答案").assertExists()
+        repo.save(lesson.id,CourseRepository.Checkpoint(guideVersion=2,guidedStage=5,
+            drafts=mapOf("listen-1" to "I am"),started=true))
+        compose.setContent { TeaWordsTheme { CourseLessonScreen(db,lesson,onBack={}) } }
+        compose.onNodeWithText("提交答案").assertIsNotEnabled()
+        compose.onNodeWithTag("tea-exercise-content").performScrollToNode(hasText("你的答案"))
         compose.onNodeWithText("I am",substring=false).assertExists()
-        compose.onNodeWithText("提交答案").performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText("请先下载本课原声再听写。").assertExists()
         assertTrue(repo.progress(lesson.id).answers.isEmpty())
     }
-
-    @Test fun captureCoursePagesOnSmallScreenInLightDarkAndLargeType() {
+    @Test fun referenceReturnsToTheSameTransferDraft() {
         val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
-        val audio=File(testContext.filesDir,"course_audio/${lesson.audio.sha256}.mp3")
-        audio.parentFile!!.mkdirs()
-        InstrumentationRegistry.getInstrumentation().context.assets.open("course-welcome.mp3").use { input -> audio.outputStream().use { input.copyTo(it) } }
-        lesson.questions.forEach { repo.submit(lesson,it.id,if(it==lesson.questions.first()) "wrong" else it.answers.first(),0) }
+        repo.save(lesson.id,CourseRepository.Checkpoint(guideVersion=2,guidedStage=4,
+            drafts=mapOf("transfer-1" to "I am M"),started=true))
+        compose.setContent { TeaWordsTheme { CourseLessonScreen(db,lesson,onBack={}) } }
+        compose.onNodeWithText("原文与词句笔记").performClick()
+        compose.onNodeWithText("词句笔记",useUnmergedTree=true).assertExists()
+        compose.onNodeWithContentDescription("返回").performClick()
+        compose.onNodeWithTag("tea-exercise-content").performScrollToNode(hasText("你的答案"))
+        compose.onNodeWithText("I am M",substring=false).assertExists()
+        assertTrue("transfer-1" in repo.progress(lesson.id).checkpoint.hinted)
+    }
+    @Test fun captureGuidedLearningOnSmallScreensAndThemes() {
+        val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
+        seedAudio()
         var appearance by mutableStateOf("light")
-        var page by mutableIntStateOf(0)
-        compose.setContent { androidx.compose.runtime.CompositionLocalProvider(LocalContext provides testContext) {
+        var targetStage by mutableIntStateOf(0)
+        var generation by mutableIntStateOf(0)
+        compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density,if(appearance=="large")1.5f else 1f)) {
-                TeaWordsTheme(darkTheme=appearance=="dark" || appearance=="black",pureBlack=appearance=="black",dynamicColor=appearance=="dynamic") {
+                TeaWordsTheme(darkTheme=appearance in listOf("dark","black"),pureBlack=appearance=="black",dynamicColor=appearance=="dynamic") {
                     Box(Modifier.widthIn(max=320.dp).height(640.dp)) { Surface {
-                        key(page,appearance) {
-                            if(page==0) CourseListScreen(db,onBack={},onOpen={}) else CourseLessonScreen(db,lesson,onBack={})
-                        }
+                        key(appearance,generation) { CourseLessonScreen(db,lesson,onBack={}) }
                     } }
                 }
             }
-        } }
-        val directory=File(testContext.filesDir,"course-rebuild").apply{mkdirs()}
-        fun capture(name:String) {
-            compose.waitForIdle()
-            val image=InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
-            File(directory,"$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}
         }
         for(theme in listOf("light","dark","black","dynamic","large")) {
-            compose.runOnIdle { appearance=theme;page=0 }
-            compose.onNodeWithText("找课程").assertExists();capture("directory-$theme")
+            compose.runOnIdle { appearance=theme }
+            capture("intro-$theme")
         }
-        compose.runOnIdle { appearance="light";page=1 }
-        capture("lesson-text-light")
-        compose.onNodeWithText("讲解",useUnmergedTree=true).performClick();capture("lesson-explanation")
-        compose.onNodeWithText("练习",useUnmergedTree=true).performClick();capture("lesson-practice")
-        compose.onNodeWithText("总结",useUnmergedTree=true).performClick();capture("lesson-summary")
-        compose.runOnIdle { appearance="dark" }
-        capture("lesson-summary-dark")
-        compose.runOnIdle { appearance="large" }
-        compose.onNodeWithText("课文",useUnmergedTree=true).performClick()
-        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("course-segment-s09"))
-        compose.onNodeWithTag("course-segment-s09").assertIsDisplayed()
-        capture("lesson-text-large-scrolled")
-        audio.delete()
+        for(stage in listOf(1,2,3,4,5)) {
+            compose.runOnIdle {
+                repo.save(lesson.id,repo.progress(lesson.id).checkpoint.copy(guideVersion=2,guidedStage=stage,question=0))
+                appearance="light";targetStage=stage;generation++
+            }
+            capture("activity-$stage")
+        }
     }
 
     @Test fun nativePlaybackSupportsSentenceLoopSpeedAndPausesOnBackground() {
@@ -172,12 +208,12 @@ class CourseScreensTest {
         val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
         val audio=cachedAudio().apply { parentFile!!.mkdirs() }
         InstrumentationRegistry.getInstrumentation().context.assets.open("course-welcome.mp3").use { input -> audio.outputStream().use { input.copyTo(it) } }
-        compose.setContent { TeaWordsTheme { CourseLessonScreen(db,lesson,onBack={}) } }
+        compose.setContent { TeaWordsTheme { CourseReferenceScreen(db,lesson,onBack={}) } }
         compose.waitUntil(10000) { compose.onAllNodes(hasText("整课播放") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("整课播放").performClick()
         compose.waitUntil(7000) { repo.progress(lesson.id).checkpoint.let { it.sentence>=1 && it.positionMs>2600 } }
         compose.onNodeWithTag("course-segment-s02").assertIsDisplayed()
-        compose.onNodeWithText("讲解",useUnmergedTree=true).performClick()
+        compose.onNodeWithText("词句笔记",useUnmergedTree=true).performClick()
         compose.onNodeWithText("课文",useUnmergedTree=true).performClick()
         compose.onNodeWithText("整课播放").assertIsEnabled()
         assertTrue(repo.progress(lesson.id).checkpoint.positionMs>0)
@@ -185,23 +221,23 @@ class CourseScreensTest {
 
     @Test fun keyboardAtLargeFontKeepsDraftAndSubmitReachableAfterBackground() {
         val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
-        repo.save(lesson.id,CourseRepository.Checkpoint(section=2,question=4,started=true))
+        repo.save(lesson.id,CourseRepository.Checkpoint(guideVersion=2,guidedStage=4,question=0,started=true))
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density,1.5f)) {
                 TeaWordsTheme { Box(Modifier.widthIn(max=320.dp).height(640.dp)) { CourseLessonScreen(db,lesson,onBack={}) } }
             }
         }
-        compose.onNodeWithText("你的答案").performClick().performTextInput("Nice to meet you")
+        compose.onNodeWithText("你的答案").performClick().performTextInput("I am Mei")
         compose.onNodeWithText("提交答案").performScrollTo().assertIsDisplayed()
-        assertEquals("Nice to meet you",repo.progress(lesson.id).checkpoint.draft)
-        val directory=File(testContext.filesDir,"course-rebuild").apply{mkdirs()}
+        assertEquals("I am Mei",repo.progress(lesson.id).checkpoint.drafts["transfer-1"])
+        val directory=File(testContext.filesDir,"course-teaching").apply{mkdirs()}
         val screenshot=InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
         File(directory,"lesson-keyboard-large.png").outputStream().use { screenshot.compress(Bitmap.CompressFormat.PNG,100,it) }
         compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
         compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
-        compose.onNodeWithText("Nice to meet you",substring=false).assertExists()
+        compose.onNodeWithText("I am Mei",substring=false).assertExists()
         compose.onNodeWithText("提交答案").performScrollTo().performClick()
-        compose.waitUntil(5000) { repo.progress(lesson.id).answers[lesson.questions[4].id]?.correct==true }
+        compose.waitUntil(5000) { repo.progress(lesson.id).answers["transfer-1"]?.correct==true }
     }
 
     @Test fun localRecordingCanBeSavedReplayedAndDeletedAfterBackground() {

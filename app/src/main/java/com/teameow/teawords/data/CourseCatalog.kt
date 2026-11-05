@@ -13,14 +13,21 @@ data class CourseSegment(val id: String, val speaker: String, val english: Strin
 data class CourseKeyPhrase(val english: String, val chinese: String, val segmentId: String)
 data class CourseExplanation(val title: String, val text: String, val example: String, val segmentId: String)
 data class CourseQuestion(val id: String, val type: String, val prompt: String, val options: List<String>,
-                          val answers: List<String>, val explanation: String, val segmentId: String) {
+                          val answers: List<String>, val explanation: String, val segmentId: String,
+                          val phase: String = "", val hint: String = "") {
     fun accepts(input: String): Boolean = answers.any { CourseAnswers.normalize(it) == CourseAnswers.normalize(input) }
 }
+data class CourseTeachingPoint(val expression: String, val meaning: String, val useWhen: String,
+                               val contrast: String, val example: String, val segmentId: String)
+data class CourseTeachingGuide(val situation: String, val mission: String, val listenFor: String,
+                               val points: List<CourseTeachingPoint>, val speakingTask: String,
+                               val speakingExample: String, val takeaway: String)
 data class CourseLesson(val id: String, val number: Int, val unit: Int, val title: String, val subtitle: String,
                         val objectives: List<String>, val prerequisites: List<String>, val skills: List<String>,
                         val minutes: Int, val source: CourseSource, val audio: CourseAudio,
                         val segments: List<CourseSegment>, val keyPhrases: List<CourseKeyPhrase>,
-                        val explanations: List<CourseExplanation>, val questions: List<CourseQuestion>)
+                        val explanations: List<CourseExplanation>, val questions: List<CourseQuestion>,
+                        val teaching: CourseTeachingGuide)
 data class CoursePack(val schemaVersion: Int, val contentVersion: String, val title: String,
                       val lessons: List<CourseLesson>)
 
@@ -63,6 +70,12 @@ object CourseCatalog {
             require(lesson.keyPhrases.all { it.segmentId in ids && it.english.isNotBlank() && it.chinese.isNotBlank() })
             require(lesson.explanations.all { it.segmentId in ids && it.text.isNotBlank() && it.example.isNotBlank() })
             require(lesson.questions.map { it.id }.distinct().size == lesson.questions.size)
+            require(lesson.teaching.situation.isNotBlank() && lesson.teaching.mission.isNotBlank())
+            require(lesson.teaching.points.size in 2..4 && lesson.teaching.speakingTask.isNotBlank())
+            require(lesson.teaching.points.all { it.segmentId in ids && it.contrast.isNotBlank() && it.example.isNotBlank() })
+            listOf("understand", "guided", "transfer", "listen").forEach { phase ->
+                require(lesson.questions.count { it.phase == phase } >= 2)
+            }
             listOf("comprehension", "dictation", "expression").forEach { type ->
                 require(lesson.questions.count { it.type == type } >= 2)
             }
@@ -71,6 +84,9 @@ object CourseCatalog {
                 require(q.prompt.isNotBlank() && q.answers.isNotEmpty() && q.answers.all { CourseAnswers.normalize(it).isNotBlank() })
                 require(q.explanation.isNotBlank() && (q.options.isEmpty() || q.answers.first() in q.options))
                 require(q.options.distinct().size == q.options.size)
+                if (q.phase == "transfer") {
+                    require(q.options.isEmpty() && lesson.segments.none { q.accepts(it.english) })
+                }
                 if (q.type == "dictation") require(q.options.isEmpty() && q.accepts(lesson.segments.single { it.id == q.segmentId }.english))
             }
         }

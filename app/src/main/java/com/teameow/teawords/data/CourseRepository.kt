@@ -28,11 +28,16 @@ class CourseRepository(private val helper: DatabaseHelper) {
     data class Checkpoint(val section: Int = 0, val sentence: Int = 0, val positionMs: Int = 0,
                           val question: Int = 0, val draft: String = "", val started: Boolean = false,
                           val speed: Float = 1f, val follow: Boolean = true,
-                          val listIndex: Int = 0, val listOffset: Int = 0)
+                          val listIndex: Int = 0, val listOffset: Int = 0,
+                          val guideVersion: Int = 0, val guidedStage: Int = 0, val point: Int = 0,
+                          val drafts: Map<String, String> = emptyMap(), val hinted: List<String> = emptyList(),
+                          val roundIds: List<String> = emptyList(), val roundDone: List<String> = emptyList(),
+                          val reviewAt: Long = 0, val reviewCount: Int = 0, val reviewRound: Boolean = false)
     data class Answer(val input: String, val correct: Boolean, val attempt: Int)
     data class Progress(val checkpoint: Checkpoint = Checkpoint(), val answers: Map<String, Answer> = emptyMap(),
                         val total: Int = 0) {
-        val complete get() = total > 0 && answers.size == total
+        val attemptedAll get() = total > 0 && answers.size == total
+        val complete get() = attemptedAll && mistakes.isEmpty()
         val step get() = if (checkpoint.started) answers.size + 1 else 0
         val mistakes get() = answers.filterValues { !it.correct }.keys
     }
@@ -43,7 +48,9 @@ class CourseRepository(private val helper: DatabaseHelper) {
         val answers = db.rawQuery("SELECT question_id,input,correct,attempt FROM course_v2_answers WHERE lesson_id=?", arrayOf(id)).use {
             buildMap { while (it.moveToNext()) put(it.getString(0), Answer(it.getString(1), it.getInt(2) != 0, it.getInt(3))) }
         }
-        return Progress(checkpoint, answers, CourseCatalog.all.firstOrNull { it.id == id }?.questions?.size ?: 0)
+        val lesson = CourseCatalog.all.firstOrNull { it.id == id }
+        val active = lesson?.questions?.map { it.id }?.toSet().orEmpty()
+        return Progress(checkpoint, answers.filterKeys { it in active }, active.size)
     }
     fun allProgress(): Map<String, Progress> = CourseCatalog.all.associate { it.id to progress(it.id) }
     fun save(lessonId: String, checkpoint: Checkpoint) {
@@ -70,4 +77,13 @@ class CourseRepository(private val helper: DatabaseHelper) {
         } finally { db.endTransaction() }
         return progress(lesson.id)
     }
+}
+
+/** Short-course retrieval reminders only; separate from the word learning scheduler. */
+object CourseReviewTiming {
+    fun next(now: Long, completedReviews: Int) = now + when (completedReviews) {
+        0 -> 1L; 1 -> 3L; else -> 7L
+    } * 24 * 60 * 60 * 1000
+    fun due(progress: CourseRepository.Progress, now: Long) = progress.complete &&
+        progress.checkpoint.reviewAt in 1..now
 }

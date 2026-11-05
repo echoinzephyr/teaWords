@@ -21,3 +21,6 @@
 -keep class com.teameow.teawords.data.CourseExplanation { *; }
 -keep class com.teameow.teawords.data.CourseQuestion { *; }
 -keep class com.teameow.teawords.data.CourseRepository$Checkpoint { *; }
+
+-keep class com.teameow.teawords.data.CourseTeachingGuide { *; }
+-keep class com.teameow.teawords.data.CourseTeachingPoint { *; }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentVersion": "2026.11.05.2",
+  "contentVersion": "2026.11.05.3",
   "title": "入门英语",
   "lessons": [
     {
@@ -166,80 +166,161 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "谁欢迎安娜来到欧文街？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "这段对话主要在完成什么事情？",
           "answers": [
-            "皮特"
+            "初次见面，确认身份并表示欢迎"
           ],
           "options": [
-            "玛莎",
-            "皮特",
-            "乔纳森"
+            "询问去超市的路",
+            "初次见面，确认身份并表示欢迎",
+            "向邻居借东西"
           ],
-          "explanation": "皮特说 Welcome to ... 1400 Irving Street，欢迎安娜来到新住处。",
-          "segmentId": "s08"
+          "explanation": "Are you Anna? 先确认身份；介绍姓名和 Nice to meet you 接着完成认识新朋友的过程。",
+          "segmentId": "s01"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "安娜的名字怎样拼写？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Pete 把 Anna 的名字拼错后，Anna 怎样回应？",
           "answers": [
-            "A-N-N-A"
+            "先否定，再重新拼写"
           ],
           "options": [
-            "A-N-A",
-            "A-N-N-A",
-            "A-M-N-A"
+            "只说谢谢",
+            "再说一次地址",
+            "先否定，再重新拼写"
           ],
-          "explanation": "安娜用 No 纠正皮特，名字中有两个 n。",
+          "explanation": "No 表示前面的拼法不对，后面的 A-N-N-A 给出正确信息。",
           "segmentId": "s07"
         },
         {
-          "id": "q03",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "想一想：谁是说话的人？",
+          "prompt": "选出向别人介绍自己的句子。",
+          "answers": [
+            "I am Lina."
+          ],
+          "options": [
+            "You am Lina.",
+            "Are you Lina?",
+            "I am Lina."
+          ],
+          "explanation": "自己用 I，搭配 am。Are you ...? 是问对方，不是在介绍自己。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "陈述句是 You are Ben。",
+          "prompt": "补全确认姓名的问句：___ you Ben?",
+          "answers": [
+            "Are"
+          ],
+          "options": [
+            "Are",
+            "Is",
+            "Am"
+          ],
+          "explanation": "you 搭配 are；标准问句把 are 放在 you 前面。",
+          "segmentId": "s01"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "主语用 I；后面接 am 和你的名字。",
+          "prompt": "新同学先打招呼。你叫 Mei：用 I am 或 I’m 介绍自己，只写介绍姓名的一句。",
+          "answers": [
+            "I am Mei.",
+            "I'm Mei."
+          ],
+          "options": [],
+          "explanation": "把名字换成 Mei，I am 的结构不变。Are you Mei? 是在询问别人。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "用 Are you + 名字。",
+          "prompt": "门口的人可能是 Ben。请用 Are you 开头核实他的名字，写一个完整问句。",
+          "answers": [
+            "Are you Ben?"
+          ],
+          "options": [],
+          "explanation": "这是确认对方身份，所以用 Are you Ben?，不能写成 I am Ben。",
+          "segmentId": "s01"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出皮特介绍自己的完整一句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "只听原声，写出 Pete 介绍自己的完整一句。",
           "answers": [
             "I am Pete."
           ],
           "options": [],
-          "explanation": "I am + 名字用来介绍自己。注意 Pete 是人名。",
+          "explanation": "人名 Pete 放在 I am 后面，形成完整的自我介绍。",
           "segmentId": "s03"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出安娜第一次说的见面问候。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "只听原声，写出 Anna 第一次说的见面问候。",
           "answers": [
             "Nice to meet you."
           ],
           "options": [],
-          "explanation": "Nice to meet you 表示初次见面时的“很高兴认识你”。",
+          "explanation": "固定表达中保留 to；这句话适合初次认识时使用。",
           "segmentId": "s04"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "初次见面，怎样用英语说“很高兴认识你”？",
-          "answers": [
-            "Nice to meet you."
-          ],
-          "options": [],
-          "explanation": "固定表达 Nice to meet you 中的 to 不能省略。",
-          "segmentId": "s04"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全问句：___ you Anna?（你是安娜吗？只填空缺词）",
-          "answers": [
-            "Are"
-          ],
-          "options": [],
-          "explanation": "询问 You are ... 是否成立时，把 are 放在 you 前面。",
-          "segmentId": "s01"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "你刚搬到新住处，第一次见到邻居。你想确认对方的名字，再介绍自己。",
+        "mission": "能用英语完成一次简短的初次见面。",
+        "listenFor": "先听人物怎样确认姓名、怎样回应问候。第一遍不必记住地址和拼写。",
+        "points": [
+          {
+            "expression": "I am … / I’m …",
+            "meaning": "我是……",
+            "useWhen": "主动说自己的名字。",
+            "contrast": "I am 用来介绍自己；Are you 用来确认对方，顺序不同。",
+            "example": "Hi, I’m Lina.",
+            "segmentId": "s03"
+          },
+          {
+            "expression": "Are you …?",
+            "meaning": "你是……吗？",
+            "useWhen": "你大概知道对方的名字，想核实一下。",
+            "contrast": "不要写成 You are ...? 来练习本课的标准问句；把 are 提到 you 前面。",
+            "example": "Are you Ben?",
+            "segmentId": "s01"
+          },
+          {
+            "expression": "Nice to meet you.",
+            "meaning": "很高兴认识你。",
+            "useWhen": "初次见面时，回应或表达友好。",
+            "contrast": "初次认识用 meet；再次见面通常说 Nice to see you。",
+            "example": "I’m Lina. Nice to meet you.",
+            "segmentId": "s04"
+          }
+        ],
+        "speakingTask": "想象新邻居问你“Are you Mei?”。你就是 Mei：先确认，再说很高兴认识对方。合上示范，用自己的声音说两句。",
+        "speakingExample": "Yes, I am. Nice to meet you.",
+        "takeaway": "确认对方 → 介绍自己 → 友好回应。名字换了，句子的基本结构不变。"
+      }
     },
     {
       "id": "voa1-02",
@@ -454,80 +535,161 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "安娜来自哪里？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Jonathan 问 Where are you from?，想了解哪件事？",
           "answers": [
-            "一个小镇"
+            "Anna 来自哪里"
           ],
           "options": [
-            "华盛顿市中心",
-            "一个小镇",
-            "乔纳森的公寓"
+            "Anna 现在站在哪里",
+            "Anna 的房间有多大",
+            "Anna 来自哪里"
           ],
-          "explanation": "I am from a small town 直接说明她来自一个小镇，并未说出镇名。",
-          "segmentId": "s04"
+          "explanation": "from 指向来源地；它和 Where are you? 的用途不同。",
+          "segmentId": "s03"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "谁是安娜的室友？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Anna 说 Marsha is my roommate，说明了什么？",
           "answers": [
-            "玛莎"
+            "她们住在一起"
           ],
           "options": [
-            "皮特",
-            "乔纳森",
-            "玛莎"
+            "她们住在一起",
+            "Marsha 刚搬到同一座城",
+            "她们只是在同一公司"
           ],
-          "explanation": "安娜说 Marsha is my roommate；roommate 是室友。",
+          "explanation": "roommate 是同住的室友，这里不仅是在说“朋友”。",
           "segmentId": "s08"
         },
         {
-          "id": "q03",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "本题问来源，不问当前位置。",
+          "prompt": "补全来源句：I am ___ Beijing.",
+          "answers": [
+            "from"
+          ],
+          "options": [
+            "from",
+            "in",
+            "to"
+          ],
+          "explanation": "from 说明来自哪里，in 更常说明现在的位置。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "“我的”不是 I。",
+          "prompt": "选出“Lina 是我的室友”。",
+          "answers": [
+            "Lina is my roommate."
+          ],
+          "options": [
+            "Lina is my roommate.",
+            "Lina is I roommate.",
+            "Lina am my roommate."
+          ],
+          "explanation": "一个人的名字搭配 is，“我的”用 my。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "from 后直接接 Shanghai。",
+          "prompt": "你来自 Shanghai。用 I am from 或 I’m from，向新朋友说明这件事。",
+          "answers": [
+            "I am from Shanghai.",
+            "I'm from Shanghai."
+          ],
+          "options": [],
+          "explanation": "来源句是 I am from + 地点。换了城市，from 仍要保留。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "Ben + is + my roommate。",
+          "prompt": "你的室友叫 Ben。用 Ben 开头，写一句话介绍他与你的关系。",
+          "answers": [
+            "Ben is my roommate."
+          ],
+          "options": [],
+          "explanation": "Ben 是第三人称单数，用 is；my roommate 说明关系。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出询问来自哪里的整句问话。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出询问来源地的问句。",
           "answers": [
             "Where are you from?"
           ],
           "options": [],
-          "explanation": "Where are you from? 询问来自哪里，from 放在句末。",
+          "explanation": "听清句末的 from，不能把问来源变成问位置。",
           "segmentId": "s03"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出安娜回答来自哪里的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Anna 回答来自哪里的完整一句。",
           "answers": [
             "I am from a small town."
           ],
           "options": [],
-          "explanation": "a small town 是“一个小镇”，a 不可省略。",
+          "explanation": "a small town 是一个小镇；a 与 from 都是句子的一部分。",
           "segmentId": "s04"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "向新朋友询问“你从哪里来？”，用本课的句型。",
-          "answers": [
-            "Where are you from?"
-          ],
-          "options": [],
-          "explanation": "Where + are + you + from 是本课的完整问句。",
-          "segmentId": "s03"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：Marsha is my ___.（玛莎是我的室友，只填一个词）",
-          "answers": [
-            "roommate"
-          ],
-          "options": [],
-          "explanation": "roommate 表示共同居住的室友，不等于 friend。",
-          "segmentId": "s08"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "朋友把你介绍给另一位邻居。对方想知道你从哪里来、和谁一起住。",
+        "mission": "能介绍自己的来源地和一位室友。",
+        "listenFor": "听出 Anna 来自什么地方，以及 Marsha 和她的关系。公寓编号先不用背。",
+        "points": [
+          {
+            "expression": "Where are you from?",
+            "meaning": "你来自哪里？",
+            "useWhen": "认识新朋友时，询问对方来自的地方。",
+            "contrast": "问来源用 from；Where are you? 问的是现在的位置。",
+            "example": "Where are you from, Ben?",
+            "segmentId": "s03"
+          },
+          {
+            "expression": "I am from …",
+            "meaning": "我来自……",
+            "useWhen": "用地点回答来源问题。",
+            "contrast": "from 后面接地点，不加额外的 am。",
+            "example": "I’m from Beijing.",
+            "segmentId": "s04"
+          },
+          {
+            "expression": "… is my roommate.",
+            "meaning": "……是我的室友。",
+            "useWhen": "介绍与你同住的人。",
+            "contrast": "my 后直接接名词；roommate 与 friend 不是同一个意思。",
+            "example": "Lina is my roommate.",
+            "segmentId": "s08"
+          }
+        ],
+        "speakingTask": "你来自 Beijing，室友叫 Lina。向新邻居介绍这两件事，每件事说一句。",
+        "speakingExample": "I’m from Beijing. Lina is my roommate.",
+        "takeaway": "Where … from 问来源；I’m from … 回答；my roommate 说明关系。"
+      }
     },
     {
       "id": "voa1-03",
@@ -798,80 +960,160 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "安娜为什么想找超市？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "第一次电话里，Anna 为什么没有问到超市的位置？",
           "answers": [
-            "她想做晚饭"
+            "她拨错了号码"
           ],
           "options": [
-            "她想找工作",
-            "她想做晚饭",
-            "她要找室友"
+            "对方不知道超市",
+            "她拨错了号码",
+            "她忘了自己的名字"
           ],
-          "explanation": "她先说 I want to cook dinner，随后询问附近的超市。",
+          "explanation": "对方说 You have the wrong number。先确认联系到谁，才能继续问事。",
+          "segmentId": "s07"
+        },
+        {
+          "id": "understand-2",
+          "type": "comprehension",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "联系到 Marsha 后，Anna 的主要需求是什么？",
+          "answers": [
+            "找超市，好准备晚饭"
+          ],
+          "options": [
+            "找一个新室友",
+            "打听 Marsha 的职业",
+            "找超市，好准备晚饭"
+          ],
+          "explanation": "cook dinner 和 find a supermarket 连在一起，说明她要为做饭找超市。",
+          "segmentId": "s18"
+        },
+        {
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "本题要介绍自己，不是核实别人。",
+          "prompt": "电话接通，你叫 Ben。选择合适的自我介绍。",
+          "answers": [
+            "Hello. This is Ben."
+          ],
+          "options": [
+            "Hello. This is Ben.",
+            "Hello. This Ben.",
+            "Hello. Are you Ben?"
+          ],
+          "explanation": "This is + 名字是在电话中说明自己是谁。",
+          "segmentId": "s13"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "表示“想做某事”。",
+          "prompt": "补全：I want ___ buy food.",
+          "answers": [
+            "to"
+          ],
+          "options": [
+            "buy",
+            "am",
+            "to"
+          ],
+          "explanation": "want 后接 to + 动词原形；buy 已经是动词原形。",
           "segmentId": "s03"
         },
         {
-          "id": "q02",
-          "type": "comprehension",
-          "prompt": "超市在哪里？",
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "This is + 你的名字。",
+          "prompt": "你叫 Lina。模拟电话刚接通时的自我介绍，用 This is 开头。",
           "answers": [
-            "欧文街 1500 号"
+            "This is Lina."
           ],
-          "options": [
-            "欧文街 1400 号",
-            "欧文街 1500 号",
-            "城市另一端"
-          ],
-          "explanation": "玛莎给出的超市地址是 1500 Irving Street，并说离公寓很近。",
-          "segmentId": "s19"
+          "options": [],
+          "explanation": "电话里可以用 This is Lina 说明身份，不需要把自己说成第三人称。",
+          "segmentId": "s13"
         },
         {
-          "id": "q03",
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "把 cook dinner 换成 buy food。",
+          "prompt": "你想买食物。用 I want to 开头，使用 buy food，写完整一句。",
+          "answers": [
+            "I want to buy food."
+          ],
+          "options": [],
+          "explanation": "保留 to，后面使用 buy 的原形。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出安娜说明自己要找超市的完整一句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Anna 要找超市的整句。",
           "answers": [
             "I want to find a supermarket."
           ],
           "options": [],
-          "explanation": "want to 后接动词原形 find，supermarket 前有 a。",
+          "explanation": "to find 是想做的动作，a supermarket 是要找的对象。",
           "segmentId": "s18"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出玛莎确认安娜位置的两句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Marsha 接通电话时的两句。",
           "answers": [
-            "Good. You are there."
+            "Hello. This is Marsha."
           ],
           "options": [],
-          "explanation": "there 指对方所在的地方；这里 are 与 you 搭配。",
-          "segmentId": "s17"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "电话接通后，怎样按本课说“我是玛莎”？",
-          "answers": [
-            "This is Marsha."
-          ],
-          "options": [],
-          "explanation": "电话中常用 This is + 名字说明自己是谁。",
+          "explanation": "This is + 名字是在电话里说明自己是谁。",
           "segmentId": "s13"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：I want ___ cook dinner.（只填一个词）",
-          "answers": [
-            "to"
-          ],
-          "options": [],
-          "explanation": "want to do 表示想做某事，不能直接用 want cook。",
-          "segmentId": "s03"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "你想做晚饭，需要打电话问室友附近有没有超市。第一次却拨错了号码。",
+        "mission": "能在电话里确认身份，并说明自己想做什么。",
+        "listenFor": "先听第一次电话出了什么问题，再听 Anna 联系到 Marsha 后提出的需求。",
+        "points": [
+          {
+            "expression": "This is …",
+            "meaning": "我是……（电话用语）",
+            "useWhen": "接通电话后，向对方说明身份。",
+            "contrast": "电话里常说 This is Anna；不是在指旁边的另一个人。",
+            "example": "Hello. This is Ben.",
+            "segmentId": "s13"
+          },
+          {
+            "expression": "I want to …",
+            "meaning": "我想……",
+            "useWhen": "说明自己想做的一件事。",
+            "contrast": "want 后面用 to + 动词原形；不是 want cooking。",
+            "example": "I want to buy food.",
+            "segmentId": "s03"
+          },
+          {
+            "expression": "Is there a … near here?",
+            "meaning": "这附近有……吗？",
+            "useWhen": "寻找附近某种设施。",
+            "contrast": "a 后面接单数名词；问有没有与问具体地址是两件事。",
+            "example": "Is there a bank near here?",
+            "segmentId": "s03"
+          }
+        ],
+        "speakingTask": "模拟给室友打电话：说自己叫 Ben，并说明你想买食物。可使用 buy food。",
+        "speakingExample": "Hello. This is Ben. I want to buy food.",
+        "takeaway": "先确认电话身份，再说明需求；想做某事用 want to + 动词。"
+      }
     },
     {
       "id": "voa1-04",
@@ -1158,80 +1400,161 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "玛莎想向安娜借什么？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Anna 说 I have a pen，主要在表达什么？",
           "answers": [
-            "一支笔"
+            "她有一支笔"
           ],
           "options": [
-            "一本书",
-            "一支笔",
-            "一个枕头"
+            "她正在写字",
+            "她有一支笔",
+            "眼前的东西一定是笔"
           ],
-          "explanation": "玛莎问 Anna, do you have a pen?；之后安娜一直在包里找笔。",
-          "segmentId": "s09"
+          "explanation": "have 表示拥有；辨认眼前物品要用 It is ...。",
+          "segmentId": "s10"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "安娜最后找到笔后提议做什么？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "It is not a pen. It is a book. 两句连用在做什么？",
           "answers": [
-            "去喝咖啡"
+            "纠正对物品的判断"
           ],
           "options": [
-            "去买地图",
-            "去喝咖啡",
-            "回公寓睡觉"
+            "问朋友有没有笔",
+            "说明书是谁的",
+            "纠正对物品的判断"
           ],
-          "explanation": "结尾说 I have a pen! Let's get coffee!，明确邀请去喝咖啡。",
-          "segmentId": "s24"
+          "explanation": "先否定“是笔”，再给出正确判断“是书”。",
+          "segmentId": "s12"
         },
         {
-          "id": "q03",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "先分清“我有”和“我是”。",
+          "prompt": "选择“我有一本书”。",
+          "answers": [
+            "I have a book."
+          ],
+          "options": [
+            "It is a book.",
+            "I have a book.",
+            "I am a book."
+          ],
+          "explanation": "I have 说明你拥有物品；I am a book 会把你说成一本书。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "not 放在哪里？",
+          "prompt": "选出“它不是玩具”的标准句子。",
+          "answers": [
+            "It is not a toy."
+          ],
+          "options": [
+            "It is no toy.",
+            "It is not a toy.",
+            "It not is a toy."
+          ],
+          "explanation": "本课在 is 后面加 not，构成否定。",
+          "segmentId": "s12"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "map 前保留 a。",
+          "prompt": "你包里有一张地图。用 I have 开头，使用 a map，说“我有一张地图”。",
+          "answers": [
+            "I have a map."
+          ],
+          "options": [],
+          "explanation": "对象换成 map，拥有关系仍用 have。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "It is not + a book。",
+          "prompt": "你拿着的是灯，不是书。只写否定“它是一本书”的句子，使用 book。",
+          "answers": [
+            "It is not a book.",
+            "It isn't a book."
+          ],
+          "options": [],
+          "explanation": "把 not 放在 is 后面；也接受标准缩写 isn't。",
+          "segmentId": "s12"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出安娜说笔在哪里的两句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Anna 说明笔在包里的两句。",
           "answers": [
             "Yes. I have a pen in my bag."
           ],
           "options": [],
-          "explanation": "in my bag 指在我的包里；have 表示拥有。",
+          "explanation": "in my bag 给出笔的位置；拥有关系由 I have 表达。",
           "segmentId": "s10"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出玛莎指出那是地图的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Marsha 指出那是地图的一句。",
           "answers": [
             "Anna, it is a map."
           ],
           "options": [],
-          "explanation": "it is + a + 单数名词，用于辨认物品。",
+          "explanation": "称呼后用 it is a map 辨认物品。",
           "segmentId": "s19"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "用本课句型说“我有一支笔”。",
-          "answers": [
-            "I have a pen."
-          ],
-          "options": [],
-          "explanation": "I have 表示“我有”；a pen 是一支笔。",
-          "segmentId": "s10"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：It is ___ a pen.（它不是笔，只填一个词）",
-          "answers": [
-            "not"
-          ],
-          "options": [],
-          "explanation": "be 动词后加 not 构成否定：It is not a pen。",
-          "segmentId": "s12"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "朋友需要一支笔，你在包里找，却接连拿出了别的东西。",
+        "mission": "能说明自己有什么，并纠正对物品的判断。",
+        "listenFor": "听清 have 和 is 分别在表达什么；不必把安娜包里的每件物品都背下来。",
+        "points": [
+          {
+            "expression": "I have a …",
+            "meaning": "我有一个……",
+            "useWhen": "说明你拥有某件物品。",
+            "contrast": "have 表示拥有，is 用于说明“它是什么”。",
+            "example": "I have a map.",
+            "segmentId": "s10"
+          },
+          {
+            "expression": "It is a …",
+            "meaning": "它是一个……",
+            "useWhen": "辨认眼前的单个物品。",
+            "contrast": "单数可数名词前通常需要 a；不要只说 It is book。",
+            "example": "It is a lamp.",
+            "segmentId": "s12"
+          },
+          {
+            "expression": "It is not a …",
+            "meaning": "它不是一个……",
+            "useWhen": "否定刚才的物品判断。",
+            "contrast": "not 放在 is 后面；不是 It not is ...。",
+            "example": "It is not a toy.",
+            "segmentId": "s12"
+          }
+        ],
+        "speakingTask": "你拿着一张地图。先告诉朋友你有一张地图，再说明它不是一本书。",
+        "speakingExample": "I have a map. It is not a book.",
+        "takeaway": "have 说拥有；is 说身份；is not 纠正判断。"
+      }
     },
     {
       "id": "voa1-05",
@@ -1406,80 +1729,161 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "人们通常在哪个房间做饭？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "对方问 Where are you?，你应当优先回答什么？",
           "answers": [
-            "厨房"
+            "自己现在的位置"
           ],
           "options": [
-            "卧室",
-            "厨房",
-            "客厅"
+            "自己现在的位置",
+            "自己来自的城市",
+            "朋友的姓名"
           ],
-          "explanation": "玛莎说 We cook in the kitchen。",
-          "segmentId": "s03"
+          "explanation": "where 在这个问句中问当前位置；没有 from。",
+          "segmentId": "s07"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "人们在哪个房间睡觉？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "We relax in the living room. 把哪两件事连在一起？",
           "answers": [
-            "卧室"
+            "休息和客厅"
           ],
           "options": [
-            "浴室",
-            "客厅",
-            "卧室"
+            "休息和客厅",
+            "睡觉和厨房",
+            "做饭和客厅"
           ],
-          "explanation": "玛莎说 We sleep in the bedroom；sleep 是睡觉。",
-          "segmentId": "s09"
+          "explanation": "relax 是休息，living room 是客厅；两者组成活动与地点。",
+          "segmentId": "s05"
         },
         {
-          "id": "q03",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "I 后面需要 be 动词。",
+          "prompt": "选择“我在厨房”，只说明位置。",
+          "answers": [
+            "I am in the kitchen."
+          ],
+          "options": [
+            "I cook the kitchen.",
+            "I in the kitchen.",
+            "I am in the kitchen."
+          ],
+          "explanation": "位置句需要 am；cook 是做饭，不是位置词。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "把 sleep 换成 read。",
+          "prompt": "你想说在卧室读书。选择完整句子。",
+          "answers": [
+            "I read in the bedroom."
+          ],
+          "options": [
+            "I read the bedroom.",
+            "I read in the bedroom.",
+            "I am read in the bedroom."
+          ],
+          "explanation": "这里用一般现在时描述活动，不在 read 前加 am。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "in 后接 the living room。",
+          "prompt": "用 I am in 开头，说“我在客厅”。客厅用 the living room。",
+          "answers": [
+            "I am in the living room.",
+            "I'm in the living room."
+          ],
+          "options": [],
+          "explanation": "地点变化后，I am in the ... 的结构保持不变。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "I + read + in the kitchen。",
+          "prompt": "说“我在厨房读书”，用 read、the kitchen。",
+          "answers": [
+            "I read in the kitchen."
+          ],
+          "options": [],
+          "explanation": "主语 + 活动 + in + 房间，不用 I am read。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出安娜说自己在厨房做什么的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Anna 说自己在厨房做什么的一句。",
           "answers": [
             "I eat in the kitchen."
           ],
           "options": [],
-          "explanation": "eat 是吃饭；地点前用 in the。",
+          "explanation": "eat 表示吃饭，地点由 in the kitchen 补充。",
           "segmentId": "s04"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出玛莎说在客厅做什么的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Marsha 说在客厅做什么的一句。",
           "answers": [
             "We relax in the living room."
           ],
           "options": [],
-          "explanation": "relax 表示休息、放松，living room 是客厅。",
+          "explanation": "听清 we 和 relax，别把主语改成 I。",
           "segmentId": "s05"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "用本课句型说“我在卧室睡觉”。",
-          "answers": [
-            "I sleep in the bedroom."
-          ],
-          "options": [],
-          "explanation": "I + sleep + in the bedroom 描述日常活动和地点。",
-          "segmentId": "s10"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：Where ___ you?（你在哪里？只填一个词）",
-          "answers": [
-            "are"
-          ],
-          "options": [],
-          "explanation": "you 与 are 搭配；疑问词 where 问地点。",
-          "segmentId": "s07"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "你和朋友参观房子，彼此在不同的房间，需要说清自己在哪里。",
+        "mission": "能把房间和日常活动连成一句话。",
+        "listenFor": "把每个房间和对应活动联系起来听：cook、relax、sleep。",
+        "points": [
+          {
+            "expression": "Where are you?",
+            "meaning": "你在哪里？",
+            "useWhen": "寻找对方当前所在的地方。",
+            "contrast": "这不是 Where are you from?；后者问来源地。",
+            "example": "Ben, where are you?",
+            "segmentId": "s07"
+          },
+          {
+            "expression": "I am in the …",
+            "meaning": "我在……里面。",
+            "useWhen": "说明你所在的房间。",
+            "contrast": "in 表示在里面；bedroom、kitchen 等房间前在这里用 the。",
+            "example": "I am in the kitchen.",
+            "segmentId": "s08"
+          },
+          {
+            "expression": "I … in the …",
+            "meaning": "我在……做……",
+            "useWhen": "描述在某个房间的日常活动。",
+            "contrast": "I am in ... 只说位置；I sleep in ... 还说明做什么。",
+            "example": "I read in the bedroom.",
+            "segmentId": "s10"
+          }
+        ],
+        "speakingTask": "你在客厅读书。用 read 和 living room 说一句；再用 Where are you? 问朋友的位置。",
+        "speakingExample": "I read in the living room. Where are you?",
+        "takeaway": "先说明位置，再加上活动；不用把 am 放在 read、sleep 等动作前。"
+      }
     },
     {
       "id": "voa1-06",
@@ -1758,80 +2162,160 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "健身房在休息室的什么位置？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "across from 和 next to 可以随意互换吗？",
           "answers": [
-            "对面"
+            "不能，前者是对面，后者是旁边"
           ],
           "options": [
-            "里面",
-            "对面",
-            "上面"
+            "可以，都表示在后面",
+            "不能，前者是对面，后者是旁边",
+            "可以，都表示在附近"
           ],
-          "explanation": "The gym is across from the lounge；across from 是在对面。",
+          "explanation": "它们给出不同位置关系，替换后路线会改变。",
           "segmentId": "s04"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "健身房还在大堂的什么位置？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Pete 补充 behind the lobby，是在帮助 Anna 明确什么？",
           "answers": [
-            "后面"
+            "健身房相对大堂的位置"
           ],
           "options": [
-            "后面",
-            "前面",
-            "楼顶上"
+            "锻炼要花多长时间",
+            "大堂的名字",
+            "健身房相对大堂的位置"
           ],
-          "explanation": "皮特补充 It is behind the lobby；behind 是在后面。",
+          "explanation": "behind 用大堂作为参照，补充健身房的位置。",
           "segmentId": "s13"
         },
         {
-          "id": "q03",
-          "type": "dictation",
-          "prompt": "听原声，写出安娜的道谢。",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "本题的主语不是 you。",
+          "prompt": "问一个具体的银行在哪里，应选哪句？",
           "answers": [
-            "Thanks, Pete!"
+            "Where is the bank?"
           ],
-          "options": [],
-          "explanation": "Thanks 是非正式的“谢谢”，后面直接称呼对方。",
-          "segmentId": "s05"
+          "options": [
+            "Where is the bank?",
+            "Where is you bank?",
+            "Where are the bank?"
+          ],
+          "explanation": "单数的 the bank 与 is 搭配。",
+          "segmentId": "s03"
         },
         {
-          "id": "q04",
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "紧挨着，不是隔在对面。",
+          "prompt": "银行和商店紧挨着。补全：The bank is ___ the store.",
+          "answers": [
+            "next to"
+          ],
+          "options": [
+            "across from",
+            "behind",
+            "next to"
+          ],
+          "explanation": "紧挨着用 next to；对面是 across from。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "Where is + the store。",
+          "prompt": "用 Where is 开头，询问商店在哪里。使用 the store。",
+          "answers": [
+            "Where is the store?"
+          ],
+          "options": [],
+          "explanation": "换了地点，单数问句仍用 Where is。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "The gym + is + 位置短语。",
+          "prompt": "健身房在商店后面。使用 The gym、behind、the store，写完整句子。",
+          "answers": [
+            "The gym is behind the store."
+          ],
+          "options": [],
+          "explanation": "The gym 后需要 is，behind 给出相对位置。",
+          "segmentId": "s13"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出皮特只说明健身房与休息室位置的完整一句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出只说明健身房在休息室对面的完整一句。",
           "answers": [
             "The gym is across from the lounge."
           ],
           "options": [],
-          "explanation": "across from 作为一个整体表示“在……对面”。",
+          "explanation": "across from 说明目标地点在参照物的对面。",
           "segmentId": "s10"
         },
         {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "用本课句型问“健身房在哪里？”",
+          "id": "listen-2",
+          "type": "dictation",
+          "phase": "listen",
+          "hint": "lounge 是休息室，lobby 是大堂。先听清对应的方位词。",
+          "prompt": "听原声，写出 Pete 说明健身房两个方位的两句。",
           "answers": [
-            "Where is the gym?"
+            "The gym is across from the lounge. It is behind the lobby."
           ],
           "options": [],
-          "explanation": "单数地点 the gym 与 is 搭配。",
-          "segmentId": "s03"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：The gym is ___ the lobby.（在大堂后面，只填一个词）",
-          "answers": [
-            "behind"
-          ],
-          "options": [],
-          "explanation": "behind 表示在后面；不是 next to“在旁边”。",
+          "explanation": "across from 是对面，behind 是后面，两句提供了不同的参照物。",
           "segmentId": "s13"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "你第一次去健身房，需要根据大楼里的休息室、收发室和大堂找位置。",
+        "mission": "能用三个位置短语说明一个地点。",
+        "listenFor": "重点听 across from、next to、behind。它们不是同一种位置关系。",
+        "points": [
+          {
+            "expression": "Where is the …?",
+            "meaning": "……在哪里？",
+            "useWhen": "询问一个具体设施的位置。",
+            "contrast": "单数地点用 is；you 则用 are。",
+            "example": "Where is the bank?",
+            "segmentId": "s03"
+          },
+          {
+            "expression": "across from / next to",
+            "meaning": "在对面／紧挨着",
+            "useWhen": "利用另一个地点作为参照物。",
+            "contrast": "across from 隔在对面；next to 紧挨着，不能互换。",
+            "example": "The bank is next to the store.",
+            "segmentId": "s04"
+          },
+          {
+            "expression": "behind",
+            "meaning": "在……后面",
+            "useWhen": "说明一个地点在另一个地点后方。",
+            "contrast": "behind 不是 in；后面和里面不同。",
+            "example": "The gym is behind the store.",
+            "segmentId": "s13"
+          }
+        ],
+        "speakingTask": "给朋友指路：银行紧挨着商店，健身房在商店后面。用 bank、store、gym 各说一句。",
+        "speakingExample": "The bank is next to the store. The gym is behind the store.",
+        "takeaway": "把目标地点和参照物说清楚；位置短语选错，会把人带到不同地方。"
+      }
     },
     {
       "id": "voa1-07",
@@ -2342,80 +2826,162 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "安妮正在做什么？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "What are you doing? 在这段对话里问什么？",
           "answers": [
-            "写东西"
+            "对方此刻正在做的事"
           ],
           "options": [
-            "录节目",
-            "写东西",
-            "整理安娜的公寓"
+            "对方来自的地方",
+            "对方长期从事的职业",
+            "对方此刻正在做的事"
           ],
-          "explanation": "安妮回答 I'm writing；后面安娜还感叹她写了很多。",
-          "segmentId": "s15"
+          "explanation": "这里关注正在写、读或录节目的活动，不是职业名称。",
+          "segmentId": "s14"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "乔纳森为什么要重新录制？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "同事们的回应说明 Anna 需要注意什么？",
           "answers": [
-            "安娜打断了他的节目"
+            "别人正在工作，不宜随意打断"
           ],
           "options": [
-            "麦克风没电",
-            "安娜打断了他的节目",
-            "他在找公寓"
+            "大家都已经下班",
+            "别人正在工作，不宜随意打断",
+            "每个人都想马上聊天"
           ],
-          "explanation": "乔纳森正在做节目，安娜闯入打招呼后，他说 now I have to record again。",
+          "explanation": "对话中的 writing、recording、reading 都表明同事正在忙自己的活动。",
           "segmentId": "s30"
         },
         {
-          "id": "q03",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "be + 动词 -ing。",
+          "prompt": "选择“我正在读一本书”。",
+          "answers": [
+            "I am reading a book."
+          ],
+          "options": [
+            "I am read a book.",
+            "I reading a book.",
+            "I am reading a book."
+          ],
+          "explanation": "现在进行时需要 am 和 reading，两者不能漏掉。",
+          "segmentId": "s41"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "write 末尾的 e 要去掉。",
+          "prompt": "write 放入 I am ___ 中，应使用哪个形式？",
+          "answers": [
+            "writing"
+          ],
+          "options": [
+            "writing",
+            "writeing",
+            "write"
+          ],
+          "explanation": "write 去掉末尾不发音的 e 后加 ing。",
+          "segmentId": "s15"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "read 在这里变成 reading。",
+          "prompt": "朋友问你正在做什么。用 I am 开头，说自己正在读一本书，使用 read a book。",
+          "answers": [
+            "I am reading a book.",
+            "I'm reading a book."
+          ],
+          "options": [],
+          "explanation": "此刻的活动使用 am reading；a book 是读取对象。",
+          "segmentId": "s41"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "Lina + is + writing。",
+          "prompt": "Lina 正在写东西。用 Lina 开头，使用 write 的现在进行时，只写一句。",
+          "answers": [
+            "Lina is writing.",
+            "Lina's writing."
+          ],
+          "options": [],
+          "explanation": "Lina 是第三人称单数，选 is；write 变 writing。",
+          "segmentId": "s15"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出安娜单独询问正在做什么的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Anna 单独询问对方正在做什么的整句。",
           "answers": [
             "What are you doing?"
           ],
           "options": [],
-          "explanation": "What are you doing? 用现在进行时询问此刻的活动。",
+          "explanation": "are 和 doing 都是这个问句的必要部分。",
           "segmentId": "s27"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出乔纳森说明自己正在做节目的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Jonathan 说明自己正在做节目的整句。",
           "answers": [
             "I am doing my show!"
           ],
           "options": [],
-          "explanation": "am doing 表示正在做，my show 是我的节目。",
+          "explanation": "am doing 是正在做；my show 是自己的节目。",
           "segmentId": "s28"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "补全：I am ___.（我正在写东西，只填一个词）",
-          "answers": [
-            "writing"
-          ],
-          "options": [],
-          "explanation": "write 的现在分词要去掉末尾不发音的 e 再加 ing。",
-          "segmentId": "s15"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：What are you ___?（你正在做什么，只填一个词）",
-          "answers": [
-            "doing"
-          ],
-          "options": [],
-          "explanation": "现在进行时由 be + 动词 ing 构成，这里用 doing。",
-          "segmentId": "s14"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "你第一天上班，要认识同事，也要看出他们正在忙什么。",
+        "mission": "能询问和说明此刻正在进行的活动。",
+        "listenFor": "听同事对 What are you doing? 的回答，留意 am 和动作的 -ing 形式。",
+        "points": [
+          {
+            "expression": "What are you doing?",
+            "meaning": "你正在做什么？",
+            "useWhen": "询问对方此刻的活动。",
+            "contrast": "不是问长期职业；此处关注“现在”。",
+            "example": "What are you doing, Ben?",
+            "segmentId": "s14"
+          },
+          {
+            "expression": "I am …-ing.",
+            "meaning": "我正在……",
+            "useWhen": "说明正在进行的动作。",
+            "contrast": "不能漏掉 am；I writing 不完整。",
+            "example": "I am reading a book.",
+            "segmentId": "s28"
+          },
+          {
+            "expression": "write → writing",
+            "meaning": "写 → 正在写",
+            "useWhen": "把 write 放进现在进行时。",
+            "contrast": "write 去掉末尾不发音的 e，再加 ing；不是 writeing。",
+            "example": "Lina is writing.",
+            "segmentId": "s15"
+          }
+        ],
+        "speakingTask": "朋友问你正在做什么。你在读一本书：用 read a book 回答，再反问对方正在做什么。",
+        "speakingExample": "I am reading a book. What are you doing?",
+        "takeaway": "正在做：be + 动词 -ing。先看主语，再选 am、is 或 are。"
+      }
     },
     {
       "id": "voa1-08",
@@ -2742,81 +3308,161 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "安娜今天想对同事们做什么？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Anna 要道歉前先问 Are you busy?，是在做什么？",
           "answers": [
-            "道歉"
+            "确认现在是否方便说话"
           ],
           "options": [
-            "介绍公寓",
-            "道歉",
-            "借钱"
+            "询问对方职业",
+            "要求对方停止工作",
+            "确认现在是否方便说话"
           ],
-          "explanation": "开场说 Today I want to apologize to my co-workers；她在弥补昨天的打扰。",
-          "segmentId": "s01"
+          "explanation": "这个问句让对方表达自己是否有空，再决定是否继续说事。",
+          "segmentId": "s02"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "凯蒂让安娜几点到办公室？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Jonathan 说 No worries，主要传达什么？",
           "answers": [
-            "下午五点"
+            "接受道歉，让 Anna 别担心"
           ],
           "options": [
-            "上午十点",
-            "下午三点",
-            "下午五点"
+            "接受道歉，让 Anna 别担心",
+            "拒绝和 Anna 说话",
+            "表示他完全没工作"
           ],
-          "explanation": "Caty 说 My office. 5:00 p.m.，p.m. 是中午以后的时间。",
-          "segmentId": "s25"
+          "explanation": "No worries 回应歉意，不等于 I am not busy。",
+          "segmentId": "s09"
         },
         {
-          "id": "q03",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "想想这句话的用途。",
+          "prompt": "同事说 Sorry about yesterday.，选择表示不介意的回应。",
+          "answers": [
+            "No worries."
+          ],
+          "options": [
+            "No worries.",
+            "Right now.",
+            "Are you busy?"
+          ],
+          "explanation": "这是对道歉的回应；另外两项不能表达接受歉意。",
+          "segmentId": "s09"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "这里不需要动作的 -ing。",
+          "prompt": "补全：Are you ___?（询问对方是否忙碌）",
+          "answers": [
+            "busy"
+          ],
+          "options": [
+            "busying",
+            "busy",
+            "doing busy"
+          ],
+          "explanation": "busy 是形容词，可以直接和 are 搭配。",
+          "segmentId": "s02"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "Are you busy + Ben。",
+          "prompt": "你想询问 Ben 现在忙不忙。用 Are you busy，句末加称呼 Ben。",
+          "answers": [
+            "Are you busy, Ben?"
+          ],
+          "options": [],
+          "explanation": "先询问状态，再用 Ben 作为称呼。",
+          "segmentId": "s02"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "Sorry about + 道歉的事情。",
+          "prompt": "你刚才制造了噪音。用 Sorry about 开头为此道歉，噪音用 the noise。",
+          "answers": [
+            "Sorry about the noise."
+          ],
+          "options": [],
+          "explanation": "about 后接具体事情，把 yesterday 换成 the noise。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出阿米莉亚说自己有点忙的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Amelia 说自己有点忙的整句。",
           "answers": [
             "I'm a little busy.",
             "I am a little busy."
           ],
           "options": [],
-          "explanation": "a little 表示程度较轻：“有一点”；缩写 I'm 读作一个整体。",
+          "explanation": "a little 表示有一点忙，不能把程度改成完全不忙。",
           "segmentId": "s15"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出乔纳森表示不介意的两词回答。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Jonathan 表示不介意的回答。",
           "answers": [
             "No worries."
           ],
           "options": [],
-          "explanation": "No worries 是自然的安慰回应，相当于“没关系，别担心”。",
+          "explanation": "worries 用复数形式；这是本课的固定回应。",
           "segmentId": "s09"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "按本课用两个词回应他人的道歉：“没关系”。",
-          "answers": [
-            "No worries."
-          ],
-          "options": [],
-          "explanation": "本题练习固定回应 No worries；worries 用复数。",
-          "segmentId": "s09"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：Are you ___?（你忙吗，只填一个词）",
-          "answers": [
-            "busy"
-          ],
-          "options": [],
-          "explanation": "busy 是形容词；Are you busy? 询问对方是否有空。",
-          "segmentId": "s02"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "昨天你打断了同事的工作。今天你想道歉，但要先确认他们是否有空。",
+        "mission": "能礼貌询问、道歉，并回应别人的道歉。",
+        "listenFor": "听 Anna 怎样开口、同事怎样回应，以及何时再见面。",
+        "points": [
+          {
+            "expression": "Are you busy?",
+            "meaning": "你忙吗？",
+            "useWhen": "开口谈事之前，先确认对方是否方便。",
+            "contrast": "busy 是形容词，直接和 are 搭配，不加 doing。",
+            "example": "Are you busy, Ben?",
+            "segmentId": "s02"
+          },
+          {
+            "expression": "Sorry about …",
+            "meaning": "为……感到抱歉",
+            "useWhen": "对一件具体的事情表示歉意。",
+            "contrast": "sorry about yesterday 指昨天的事；不是问昨天忙不忙。",
+            "example": "Sorry about the noise.",
+            "segmentId": "s08"
+          },
+          {
+            "expression": "No worries.",
+            "meaning": "没关系。",
+            "useWhen": "表示接受道歉，告诉对方不用担心。",
+            "contrast": "这是对道歉的回应；不表示“我现在不忙”。",
+            "example": "Sorry about the noise. — No worries.",
+            "segmentId": "s09"
+          }
+        ],
+        "speakingTask": "你打扰了 Ben，先问他忙不忙，再为噪音（the noise）道歉。",
+        "speakingExample": "Are you busy, Ben? Sorry about the noise.",
+        "takeaway": "先尊重对方的时间，再说明歉意；听懂回应的用途。"
+      }
     },
     {
       "id": "voa1-09",
@@ -3095,80 +3741,161 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "手机最初给出了哪个城市的天气？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "为什么 Anna 出门看到的天气与手机说的不同？",
           "answers": [
-            "墨西哥城"
+            "她看的不是华盛顿的预报"
           ],
           "options": [
-            "华盛顿特区",
-            "纽约",
-            "墨西哥城"
+            "手机把冷和暖两个词读反了",
+            "她不会说 sunny",
+            "她看的不是华盛顿的预报"
           ],
-          "explanation": "手机后来说明温暖晴朗是在 Mexico City, Mexico，安娜查错了城市。",
+          "explanation": "手机说明预报对应 Mexico City；天气词听懂了也要核实地点。",
           "segmentId": "s18"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "安娜出门后实际遇到什么天气？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "18 degrees 还不足以判断冷暖，还要确认什么？",
           "answers": [
-            "寒冷、有风、下雪"
+            "温度单位"
           ],
           "options": [
-            "温暖晴朗",
-            "寒冷、有风、下雪",
-            "炎热潮湿"
+            "温度单位",
+            "说话人的名字",
+            "手机品牌"
           ],
-          "explanation": "安娜抱怨 It is cold and windy and snowy，三种天气特征都提到了。",
-          "segmentId": "s17"
+          "explanation": "摄氏和华氏不是同一单位，原对话随后补充了 Celsius。",
+          "segmentId": "s04"
         },
         {
-          "id": "q03",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "wind 的天气形容词形式是什么？",
+          "prompt": "补全：Is it ___ today?（今天有风吗？）",
+          "answers": [
+            "windy"
+          ],
+          "options": [
+            "winding",
+            "wind",
+            "windy"
+          ],
+          "explanation": "本课天气句型需要形容词 windy。",
+          "segmentId": "s07"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "否定句也不能漏掉 is。",
+          "prompt": "选择“今天不下雪”的完整句子。",
+          "answers": [
+            "It is not snowy today."
+          ],
+          "options": [
+            "It is not snowy today.",
+            "It not snowy today.",
+            "It is no snow today."
+          ],
+          "explanation": "保留主语 it 和 is，再在 is 后加 not。",
+          "segmentId": "s14"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "Is it + 天气形容词 + today。",
+          "prompt": "用 Is it 开头，询问今天冷不冷，使用 cold、today。",
+          "answers": [
+            "Is it cold today?"
+          ],
+          "options": [],
+          "explanation": "把 sunny 换成 cold，问句结构不变。",
+          "segmentId": "s09"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "It is + warm + today。",
+          "prompt": "用 It is 开头，说“今天暖和”，使用 warm、today。",
+          "answers": [
+            "It is warm today.",
+            "It's warm today."
+          ],
+          "options": [],
+          "explanation": "天气句用 it 作主语，warm 是形容词。",
+          "segmentId": "s06"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出安娜询问是否晴天的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Anna 询问今天是否晴天的问句。",
           "answers": [
             "Is it sunny today?"
           ],
           "options": [],
-          "explanation": "sunny 是晴朗的；it 指天气，today 是今天。",
+          "explanation": "听清 sunny，保留疑问句中的 is 和 it。",
           "segmentId": "s09"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出手机回答今天没有风的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出手机回答今天没有风的完整一句。",
           "answers": [
             "No, it is not windy today."
           ],
           "options": [],
-          "explanation": "否定回答保留 it is not，windy 表示有风的。",
+          "explanation": "否定回答保留 not，它决定了句子的含义。",
           "segmentId": "s08"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "补全：Is it ___ today?（今天下雪吗，只填一个词）",
-          "answers": [
-            "snowy"
-          ],
-          "options": [],
-          "explanation": "snowy 是描述下雪天气的形容词，snow 是名词或动词。",
-          "segmentId": "s13"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "按本课用英语问“今天晴天吗？”",
-          "answers": [
-            "Is it sunny today?"
-          ],
-          "options": [],
-          "explanation": "天气问句可用 Is it + 天气形容词 + today?。",
-          "segmentId": "s09"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "出门前你查天气，手机却给出了另一个城市的预报。",
+        "mission": "能询问天气，并作肯定或否定回答。",
+        "listenFor": "先听天气描述，再核实预报说的是哪个地方。温度还要留意单位。",
+        "points": [
+          {
+            "expression": "Is it … today?",
+            "meaning": "今天……吗？",
+            "useWhen": "询问晴朗、有风等天气状况。",
+            "contrast": "it 在这里指天气；形容词放在 it 后面。",
+            "example": "Is it cold today?",
+            "segmentId": "s09"
+          },
+          {
+            "expression": "It is / It is not …",
+            "meaning": "天气……／天气不……",
+            "useWhen": "根据实际情况回答天气问题。",
+            "contrast": "not 放在 is 后；不能因为句子短就省略 it 或 is。",
+            "example": "It is warm today.",
+            "segmentId": "s08"
+          },
+          {
+            "expression": "windy / snowy / sunny",
+            "meaning": "有风的／下雪的／晴朗的",
+            "useWhen": "描述不同天气特征。",
+            "contrast": "这些是形容词；本课句型中不写 It is wind。",
+            "example": "It is windy today.",
+            "segmentId": "s01"
+          }
+        ],
+        "speakingTask": "朋友问今天冷不冷。你观察到天气暖和，而且没有雪：用 warm、snowy 回答两句。",
+        "speakingExample": "It is warm today. It is not snowy today.",
+        "takeaway": "天气句用 it 作主语；单位和地点也会影响你对预报的理解。"
+      }
     },
     {
       "id": "voa1-10",
@@ -3399,80 +4126,160 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "从地铁出来先向哪边转？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Anna 给出的前两次转向是什么顺序？",
           "answers": [
-            "右转"
+            "先右转，再左转"
           ],
           "options": [
-            "左转",
-            "右转",
-            "掉头"
+            "一直向前，不用转弯",
+            "先左转，再右转",
+            "先右转，再左转"
           ],
-          "explanation": "安娜先说 Exit the Metro and turn right，然后才是在公交站左转。",
+          "explanation": "先 Exit the Metro and turn right，再在公交站 turn left。顺序会影响路线。",
           "segmentId": "s06"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "公寓在什么建筑的对面？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Ashley 为什么追问 Which coffee shop?？",
           "answers": [
-            "大百货商店"
+            "附近有不止一家咖啡店"
           ],
           "options": [
-            "邮局",
-            "银行",
-            "大百货商店"
+            "她不懂 shop 的意思",
+            "她不想去 Anna 家",
+            "附近有不止一家咖啡店"
           ],
-          "explanation": "当咖啡店不足以定位时，安娜改说 across from a big department store。",
+          "explanation": "There are three coffee shops 表明地标不够明确，需要补充。",
+          "segmentId": "s11"
+        },
+        {
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "先确认方向。",
+          "prompt": "要让朋友左转，应选哪个指令？",
+          "answers": [
+            "Turn left."
+          ],
+          "options": [
+            "Turn right.",
+            "Turn left.",
+            "Walk left right."
+          ],
+          "explanation": "left 是左，right 是右，不能只看 turn 就选。",
+          "segmentId": "s06"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "这里要表达“然后”。",
+          "prompt": "连接下一步：Turn left. ___ walk straight ahead.",
+          "answers": [
+            "Then"
+          ],
+          "options": [
+            "Then",
+            "Where",
+            "Which"
+          ],
+          "explanation": "Then 引出随后的一步，where 和 which 是不同用途的疑问词。",
+          "segmentId": "s06"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "Turn + 左边。",
+          "prompt": "用两个单词告诉朋友“左转”。",
+          "answers": [
+            "Turn left."
+          ],
+          "options": [],
+          "explanation": "本题换成左转，要用 left 而不是照抄第一步的 right。",
+          "segmentId": "s06"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "把大百货商店换成银行。",
+          "prompt": "你的公寓在银行对面。用 My apartment 开头，使用 across from、the bank。",
+          "answers": [
+            "My apartment is across from the bank."
+          ],
+          "options": [],
+          "explanation": "目标地点后加 is，再用 across from 说明与银行的位置关系。",
           "segmentId": "s12"
         },
         {
-          "id": "q03",
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出安娜说明公寓在咖啡店附近的两句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Anna 说明公寓在咖啡店附近的两句。",
           "answers": [
             "Yes. My apartment is near a coffee shop."
           ],
           "options": [],
-          "explanation": "near 表示在附近；a coffee shop 是一家咖啡店。",
+          "explanation": "near 是在附近，没有限定哪一家咖啡店。",
           "segmentId": "s08"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出阿什莉第一次说一会儿见的两句。",
+          "phase": "listen",
+          "hint": "department store 分写为两个词。",
+          "prompt": "听原声，写出 Anna 改用百货商店定位公寓的整句。",
           "answers": [
-            "Okay. See you soon!"
+            "Okay, my apartment is across from a big department store."
           ],
           "options": [],
-          "explanation": "See you soon 是分别时说的“一会儿见”，不是路线指令。",
-          "segmentId": "s09"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "按本课写“右转”的两个英语单词。",
-          "answers": [
-            "turn right"
-          ],
-          "options": [],
-          "explanation": "动词 turn 加方向 right；left 是左。",
-          "segmentId": "s06"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：walk straight ___.（一直往前走，只填一个词）",
-          "answers": [
-            "ahead"
-          ],
-          "options": [],
-          "explanation": "straight ahead 作为方向表达表示一直向前。",
-          "segmentId": "s06"
+          "explanation": "across from 给出公寓与地标的关系，比只说咖啡店附近更明确。",
+          "segmentId": "s12"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "朋友要来你家，你得把地铁站到公寓的路线说明白。",
+        "mission": "能按顺序给出简单的步行指引。",
+        "listenFor": "听每一步的先后顺序；朋友问 Which coffee shop? 是因为地标不够明确。",
+        "points": [
+          {
+            "expression": "turn right / turn left",
+            "meaning": "右转／左转",
+            "useWhen": "说明行走方向。",
+            "contrast": "right 和 left 对调会改变路线；不要只记 turn。",
+            "example": "Turn left at the bank.",
+            "segmentId": "s06"
+          },
+          {
+            "expression": "Then …",
+            "meaning": "然后……",
+            "useWhen": "连接下一步指示。",
+            "contrast": "then 表示顺序，不表示同时发生。",
+            "example": "Turn left. Then walk straight ahead.",
+            "segmentId": "s06"
+          },
+          {
+            "expression": "across from …",
+            "meaning": "在……对面",
+            "useWhen": "用清楚的地标说明目的地。",
+            "contrast": "有多家咖啡店时，单说 near a coffee shop 不够明确。",
+            "example": "My apartment is across from the bank.",
+            "segmentId": "s12"
+          }
+        ],
+        "speakingTask": "用两句给朋友指路：先左转，再一直往前走。然后说明你的公寓在银行对面。",
+        "speakingExample": "Turn left. Then walk straight ahead. My apartment is across from the bank.",
+        "takeaway": "按实际顺序说动作，再给出容易辨认的地标。"
+      }
     },
     {
       "id": "voa1-11",
@@ -3767,80 +4574,160 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "安娜要去图书馆做什么？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Anna 说 I need to return three books，准备做什么？",
           "answers": [
-            "还三本书"
+            "归还图书"
           ],
           "options": [
-            "寄四封信",
-            "还三本书",
-            "买邮票"
+            "买三本书",
+            "归还图书",
+            "在图书馆工作"
           ],
-          "explanation": "开场说 I need to return three books to the library，return 在这里是归还。",
+          "explanation": "return 在这里是归还；need to 后面说明要办的事。",
           "segmentId": "s01"
         },
         {
-          "id": "q02",
+          "id": "understand-2",
           "type": "comprehension",
-          "prompt": "商店对面有什么？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "There is a bank behind you. 怎样帮助 Anna？",
           "answers": [
-            "邮筒"
+            "引出一个银行，并给出位置"
           ],
           "options": [
-            "邮筒",
-            "银行",
-            "图书馆"
+            "只重复 Anna 的名字",
+            "说明银行需要什么",
+            "引出一个银行，并给出位置"
           ],
-          "explanation": "玛莎说 there is a mailbox across from the store；邮局则离这里很远。",
-          "segmentId": "s08"
+          "explanation": "There is 说明某处有一个事物，behind you 进一步定位。",
+          "segmentId": "s13"
         },
         {
-          "id": "q03",
-          "type": "dictation",
-          "prompt": "听原声，写出玛莎询问有没有现金的整句。",
-          "answers": [
-            "Do you have cash?"
-          ],
-          "options": [],
-          "explanation": "cash 是现金，是不可数名词，这里不加 a。",
-          "segmentId": "s11"
-        },
-        {
-          "id": "q04",
-          "type": "dictation",
-          "prompt": "听原声，写出玛莎说明哪儿卖邮票的整句。",
-          "answers": [
-            "That store sells stamps."
-          ],
-          "options": [],
-          "explanation": "主语 That store 是第三人称单数，所以 sell 加 s。",
-          "segmentId": "s16"
-        },
-        {
-          "id": "q05",
+          "id": "guided-1",
           "type": "expression",
-          "prompt": "按本课说“你身后有一家银行”。",
+          "phase": "guided",
+          "hint": "to 后面需要动词原形。",
+          "prompt": "补全：I need to ___ food.",
+          "answers": [
+            "buy"
+          ],
+          "options": [
+            "buy",
+            "bought",
+            "buying"
+          ],
+          "explanation": "need to 后面接原形 buy；不用 buying 或过去式。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "从 Is there 开始组织。",
+          "prompt": "选择“附近有商店吗？”的完整问句。",
+          "answers": [
+            "Is there a store near here?"
+          ],
+          "options": [
+            "There is store?",
+            "Is there a store near here?",
+            "Is a store near here there?"
+          ],
+          "explanation": "询问有没有，使用 Is there a ... near here?。",
+          "segmentId": "s12"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "把 buy stamps 换成 buy food。",
+          "prompt": "你需要买食物。用 I need to 开头，使用 buy food。",
+          "answers": [
+            "I need to buy food."
+          ],
+          "options": [],
+          "explanation": "需求变了，need to + 动词原形的结构不变。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "Is there + a store + near here。",
+          "prompt": "你要找一家商店。用 Is there 开头问附近有没有，使用 a store、near here。",
+          "answers": [
+            "Is there a store near here?"
+          ],
+          "options": [],
+          "explanation": "先问存在与否；a store 是一家商店。",
+          "segmentId": "s12"
+        },
+        {
+          "id": "listen-1",
+          "type": "dictation",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Anna 回答后询问附近是否有银行的两句。",
+          "answers": [
+            "No. Is there a bank near here?"
+          ],
+          "options": [],
+          "explanation": "Is there a ... near here? 询问附近是否存在某种设施。",
+          "segmentId": "s12"
+        },
+        {
+          "id": "listen-2",
+          "type": "dictation",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Marsha 说明银行位置的整句。",
           "answers": [
             "There is a bank behind you."
           ],
           "options": [],
-          "explanation": "There is 引出一个事物；behind you 说明银行的位置。",
+          "explanation": "There is 引出银行，behind you 给出位置。",
           "segmentId": "s13"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "补全：I need to ___ stamps.（我需要买邮票，只填一个词）",
-          "answers": [
-            "buy"
-          ],
-          "options": [],
-          "explanation": "need to 后接动词原形 buy；stamps 是邮票。",
-          "segmentId": "s10"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "你要在社区里还书、寄信和买东西，需要询问地点并说明需求。",
+        "mission": "能说明要办的事，并询问附近设施。",
+        "listenFor": "听 Anna 需要做什么，以及 Marsha 用什么地标回答。",
+        "points": [
+          {
+            "expression": "I need to …",
+            "meaning": "我需要……",
+            "useWhen": "说明必须完成的一件事。",
+            "contrast": "need to 后面接动词原形；不是 need buying。",
+            "example": "I need to buy food.",
+            "segmentId": "s10"
+          },
+          {
+            "expression": "Is there a … near here?",
+            "meaning": "附近有……吗？",
+            "useWhen": "询问某种设施是否存在。",
+            "contrast": "先问有没有，不等于已经知道那家店的具体位置。",
+            "example": "Is there a store near here?",
+            "segmentId": "s12"
+          },
+          {
+            "expression": "There is a …",
+            "meaning": "这里有一个……",
+            "useWhen": "回答某处存在什么。",
+            "contrast": "这里的 there 不是“那个人”；There is 引出一个事物。",
+            "example": "There is a store behind you.",
+            "segmentId": "s13"
+          }
+        ],
+        "speakingTask": "你要买食物。先说明需求，再问附近有没有商店（store）。",
+        "speakingExample": "I need to buy food. Is there a store near here?",
+        "takeaway": "先说需要做什么，再问地点；there is 用来引出某处的事物。"
+      }
     },
     {
       "id": "voa1-12",
@@ -4239,80 +5126,161 @@
       ],
       "questions": [
         {
-          "id": "q01",
+          "id": "understand-1",
           "type": "comprehension",
-          "prompt": "拉文德与安娜是什么关系？",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Who is that woman? 和 What does Uncle John do? 有什么区别？",
           "answers": [
-            "姨妈（妈妈的姐妹）"
+            "前者问身份，后者问职业"
           ],
           "options": [
-            "姑妈（爸爸的姐妹）",
-            "姨妈（妈妈的姐妹）",
-            "堂姐"
+            "都只问姓名",
+            "前者问身份，后者问职业",
+            "都在问当前位置"
           ],
-          "explanation": "原文说明 Aunt Lavender 是 my mom's sister，因此这里译为姨妈。",
+          "explanation": "Who 关注是谁，What does ... do 关注通常从事的职业或活动。",
+          "segmentId": "s20"
+        },
+        {
+          "id": "understand-2",
+          "type": "comprehension",
+          "phase": "understand",
+          "hint": "",
+          "prompt": "Anna 说 Lavender 是 my mom's sister，说明了什么？",
+          "answers": [
+            "她与 Anna 的亲属关系"
+          ],
+          "options": [
+            "她正在做的事",
+            "她与 Anna 的亲属关系",
+            "她住的房间"
+          ],
+          "explanation": "妈妈的姐妹是母系的姨妈；英语 aunt 本身不区分父系或母系。",
           "segmentId": "s15"
         },
         {
-          "id": "q02",
-          "type": "comprehension",
-          "prompt": "安娜的堂亲做什么？",
+          "id": "guided-1",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "my 已经限定了关系。",
+          "prompt": "选择“这是我叔叔”。",
           "answers": [
-            "养羊、做毛衣"
+            "This is my uncle."
           ],
           "options": [
-            "养鸡、做吉他",
-            "表演小丑",
-            "养羊、做毛衣"
+            "This is a my uncle.",
+            "This is my uncle.",
+            "This my uncle."
           ],
-          "explanation": "紧接着询问 cousins 做什么，安娜回答 They raise sheep and make sweaters。",
-          "segmentId": "s25"
+          "explanation": "my 前不再加 a；This 后需要 is。",
+          "segmentId": "s10"
         },
         {
-          "id": "q03",
+          "id": "guided-2",
+          "type": "expression",
+          "phase": "guided",
+          "hint": "避免把第三人称单数变化做两次。",
+          "prompt": "补全：What does your uncle ___?",
+          "answers": [
+            "do"
+          ],
+          "options": [
+            "does",
+            "do",
+            "doing"
+          ],
+          "explanation": "前面已经用了 does，句末动词保持原形 do。",
+          "segmentId": "s20"
+        },
+        {
+          "id": "transfer-1",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "把 my mother 换成 my uncle。",
+          "prompt": "照片里是你的叔叔。用 This is 开头，使用 my uncle 介绍关系。",
+          "answers": [
+            "This is my uncle."
+          ],
+          "options": [],
+          "explanation": "my uncle 说明关系，不能省掉 is。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "transfer-2",
+          "type": "expression",
+          "phase": "transfer",
+          "hint": "把 a chicken farmer 换成 a teacher。",
+          "prompt": "你的叔叔是一名老师。用 He is 开头，使用 a teacher，说出职业。",
+          "answers": [
+            "He is a teacher.",
+            "He's a teacher."
+          ],
+          "options": [],
+          "explanation": "职业说明用 He is a ...；本题需要 teacher，不是重复亲属关系。",
+          "segmentId": "s21"
+        },
+        {
+          "id": "listen-1",
           "type": "dictation",
-          "prompt": "听原声，写出玛莎询问约翰叔伯职业的整句。",
+          "phase": "listen",
+          "hint": "",
+          "prompt": "听原声，写出 Marsha 询问 John 职业的整句。",
           "answers": [
             "What does Uncle John do?"
           ],
           "options": [],
-          "explanation": "第三人称单数疑问句用 does，后面的 do 保持原形。",
+          "explanation": "does 与 do 分别承担不同作用，句末 do 保持原形。",
           "segmentId": "s20"
         },
         {
-          "id": "q04",
+          "id": "listen-2",
           "type": "dictation",
-          "prompt": "听原声，写出安娜说明堂亲工作的整句。",
+          "phase": "listen",
+          "hint": "两个名词是 sheep（羊）和 sweaters（毛衣），注意听清两个动作。",
+          "prompt": "听原声，写出 Anna 说明堂亲们做什么的整句。",
           "answers": [
             "They raise sheep and make sweaters."
           ],
           "options": [],
-          "explanation": "raise sheep 是养羊，make sweaters 是做毛衣；sheep 单复数同形。",
+          "explanation": "两个动作是 raise sheep 和 make sweaters；sheep 单复数同形。",
           "segmentId": "s25"
-        },
-        {
-          "id": "q05",
-          "type": "expression",
-          "prompt": "补全：I'm feeling ___.（我想家了，只填一个词）",
-          "answers": [
-            "homesick"
-          ],
-          "options": [],
-          "explanation": "homesick 表示因离家而想家，不是身体生病。",
-          "segmentId": "s05"
-        },
-        {
-          "id": "q06",
-          "type": "expression",
-          "prompt": "按本课写“他们是谁？”的英语问句。",
-          "answers": [
-            "Who are they?"
-          ],
-          "options": [],
-          "explanation": "they 与 are 搭配；who 询问身份。",
-          "segmentId": "s22"
         }
-      ]
+      ],
+      "teaching": {
+        "situation": "朋友看到你的家庭照片，想知道照片上的人是谁、做什么工作。",
+        "mission": "能分别介绍亲属关系和职业。",
+        "listenFor": "区分 Who is …? 和 What does … do?；前者问身份，后者问职业。",
+        "points": [
+          {
+            "expression": "This is my …",
+            "meaning": "这是我的……",
+            "useWhen": "指着照片介绍一位家人。",
+            "contrast": "my 后直接接亲属名词；不再加 a。",
+            "example": "This is my uncle.",
+            "segmentId": "s10"
+          },
+          {
+            "expression": "Who is …?",
+            "meaning": "……是谁？",
+            "useWhen": "询问照片中某人的身份。",
+            "contrast": "不要用这个问题只回答职业；先说明人与人的关系。",
+            "example": "Who is that man?",
+            "segmentId": "s14"
+          },
+          {
+            "expression": "What does … do?",
+            "meaning": "……做什么工作？",
+            "useWhen": "询问一个人的职业。",
+            "contrast": "用了 does，句末 do 保持原形，不写 does。",
+            "example": "What does your uncle do?",
+            "segmentId": "s20"
+          }
+        ],
+        "speakingTask": "介绍一张照片：这是你的叔叔，他是一名老师。可使用 uncle、teacher。",
+        "speakingExample": "This is my uncle. He is a teacher.",
+        "takeaway": "介绍关系和介绍职业是两件事；一个人可以同时是你的 uncle 和一名 teacher。"
+      }
     }
   ]
 }
