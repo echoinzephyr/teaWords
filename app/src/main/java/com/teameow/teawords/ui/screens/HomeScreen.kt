@@ -264,15 +264,16 @@ fun HomeView(
                 Icon(AppSymbols.Delete, "清空最近查阅")
             }
         }) {
+            val closeRecent = LocalTeaSheetClose.current
             Column(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 16.dp)) {
                 if (historyList.isEmpty()) TeaEmptyState("还没有查阅记录", "查过的单词和翻译会出现在这里")
                 else LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 16.dp)) {
                     items(historyList, key = { "${it.word}:${it.timestamp}" }) { entry ->
-                        Surface(onClick = { onRecentHistoryDismiss(); onHistoryClick(entry.word) }, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                        Surface(onClick = { closeRecent { onRecentHistoryDismiss(); onHistoryClick(entry.word) } }, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                             Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(entry.word, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                SuggestionChip(onClick = { onRecentHistoryDismiss(); onHistoryClick(entry.word) }, label = {
+                                SuggestionChip(onClick = { closeRecent { onRecentHistoryDismiss(); onHistoryClick(entry.word) } }, label = {
                                     // 设计稿在历史行上标的是查询方向，而不是内部的「查词 / 翻译」模式名。
                                     Text(if (LexicalText.isChinese(entry.word)) "中译英" else "英译中")
                                 })

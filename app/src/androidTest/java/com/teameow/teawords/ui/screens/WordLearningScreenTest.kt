@@ -94,7 +94,74 @@ class WordLearningScreenTest {
         assertEquals(session.id, WordLearningSessionRepository(database).load()!!.id)
         assertEquals(1, LearningRepository(database).totals().tests)
         compose.onNodeWithText("本轮完成").assertIsDisplayed()
-        compose.onNodeWithText("辅助练习正确 1 个，不计入独立回忆正确。").assertExists()
+        compose.onNodeWithText("已完成认读练习 1 个，可继续用拼写巩固。").assertExists()
+    }
+    @Test fun newRoundStillStartsAfterPreviousDailyAllowanceWasUsed() {
+        name = "round-cap-${System.nanoTime()}.db"
+        val database = DatabaseHelper(compose.activity, name)
+        helper = database
+        val repository = LearningRepository(database)
+        repository.importWords(listOf(ImportedWord("roundfresh", "新一轮单词")), "test", "test")
+        repository.save(Knowledge("roundfresh", SelfReport.UNKNOWN), "manual")
+        repeat(25) { repository.recordEvent("previous$it", "test", true, 1000) }
+        assertEquals(25, repository.newWordsSince(0))
+        val preferences = AppPreferences(compose.activity)
+        val previous = preferences.dailyNewCapOverride
+        preferences.dailyNewCapOverride = 1
+        try {
+            compose.setContent { TeaWordsTheme { LearningScreen(database) } }
+            compose.waitUntil(15_000) {
+                compose.onAllNodes(hasTestTag("study-learn-entry") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+            }
+            compose.onNodeWithTag("study-learn-entry").performScrollTo().performClick()
+            compose.waitUntil(5_000) { WordLearningSessionRepository(database).load() != null }
+            assertEquals(listOf("roundfresh"), WordLearningSessionRepository(database).load()!!.tasks.map { it.word })
+        } finally { preferences.dailyNewCapOverride = previous }
+    }
+
+    @Test fun revealingAutomaticallyLoadsOnlineDetailsAndTopContinueResponds() {
+        name = "automatic-details-${System.nanoTime()}.db"
+        val database = DatabaseHelper(compose.activity, name)
+        helper = database
+        var correct: Boolean? = null
+        val calls = java.util.concurrent.atomic.AtomicInteger()
+        compose.setContent {
+            TeaWordsTheme {
+                ImmersiveWordScreen(database, "autodetailword", "本轮释义", 1, 10, false, null, onPause = {},
+                    onlineLookup = { calls.incrementAndGet(); StudyDictionaryEntry("在线补充", "test", "test", listOf("phrase" to "短语"), emptyList()) }
+                ) { value, _ -> correct = value }
+            }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("会") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        assertEquals(0, calls.get())
+        compose.onNodeWithText("会").performClick()
+        compose.waitUntil(5_000) { calls.get() == 1 }
+        compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasText("在线补充"))
+        compose.onNodeWithText("在线补充").assertIsDisplayed()
+        compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasText("继续"))
+        compose.onNodeWithText("继续").performClick()
+        assertEquals(true, correct)
+    }
+    @Test fun swipingLeftOpensFocusedSpellingWithoutTheLegacyInlineView() {
+        name = "swipe-spelling-${System.nanoTime()}.db"
+        val database = DatabaseHelper(compose.activity, name)
+        helper = database
+        compose.setContent {
+            TeaWordsTheme {
+                ImmersiveWordScreen(database, "access", "入口", 1, 10, false, null, onPause = {}) { _, _ -> }
+            }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("拼写") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("immersive-word-content").performTouchInput { swipeLeft(startX = width * .8f, endX = width * .2f) }
+        compose.onNodeWithTag("spelling-input").assertIsDisplayed()
+        compose.onNodeWithText("拼写自测").assertDoesNotExist()
+        compose.onNodeWithText("英文单词").assertDoesNotExist()
+        val screenshot = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        File(compose.activity.getExternalFilesDir(null), "spelling-rc2.png").outputStream().use {
+            screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+        compose.onNodeWithContentDescription("返回词卡").performClick()
+        compose.onNodeWithText("access").assertIsDisplayed()
     }
     @Test fun focusActionsStayVisibleWhenLongPromptScrollsAtLargeFont() {
         name = "immersive-long-${System.nanoTime()}.db"
@@ -156,10 +223,10 @@ class WordLearningScreenTest {
         compose.onNode(hasSetTextAction()).performTextInput("记住：获得使用权")
         compose.onNodeWithText("保存").performClick()
         compose.waitUntil(5000) { StudyWordDetailsRepository(database).load("access").note == "记住：获得使用权" }
-        compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasText("A"))
-        compose.onNodeWithText("A").performClick()
+        compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasText("拼写"))
+        compose.onNodeWithText("拼写").performClick()
         compose.onNode(hasSetTextAction()).performTextInput("access")
-        compose.onNodeWithText("检查拼写").performClick()
+        compose.onNodeWithContentDescription("检查拼写").performClick()
         compose.onNodeWithText("下一个").performClick()
         compose.runOnIdle { assertEquals(true, completed) }
     }
@@ -178,9 +245,9 @@ class WordLearningScreenTest {
             }
         }
         compose.waitUntil(10000) { compose.onAllNodes(hasText("认识") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("A").performClick()
+        compose.onNodeWithText("拼写").performClick()
         compose.onNode(hasSetTextAction()).performTextInput("access")
-        compose.onNodeWithText("检查拼写").performClick()
+        compose.onNodeWithContentDescription("检查拼写").performClick()
         compose.onNodeWithText("下一个").performClick()
         compose.runOnIdle { assertEquals(true, recall); assertEquals(0, recognitionCalls) }
     }
@@ -201,8 +268,8 @@ class WordLearningScreenTest {
         }
         compose.waitUntil(10000) { compose.onAllNodes(hasText("认识") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("认识").performClick()
-        compose.onNodeWithText("A").performClick()
-        compose.onNodeWithText("返回词卡").performClick()
+        compose.onNodeWithText("拼写").performClick()
+        compose.onNodeWithContentDescription("返回词卡").performClick()
         compose.onNodeWithText("下一个").performClick()
         compose.runOnIdle { assertEquals(1, recognitionCalls); assertEquals(0, recallCalls) }
     }

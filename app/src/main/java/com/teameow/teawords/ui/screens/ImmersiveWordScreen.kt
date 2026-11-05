@@ -4,6 +4,8 @@ import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.platform.testTag
@@ -37,6 +41,7 @@ import com.teameow.teawords.data.search.SearchFilter
 import com.teameow.teawords.data.search.WordFormKeys
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 
 private val StudyInk: Color @Composable get() = MaterialTheme.colorScheme.onSurface
@@ -80,6 +85,7 @@ internal fun ImmersiveWordScreen(
     helper: DatabaseHelper, word: String, definition: String, index: Int, total: Int,
     busy: Boolean, error: String?, wallpaper: String? = null, onPause: () -> Unit,
     onRecallComplete: ((Boolean, Long) -> Unit)? = null,
+    onlineLookup: (suspend (String) -> StudyDictionaryEntry)? = null,
     onComplete: (Boolean, Long) -> Unit
 ) {
     val layout = teaLayoutSize()
@@ -108,16 +114,18 @@ internal fun ImmersiveWordScreen(
     val dictionary = remember(helper) { StudyDictionary(helper) }
     var onlineEntry by remember(word) { mutableStateOf<StudyDictionaryEntry?>(null) }
     var onlineBusy by remember(word) { mutableStateOf(false) }
+    var onlineAttempted by remember(word) { mutableStateOf(false) }
+    var onlineJob by remember { mutableStateOf<Job?>(null) }
     var dictionaryAudio by remember { mutableStateOf(prefs.getBoolean("dictionary_audio", true)) }
     val audio = remember(speech.manager) { com.teameow.teawords.data.pronunciation.DictionaryAudioPlayer(context, speech.manager) }
     val recordingPlaying by audio.playing.collectAsState()
     DisposableEffect(audio) { onDispose { audio.close() } }
     fun lookupOnline() {
         if (onlineBusy) return
-        onlineBusy = true; localError = null
-        scope.launch {
+        onlineBusy = true; onlineAttempted = true; localError = null
+        onlineJob = scope.launch {
             try {
-                onlineEntry = withContext(Dispatchers.IO) { dictionary.lookup(word) }
+                onlineEntry = withContext(Dispatchers.IO) { onlineLookup?.invoke(word) ?: dictionary.lookup(word) }
                 revealed = true
                 if (onlineEntry?.phrases?.isNotEmpty() == true) selectedTab = 0
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
@@ -125,6 +133,8 @@ internal fun ImmersiveWordScreen(
             finally { onlineBusy = false }
         }
     }
+    DisposableEffect(word) { onDispose { onlineJob?.cancel() } }
+    LaunchedEffect(word, revealed) { if (revealed && !onlineAttempted) lookupOnline() }
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -163,7 +173,8 @@ internal fun ImmersiveWordScreen(
     Box(Modifier.fillMaxSize()) {
         StudyAmbientBackground(if (useWallpaper) wallpaper else null)
         CompositionLocalProvider(LocalContentColor provides StudyInk) {
-            Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
+            Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()
+                .then(if (typing) Modifier.clearAndSetSemantics { } else Modifier)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     StudyCircle(onPause, "返回", !busy) { Icon(AppSymbols.ArrowBack, "返回") }
@@ -177,35 +188,48 @@ internal fun ImmersiveWordScreen(
                     }
                     Box {
                         StudyCircle({ menu = true }, "更多", !busy) { Icon(Icons.Default.MoreHoriz, "更多") }
-                        DropdownMenu(menu, { menu = false }, containerColor = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                            DropdownMenuItem(text = { Text("查看释义", color = StudyInk) }, enabled = controlsEnabled,
-                                onClick = { revealed = true; menu = false })
-                            DropdownMenuItem(text = { Text(if (useWallpaper) "使用应用主题" else "跟随首页壁纸", color = StudyInk) },
-                                onClick = { useWallpaper = !useWallpaper; prefs.edit().putBoolean("word_card_wallpaper_v2", useWallpaper).apply(); menu = false })
-                            DropdownMenuItem(text = { Text(if (onlineBusy) "正在查询…" else "在线查询词义 · 有道", color = StudyInk) },
-                                enabled = !onlineBusy, onClick = { menu = false; lookupOnline() })
-                            DropdownMenuItem(text = { Text(if (pronunciation.dialect == PronunciationDialect.UK) "切换美式发音" else "切换英式发音", color = StudyInk) },
-                                onClick = { audio.stop(); speech.manager.stop(); speech.setDefault(if (pronunciation.dialect == PronunciationDialect.UK) PronunciationDialect.US else PronunciationDialect.UK); menu = false })
-                            DropdownMenuItem(text = { Text(if (dictionaryAudio) "发音来源：有道音频" else "发音来源：系统语音", color = StudyInk) },
-                                onClick = { audio.stop(); speech.manager.stop(); dictionaryAudio = !dictionaryAudio; prefs.edit().putBoolean("dictionary_audio", dictionaryAudio).apply(); menu = false })
-                            DropdownMenuItem(text = { Text("系统语音设置", color = StudyInk) }, onClick = {
-                                menu = false
-                                try { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
-                                catch (_: Exception) { localError = "无法打开系统语音设置" }
-                            })
-                            DropdownMenuItem(text = { Text("暂停，稍后继续", color = StudyInk) }, onClick = { menu = false; onPause() })
-                        }
+                        TeaDropdownMenu(menu, { menu = false }, listOf(
+                            TeaMenuSection(listOf(
+                                TeaMenuOption("查看释义", AppSymbols.Info, enabled = controlsEnabled) { revealed = true; menu = false },
+                                TeaMenuOption(if (useWallpaper) "使用应用主题" else "跟随首页壁纸", AppSymbols.Wallpaper) {
+                                    useWallpaper = !useWallpaper; prefs.edit().putBoolean("word_card_wallpaper_v2", useWallpaper).apply(); menu = false
+                                },
+                                TeaMenuOption(if (onlineBusy) "正在查询…" else "在线查询词义 · 有道", AppSymbols.Search, enabled = !onlineBusy) { menu = false; lookupOnline() }
+                            )),
+                            TeaMenuSection(listOf(
+                                TeaMenuOption(if (pronunciation.dialect == PronunciationDialect.UK) "切换美式发音" else "切换英式发音", AppSymbols.VoiceSelection) {
+                                    audio.stop(); speech.manager.stop(); speech.setDefault(if (pronunciation.dialect == PronunciationDialect.UK) PronunciationDialect.US else PronunciationDialect.UK); menu = false
+                                },
+                                TeaMenuOption(if (dictionaryAudio) "发音来源：有道音频" else "发音来源：系统语音", AppSymbols.VolumeUp) {
+                                    audio.stop(); speech.manager.stop(); dictionaryAudio = !dictionaryAudio; prefs.edit().putBoolean("dictionary_audio", dictionaryAudio).apply(); menu = false
+                                },
+                                TeaMenuOption("系统语音设置", AppSymbols.Settings) {
+                                    menu = false
+                                    try { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
+                                    catch (_: Exception) { localError = "无法打开系统语音设置" }
+                                }
+                            )),
+                            TeaMenuSection(listOf(TeaMenuOption("暂停，稍后继续", AppSymbols.ArrowBack) { menu = false; onPause() }))
+                        ))
                     }
                 }
-                LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("immersive-word-content"),
+                LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("immersive-word-content")
+                    .pointerInput(word, controlsEnabled) {
+                        var distance = 0f
+                        detectHorizontalDragGestures(onDragStart = { distance = 0f }, onDragEnd = {
+                            if (controlsEnabled && distance < -72.dp.toPx()) { typing = true; answer = ""; typingFeedback = null }
+                        }, onHorizontalDrag = { change, delta ->
+                            if (controlsEnabled) { distance += delta; change.consume() }
+                        })
+                    },
                     contentPadding = PaddingValues(horizontal = layout.horizontalPadding, vertical = if (layout.compact) 12.dp else 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     item {
                         Box(Modifier.fillMaxWidth()) {
                             Column(Modifier.fillMaxWidth().padding(horizontal = 42.dp), horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(if (typing) "拼写自测" else word, fontSize = if (typing) 24.sp else layout.wordSize,
+                                Text(word, fontSize = layout.wordSize,
                                     fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = layout.wordSize * 1.2f)
-                                if (!typing) TextButton(onClick = {
+                                TextButton(onClick = {
                                     pronunciation.dialect?.let { if (dictionaryAudio) audio.play(word, it) else speech.manager.play(word, it) }
                                 }, enabled = pronunciation.dialect != null && (dictionaryAudio || playback.phase != com.teameow.teawords.data.pronunciation.SpeechPhase.INITIALIZING),
                                     colors = ButtonDefaults.textButtonColors(contentColor = StudyInk)) {
@@ -216,16 +240,18 @@ internal fun ImmersiveWordScreen(
                                     Text(if (recordingPlaying) "正在播放…" else regional?.takeIf { it.isNotBlank() }?.let { "/${it.trim('/')}/" } ?: "播放发音", fontSize = 15.sp)
                                     Spacer(Modifier.width(5.dp)); Icon(AppSymbols.VolumeUp, "播放发音", Modifier.size(16.dp))
                                 }
-                                if (onlineEntry == null && details.phonetic.isNotBlank() && !typing)
+                                if (onlineEntry == null && details.phonetic.isNotBlank()  )
                                     Text("/${details.phonetic.trim('/')}/", fontSize = 14.sp, color = StudyInk.copy(alpha = .65f))
                                 Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                                     repeat(3) { dot -> Box(Modifier.size(8.dp).background(
-                                        if ((revealed && dot == 0) || (typing && dot == 2)) StudyInk else StudyInk.copy(alpha = .25f), CircleShape)) }
+                                        if (revealed && dot == 0) StudyInk else StudyInk.copy(alpha = .25f), CircleShape)) }
                                 }
                             }
                             Column(Modifier.align(Alignment.TopEnd), horizontalAlignment = Alignment.CenterHorizontally) {
-                                TextButton(onClick = { recognized = true; revealed = true }, enabled = controlsEnabled,
-                                    colors = ButtonDefaults.textButtonColors(contentColor = StudyInk), contentPadding = PaddingValues(0.dp)) { Text("会", fontSize = 22.sp) }
+                                TextButton(onClick = { if (revealed) finish(recognized) else { recognized = true; revealed = true } }, enabled = controlsEnabled,
+                                    colors = ButtonDefaults.textButtonColors(contentColor = StudyInk), contentPadding = PaddingValues(0.dp)) {
+                                    Text(if (revealed) "继续" else "会", fontSize = if (revealed) 16.sp else 22.sp)
+                                }
                                 IconButton(enabled = controlsEnabled, onClick = {
                                     detailsBusy = true
                                     scope.launch {
@@ -241,10 +267,12 @@ internal fun ImmersiveWordScreen(
                                 }) { Icon(if (details.saved) Icons.Default.Star else Icons.Outlined.StarBorder,
                                     if (details.saved) "移出生词本" else "加入生词本", tint = StudyInk) }
                                 TextButton(enabled = controlsEnabled, onClick = { typing = true; answer = ""; typingFeedback = null },
-                                    colors = ButtonDefaults.textButtonColors(contentColor = StudyInk), contentPadding = PaddingValues(0.dp)) { Text("A", fontSize = 28.sp) }
+                                    colors = ButtonDefaults.textButtonColors(contentColor = StudyInk), contentPadding = PaddingValues(0.dp)) { Text("拼写", fontSize = 14.sp) }
                             }
                         }
                     }
+                    if (!revealed) item { Text("← 左滑进入拼写", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+                        fontSize = 12.sp, color = StudyInk.copy(alpha = .7f)) }
                     (error ?: localError)?.let { message -> item {
                         Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.errorContainer,
                             contentColor = MaterialTheme.colorScheme.onErrorContainer) {
@@ -253,31 +281,26 @@ internal fun ImmersiveWordScreen(
                     } }
                     if (playback.word == word) playback.message?.let { message -> item { Text(message, color = StudyInk.copy(alpha = .8f), fontSize = 13.sp) } }
                     item {
-                        AnimatedVisibility(revealed || typing,
+                        AnimatedVisibility(revealed,
                             enter = fadeIn(tween(240)) + expandVertically(spring(dampingRatio = .85f)),
                             exit = fadeOut(tween(140)) + shrinkVertically()) {
                             Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.secondaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer) {
-                                Text(onlineEntry?.definition?.takeIf { it.isNotBlank() } ?: definition,
+                                Text(definition,
                                     Modifier.fillMaxWidth().padding(20.dp), textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.titleMedium)
                             }
                         }
                     }
-                    if (typing) {
-                        item {
-                            OutlinedTextField(answer, { answer = it }, Modifier.fillMaxWidth(), enabled = !busy, singleLine = true,
-                                label = { Text("英文单词") }, keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
-                                colors = OutlinedTextFieldDefaults.colors(focusedTextColor = StudyInk, unfocusedTextColor = StudyInk,
-                                    focusedBorderColor = StudyAccent, unfocusedBorderColor = StudyInk.copy(alpha = .4f),
-                                    focusedLabelColor = StudyAccent, unfocusedLabelColor = StudyInk.copy(alpha = .7f), cursorColor = StudyAccent))
-                            typingFeedback?.let { Text(it, color = StudyInk) }
-                        }
-                    } else {
                         item {
                             AnimatedVisibility(revealed, enter = fadeIn(tween(260)) + expandVertically(spring(dampingRatio = .85f)), exit = fadeOut() + shrinkVertically()) {
                             Surface(color = StudyGlass, contentColor = StudyInk, shape = RoundedCornerShape(24.dp)) {
                                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    onlineEntry?.definition?.takeIf { it.isNotBlank() && it.trim() != definition.trim() }?.let {
+                                        TeaCaption("补充释义 · 有道")
+                                        Text(it, style = MaterialTheme.typography.bodyLarge)
+                                        HorizontalDivider(color = StudyInk.copy(alpha = .08f))
+                                    }
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         listOf("短语", "词形").forEachIndexed { tab, title ->
                                             FilterChip(selected = selectedTab == tab, onClick = { selectedTab = tab },
@@ -301,9 +324,8 @@ internal fun ImmersiveWordScreen(
                         item {
                             AnimatedVisibility(revealed, enter = fadeIn(tween(260)) + expandVertically(), exit = fadeOut() + shrinkVertically()) {
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            TextButton(onClick = { lookupOnline() }, enabled = !onlineBusy) {
-                                Text(if (onlineBusy) "正在查询…" else if (onlineEntry != null) "已加载有道词典释义" else "查询更多释义与短语 · 有道")
-                            }
+                            if (onlineBusy) TeaCaption("正在加载在线补充…")
+                            else if (onlineEntry == null) TextButton(onClick = { lookupOnline() }) { Text("重试在线补充 · 有道") }
                             Surface(onClick = { noteDraft = details.note; editingNote = true }, enabled = controlsEnabled,
                                 color = StudyGlass, contentColor = StudyInk.copy(alpha = .7f), shape = RoundedCornerShape(24.dp)) {
                                 Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -315,37 +337,32 @@ internal fun ImmersiveWordScreen(
                             }
                             }
                         }
-                    }
                 }
                 Row(Modifier.fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surfaceContainerLow,
                         RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                     .padding(horizontal = 20.dp, vertical = 16.dp).testTag("immersive-word-actions"),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val left = when { typing -> "检查拼写"; revealed -> "下一个"; else -> "认识" }
-                    val right = when { typing -> "返回词卡"; revealed -> "记错了"; else -> "不认识" }
-                    StudyPill(left, controlsEnabled && (!typing || answer.isNotBlank()), Modifier.weight(1f), primary = true) {
-                        when {
-                            typing -> {
-                                if (answer.trim().equals(word, true)) {
-                                    recognized = !typingMissed; spellingCompleted = true; revealed = true; typing = false
-                                    focus.clearFocus(); keyboard?.hide()
-                                } else { typingMissed = true; typingFeedback = "还不对，再试一次；可返回词卡查看答案。" }
-                            }
-                            revealed -> finish(recognized)
-                            else -> { recognized = true; revealed = true }
-                        }
+                    StudyPill(if (revealed) "下一个" else "认识", controlsEnabled, Modifier.weight(1f), primary = true) {
+                        if (revealed) finish(recognized) else { recognized = true; revealed = true }
                     }
-                    StudyPill(right, controlsEnabled, Modifier.weight(1f)) {
-                        when {
-                            typing -> { typing = false; focus.clearFocus(); keyboard?.hide() }
-                            revealed -> finish(false)
-                            else -> { recognized = false; revealed = true }
-                        }
+                    StudyPill(if (revealed) "记错了" else "不认识", controlsEnabled, Modifier.weight(1f)) {
+                        if (revealed) finish(false) else { recognized = false; revealed = true }
                     }
                 }
             }
         }
+    }
+    if (typing) PredictiveBackLayer(enterFromRight = true, onBack = { typing = false; focus.clearFocus(); keyboard?.hide() }) { close ->
+        StudySpellingScreen(definition, answer, { answer = it }, typingFeedback,
+            onlineEntry?.uk?.ifBlank { onlineEntry?.us.orEmpty() }?.ifBlank { details.phonetic } ?: details.phonetic,
+            if (useWallpaper) wallpaper else null, controlsEnabled, onClose = close,
+            onHint = { typingMissed = true }, onSubmit = {
+                if (answer.trim().equals(word, true)) {
+                    recognized = !typingMissed; spellingCompleted = true; revealed = true; typing = false
+                    focus.clearFocus(); keyboard?.hide()
+                } else { typingMissed = true; typingFeedback = "还不对，再试一次；可返回词卡查看答案。" }
+            })
     }
     if (editingNote) AlertDialog(onDismissRequest = { if (!detailsBusy) editingNote = false }, title = { Text("$word · 笔记") },
         text = { Column {
@@ -386,11 +403,15 @@ private fun StudyPill(label: String, enabled: Boolean, modifier: Modifier, prima
 }
 
 @Composable
-private fun StudyAmbientBackground(wallpaper: String?) {
+internal fun StudyAmbientBackground(wallpaper: String?) {
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
     if (!wallpaper.isNullOrBlank()) {
-        AsyncImage(ImageRequest.Builder(LocalContext.current).data(wallpaper).size(48, 96).build(),
-            contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().blur(48.dp))
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = .82f)))
+        AsyncImage(ImageRequest.Builder(LocalContext.current).data(wallpaper).size(720, 1600).build(),
+            contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().blur(6.dp))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(
+            MaterialTheme.colorScheme.background.copy(alpha = .35f),
+            MaterialTheme.colorScheme.background.copy(alpha = .22f),
+            MaterialTheme.colorScheme.background.copy(alpha = .48f)
+        ))))
     }
 }

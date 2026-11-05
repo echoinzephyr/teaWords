@@ -81,11 +81,11 @@ class SettingsScreenTest {
         launch()
         val top = compose.onNodeWithContentDescription("关闭设置").getUnclippedBoundsInRoot().top
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("检查更新"))
-        compose.onNodeWithText("个性化").assertIsDisplayed()
+        compose.onNodeWithText("设置").assertIsDisplayed()
         assertEquals(top, compose.onNodeWithContentDescription("关闭设置").getUnclippedBoundsInRoot().top)
         compose.onNodeWithText("检查更新").performClick()
         compose.onNodeWithContentDescription("关闭子设置").performClick()
-        compose.onNodeWithText("个性化").assertIsDisplayed()
+        compose.onNodeWithText("设置").assertIsDisplayed()
     }
 
     @Test fun draggingChildHeaderDownReturnsToParentWithoutClosingSettings() {
@@ -94,7 +94,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag("settings-panel-header").performTouchInput {
             down(center); moveBy(androidx.compose.ui.geometry.Offset(0f, 340f), delayMillis = 200); up()
         }
-        compose.onNodeWithText("个性化").assertIsDisplayed()
+        compose.onNodeWithText("设置").assertIsDisplayed()
         compose.onNodeWithContentDescription("关闭设置").assertIsDisplayed()
         compose.onNodeWithContentDescription("关闭子设置").assertDoesNotExist()
     }
@@ -106,7 +106,7 @@ class SettingsScreenTest {
         compose.onNodeWithText("主页定制").assertIsDisplayed()
         compose.onNodeWithContentDescription("主页外观预览").assertIsDisplayed()
         compose.onNodeWithContentDescription("返回").performClick()
-        compose.onNodeWithText("个性化").assertIsDisplayed()
+        compose.onNodeWithText("设置").assertIsDisplayed()
     }
 
     @Test fun captureSettingsPagesForMaterialReview() {
@@ -120,6 +120,8 @@ class SettingsScreenTest {
         }
         capture("settings-main")
         compose.onNodeWithText("外观模式").performClick()
+        compose.onNodeWithTag("settings-live-preview").assertIsDisplayed()
+        compose.onNodeWithContentDescription("主页外观预览").assertIsDisplayed()
         capture("settings-appearance")
         compose.onNodeWithContentDescription("返回").performClick()
         compose.onNodeWithText("主页定制").performClick()
@@ -164,7 +166,7 @@ class SettingsScreenTest {
         compose.onNodeWithText("深色").performScrollTo().performClick().assertIsSelected()
         compose.runOnIdle { assertEquals(AppThemeMode.DARK, mode) }
         compose.onNodeWithContentDescription("返回").performClick()
-        compose.onNodeWithText("个性化").assertIsDisplayed()
+        compose.onNodeWithText("设置").assertIsDisplayed()
         compose.onNodeWithText("深色").assertIsDisplayed()
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("关于App"))
         compose.onNodeWithText("关于App").performClick()
@@ -229,7 +231,7 @@ class SettingsScreenTest {
         compose.onNodeWithText("接收 Beta 更新").assertIsDisplayed()
         compose.runOnIdle { dispatcher.onBackPressed() }
         compose.waitForIdle()
-        compose.onNodeWithText("个性化").assertIsDisplayed()
+        compose.onNodeWithText("设置").assertIsDisplayed()
         compose.onNodeWithText("日志获取").assertIsDisplayed()
     }
 

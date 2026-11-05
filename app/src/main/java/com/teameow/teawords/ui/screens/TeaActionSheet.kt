@@ -26,12 +26,13 @@ internal fun TeaActionSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = compact),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
+        val closeSheet = LocalTeaSheetClose.current
         Column(Modifier.fillMaxWidth().height(height).testTag("tea-action-sheet")) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).heightIn(min = 56.dp)
                 .testTag("tea-sheet-header"), verticalAlignment = Alignment.CenterVertically) {
                 Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
                 actions()
-                IconButton(onClick = onDismiss) { Icon(AppSymbols.Close, "关闭$title") }
+                IconButton(onClick = { closeSheet(null) }) { Icon(AppSymbols.Close, "关闭$title") }
             }
             content()
             footer?.invoke()
@@ -45,8 +46,9 @@ internal fun TeaKnowledgeProfileSheet(
     onDismiss: () -> Unit, onShowStats: () -> Unit
 ) {
     TeaActionSheet("词汇知识画像", onDismiss, compact = true, footer = {
+        val closeSheet = LocalTeaSheetClose.current
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
-            Button(onClick = { onDismiss(); onShowStats() },
+            Button(onClick = { closeSheet { onDismiss(); onShowStats() } },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).heightIn(min = 48.dp)) {
                 Text("查看统计")
                 Spacer(Modifier.width(8.dp))

@@ -36,8 +36,9 @@ class OnlineDictionary(private val fetch: suspend (String) -> String = { Diction
         val key = word.lowercase(Locale.ROOT)
         cache.get(key)?.let { return it }
         val url = "https://dict.youdao.com/jsonapi".toHttpUrl().newBuilder().addQueryParameter("q", word).build()
-        val detail = parse(fetch(url.toString()))
-        val entry = detail.takeIf { it.definition.isNotBlank() }?.let { OnlineWordEntry(word, it) }
+        val payload = fetch(url.toString())
+        val detail = parse(payload)
+        val entry = detail.takeIf { it.definition.isNotBlank() }?.let { OnlineWordEntry(headword(payload, word), it) }
         val suggestions = if (entry == null) {
             val suggestionUrl = "https://dict.youdao.com/suggest".toHttpUrl().newBuilder()
                 .addQueryParameter("q", word).addQueryParameter("num", "8").addQueryParameter("doctype", "json").build()
@@ -48,6 +49,12 @@ class OnlineDictionary(private val fetch: suspend (String) -> String = { Diction
     }
     companion object {
         val shared by lazy { OnlineDictionary() }
+        internal fun headword(payload: String, fallback: String): String {
+            val root = JsonParser.parseString(payload).asJsonObject
+            val value = root.obj("ec").array("word").objects().firstOrNull().string("return-phrase")
+                .ifBlank { root.obj("simple").array("word").objects().firstOrNull().string("return-phrase") }.trim()
+            return value.takeIf { it.isNotBlank() && it.length <= 160 && it.none(Char::isISOControl) } ?: fallback
+        }
         fun parse(payload: String): StudyDictionaryEntry {
             val root = JsonParser.parseString(payload).asJsonObject
             val head = root.obj("ec").array("word").objects().firstOrNull()

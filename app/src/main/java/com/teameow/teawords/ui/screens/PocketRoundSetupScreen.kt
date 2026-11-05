@@ -52,7 +52,7 @@ internal fun PocketRoundSetupScreen(
                     supportingText = { Text("可输入 1–${PocketPlanner.MAX_WORD_LIMIT} 个词") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { start() }))
-                TeaCaption("优先练到期的词。实际词数受可用词条和每日新词额度影响。")
+                TeaCaption("优先练到期的词。实际词数受可用词条和每轮新词额度影响。")
                 TeaCaption("词数会记住，练到一半也可以暂停，下次接着来。")
                 error?.let { TeaCaption(it) }
                 Button(onClick = ::start, enabled = !busy && count != null,

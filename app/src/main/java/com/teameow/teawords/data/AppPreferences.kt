@@ -160,6 +160,17 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean("pure_black", false)
         set(value) { prefs.edit().putBoolean("pure_black", value).apply() }
 
+    var themeSeedColor: Int
+        get() = prefs.getInt("theme_seed_color", DEFAULT_THEME_SEED)
+        set(value) { prefs.edit().putInt("theme_seed_color", value or 0xFF000000.toInt()).apply() }
+
+    /** null follows Android's current font scale, including accessibility changes. */
+    var customFontScale: Float?
+        get() = prefs.getFloat("custom_font_scale", 0f).takeIf { it.isFinite() && it in .75f..1.6f }
+        set(value) {
+            prefs.edit().putFloat("custom_font_scale", value?.takeIf { it.isFinite() }?.coerceIn(.75f, 1.6f) ?: 0f).apply()
+        }
+
     var predictiveBackEnabled: Boolean
         get() = prefs.getBoolean(KEY_PREDICTIVE_BACK, false)
         set(value) { prefs.edit().putBoolean(KEY_PREDICTIVE_BACK, value).apply() }
@@ -170,7 +181,7 @@ class AppPreferences(context: Context) {
             prefs.edit().putString(KEY_STUDY_STRATEGY, value.id).apply()
         }
 
-    /** Daily cap override; 0 means "use the strategy's own cap". */
+    /** Per-round new-word cap. The legacy key is retained for preference compatibility. */
     var dailyNewCapOverride: Int
         get() = prefs.getInt(KEY_DAILY_NEW_CAP, 0)
         set(value) {
@@ -185,6 +196,7 @@ class AppPreferences(context: Context) {
         }
 
     companion object {
+        const val DEFAULT_THEME_SEED = 0xFF6750A4.toInt()
         private const val KEY_SELECTED_WORDBOOK_IDS = "selected_wordbook_ids"
         private const val KEY_HOME_TITLE = "home_title"
         private const val KEY_HOME_SUBTITLE = "home_subtitle"

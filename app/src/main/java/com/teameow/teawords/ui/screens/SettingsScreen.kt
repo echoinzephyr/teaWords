@@ -116,7 +116,11 @@ fun SettingsView(
     onPredictiveBackChange: (Boolean) -> Unit = {},
     pureBlack: Boolean = false,
     onPureBlackChange: (Boolean) -> Unit = {},
-    dailyWallpaperUrl: String? = null
+    dailyWallpaperUrl: String? = null,
+    themeSeedColor: Int = AppPreferences.DEFAULT_THEME_SEED,
+    onThemeSeedColorChange: (Int) -> Unit = {},
+    customFontScale: Float? = null,
+    onCustomFontScaleChange: (Float?) -> Unit = {}
 ) {
     var currentPage by rememberSaveable { mutableStateOf(SettingsPage.Main) }
     var wordbookDraft by rememberSaveable { mutableStateOf<Set<String>?>(null) }
@@ -131,6 +135,11 @@ fun SettingsView(
     // 动态取色需要 Android 12+；不支持时开关禁用，而不是假装能开。
     val dynamicColorSupported = remember { com.teameow.teawords.ui.theme.supportsDynamicColor() }
     val books = LearningWordbook.available.filter { it.id in selectedWordbookIds }
+    val previewWallpaper = when (homeWallpaperMode) {
+        HomeWallpaperMode.NONE -> null
+        HomeWallpaperMode.DAILY -> dailyWallpaperUrl
+        HomeWallpaperMode.CUSTOM -> customWallpaperUri
+    }
     val scope = rememberCoroutineScope()
     var quoteLoading by remember { mutableStateOf(false) }
     var quoteFeedback by remember { mutableStateOf<String?>(null) }
@@ -182,24 +191,15 @@ fun SettingsView(
                 when (page) {
                     SettingsPage.Main -> Unit
                     SettingsPage.Appearance -> {
-                        val light = com.teameow.teawords.ui.theme.settingsColorScheme(settingsContext, false, dynamicColor, false)
-                        val dark = com.teameow.teawords.ui.theme.settingsColorScheme(settingsContext, true, dynamicColor, false)
-                        val black = com.teameow.teawords.ui.theme.settingsColorScheme(settingsContext, true, dynamicColor, true)
-                        item { SettingsLivePreview(MaterialTheme.colorScheme) }
-                        item { SettingsThemeControls(themeMode, pureBlack, light, dark, black, onThemeModeChange, onPureBlackChange) }
-                        item {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                SettingsOptionHeading(AppSymbols.Palette, "主题色彩")
-                                Row(Modifier.fillMaxWidth().toggleable(dynamicColor && dynamicColorSupported,
-                                    enabled = dynamicColorSupported, role = Role.Switch, onValueChange = onDynamicColorChange),
-                                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Text("动态取色", style = MaterialTheme.typography.bodyLarge)
-                                        TeaCaption(if (dynamicColorSupported) "跟随系统壁纸的颜色；关闭时使用品牌紫" else "需要 Android 12 及以上")
-                                    }
-                                    Switch(dynamicColor && dynamicColorSupported, onCheckedChange = null, enabled = dynamicColorSupported)
-                                }
+                        item(key = "theme-home-preview") {
+                            Box(Modifier.testTag("settings-live-preview")) {
+                                SettingsHomePreview(previewWallpaper, homeTitle, homeSubtitle)
                             }
+                        }
+                        item {
+                            SettingsAppearanceOptions(themeMode, onThemeModeChange, pureBlack, onPureBlackChange,
+                                dynamicColor, dynamicColorSupported, onDynamicColorChange,
+                                themeSeedColor, onThemeSeedColorChange, customFontScale, onCustomFontScaleChange)
                         }
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -208,7 +208,7 @@ fun SettingsView(
                                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Text("预测性返回", style = MaterialTheme.typography.bodyLarge)
-                                        TeaCaption("侧滑预览上一页，松手返回；需要 Android 14 及以上")
+                                        TeaCaption("侧滑时顶层页面向下移动；取消手势回到原位，需要 Android 14 及以上")
                                     }
                                     Switch(predictiveBackEnabled, onCheckedChange = null)
                                 }
@@ -242,8 +242,8 @@ fun SettingsView(
                         }
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Text("每日新词上限", style = MaterialTheme.typography.titleMedium)
-                                TeaCaption("控制每天新增的学习量，到期复习不受此上限影响。")
+                                Text("每轮新词上限", style = MaterialTheme.typography.titleMedium)
+                                TeaCaption("控制每轮加入的新词量；完成后可继续下一轮，到期复习不受此上限影响。")
                                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     listOf(0, 5, 10, 20, 40).forEach { value ->
                                         SettingsValueChip(dailyNewCapOverride == value, { onDailyNewCapChange(value) }, label = { Text(if (value == 0) "按策略" else "$value 个") })
@@ -265,11 +265,7 @@ fun SettingsView(
                         }
                     }
                     SettingsPage.Interface -> {
-                        item { SettingsHomePreview(when (homeWallpaperMode) {
-                            HomeWallpaperMode.NONE -> null
-                            HomeWallpaperMode.DAILY -> dailyWallpaperUrl
-                            HomeWallpaperMode.CUSTOM -> customWallpaperUri
-                        }, homeTitle, homeSubtitle) }
+                        item { SettingsHomePreview(previewWallpaper, homeTitle, homeSubtitle) }
                         item { SettingsOptionHeading(AppSymbols.Wallpaper, "背景") }
                         item {
                             Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -419,10 +415,11 @@ fun SettingsView(
             Box(Modifier.fillMaxWidth().height(height)) {
                 CoveredPage(covered = currentPage != SettingsPage.Main) {
                     Column(Modifier.fillMaxSize()) {
-                        SettingsPanelHeader("个性化", onClose = closeSheet)
+                        SettingsPanelHeader("设置", onClose = closeSheet)
                         LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = mainListState,
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    item { SettingsMenuHeading("个性化") }
                     item {
                         SettingsMenuGroup {
                             SettingsMenuRow(AppSymbols.Palette, "外观模式", themeMode.label) { currentPage = SettingsPage.Appearance }

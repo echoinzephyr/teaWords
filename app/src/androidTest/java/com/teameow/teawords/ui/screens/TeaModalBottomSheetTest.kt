@@ -34,8 +34,12 @@ class TeaModalBottomSheetTest {
                         modifier = Modifier.testTag("sheet"),
                         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
                     ) {
+                        val closeSheet = LocalTeaSheetClose.current
                         dispatcher = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
-                        Column(Modifier.fillMaxWidth().height(480.dp).testTag("sheet-content")) { Text("选择词书") }
+                        Column(Modifier.fillMaxWidth().height(480.dp).testTag("sheet-content")) {
+                            Text("选择词书")
+                            Button(onClick = { closeSheet(null) }) { Text("应用选择") }
+                        }
                     }
                 }
             }
@@ -91,9 +95,24 @@ class TeaModalBottomSheetTest {
 
     @Test fun verticalDragStillDismisses() {
         mount(predictive = false)
-        compose.onNodeWithTag("sheet").performTouchInput { swipeDown(startY = 30f, endY = height * .9f, durationMillis = 350) }
+        compose.onNodeWithTag("sheet-content").performTouchInput { swipeDown(startY = 30f, endY = height * .9f, durationMillis = 350) }
         compose.waitForIdle()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("sheet").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag("sheet").assertDoesNotExist()
         assertEquals(1, dismissed)
+    }
+    @Test fun applyButtonHidesBeforeDismissCallback() {
+        mount()
+        val before = compose.onNodeWithTag("sheet-content").fetchSemanticsNode().boundsInRoot
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithText("应用选择").performClick()
+        compose.mainClock.advanceTimeBy(80)
+        assertEquals(0, dismissed)
+        val moving = compose.onNodeWithTag("sheet-content").fetchSemanticsNode().boundsInRoot
+        assertTrue(moving.top > before.top)
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertEquals(1, dismissed)
+        compose.onNodeWithTag("sheet").assertDoesNotExist()
     }
 }

@@ -261,8 +261,15 @@ class LocalDictionary(
     }
     fun analyze(text: String): List<Pair<LocalEntry, Knowledge>> = Regex("[A-Za-z]+(?:['’-][A-Za-z]+)*").findAll(text.take(20000)).map { LexicalText.normalize(it.value) }.distinct().take(500)
         .flatMap { resolve(it).asSequence() }.distinctBy { it.id }.map { it to knowledge(it.word) }.filter { !it.second.verified && it.second.report != SelfReport.KNOWN }.take(40).toList()
-    fun record(text: String, kind: String, direction: String, wordId: Long? = null, headword: String? = null) {
-        db.insertOrThrow("query_history", null, ContentValues().apply { put("text", text.take(TranslationText.MAX_INPUT_CHARS)); put("kind", kind); put("direction", direction); if (wordId != null) put("word_id", wordId); headword?.let { put("headword", LexicalText.normalize(it)) }; put("timestamp", System.currentTimeMillis()) })
+    fun record(text: String, kind: String, direction: String, wordId: Long? = null, headword: String? = null): Long {
+        return db.insertOrThrow("query_history", null, ContentValues().apply { put("text", text.take(TranslationText.MAX_INPUT_CHARS)); put("kind", kind); put("direction", direction); if (wordId != null) put("word_id", wordId); headword?.let { put("headword", LexicalText.normalize(it)) }; put("timestamp", System.currentTimeMillis()) })
+    }
+    /** Only query identity is persisted; online definitions, phonetics and phrases never enter this table. */
+    fun linkHistory(id: Long, headword: String, localId: Long?) {
+        db.update("query_history", ContentValues().apply {
+            put("headword", LexicalText.normalize(headword).take(160))
+            if (localId == null) putNull("word_id") else put("word_id", localId)
+        }, "id=? AND kind='词典'", arrayOf(id.toString()))
     }
     fun history(limit: Int = 100): List<QueryRecord> = db.rawQuery("SELECT id,text,kind,direction,timestamp,headword FROM query_history ORDER BY timestamp DESC, id DESC LIMIT ?", arrayOf(limit.coerceIn(1, 200).toString())).use { c -> buildList { while (c.moveToNext()) add(QueryRecord(c.getLong(0), c.getString(1), c.getString(2), c.getString(3), c.getLong(4), if (c.isNull(5)) null else c.getString(5))) } }
 

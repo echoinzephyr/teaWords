@@ -45,4 +45,43 @@ class OnlineLookupDeviceTest {
             assertNull(LocalDictionary(helper).exact("uniquesearchtoken"))
         } finally { instrumentation.runOnMainSync { model.cancel() }; helper.close() }
     }
+    @Test fun onlineOnlyQueriesRemainInHistoryAndCanBeOpenedAgainOffline() {
+        val context = instrumentation.targetContext
+        val helper = DatabaseHelper(context)
+        val dictionary = LocalDictionary(helper)
+        val prefs = context.getSharedPreferences("lookup_privacy", 0)
+        val enabled = prefs.getBoolean("history", true)
+        prefs.edit().putBoolean("history", true).commit()
+        val query = "onlinehistoryonlytestword"
+        var available = true
+        lateinit var model: LookupViewModel
+        try {
+            instrumentation.runOnMainSync {
+                model = LookupViewModel(context.applicationContext as Application, OnlineDictionary {
+                    if (!available) throw java.io.IOException("offline")
+                    answer("transient meaning only")
+                })
+                model.open(query)
+            }
+            waitFor { model.state.value.onlineEntry != null && !model.state.value.busy }
+            assertEquals(query, dictionary.history().first { it.text == query }.headword)
+            assertTrue(dictionary.unifiedHistory().any { it.word == query })
+            assertNull(dictionary.exact(query))
+            instrumentation.runOnMainSync { model.cancel() }
+            available = false
+            // A new service simulates a fresh process without the in-memory response cache.
+            instrumentation.runOnMainSync {
+                model = LookupViewModel(context.applicationContext as Application, OnlineDictionary { throw java.io.IOException("offline") })
+                model.open(query)
+            }
+            waitFor { model.state.value.error != null && !model.state.value.busy }
+            assertEquals(query, model.state.value.input)
+            assertTrue(dictionary.unifiedHistory().any { it.word == query })
+            assertNull(dictionary.exact(query))
+        } finally {
+            instrumentation.runOnMainSync { model.cancel() }
+            dictionary.deleteHistoryText(query)
+            prefs.edit().putBoolean("history", enabled).commit(); helper.close()
+        }
+    }
 }

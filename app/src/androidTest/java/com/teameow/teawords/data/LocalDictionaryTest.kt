@@ -36,6 +36,21 @@ class LocalDictionaryTest {
         assertEquals(0, dictionary.knowledge("issue").attempts)
         helper.readableDatabase.rawQuery("SELECT word_id FROM learning_knowledge", null).use { it.moveToFirst(); assertEquals(id, it.getLong(0)) }
     }
+    @Test fun historyCanLinkToLocalIdentityWithoutPersistingOnlineContent() = withDictionary { helper, dictionary ->
+        val wordId = dictionary.upsert("test", "开放数据释义", source = "test")
+        val id = dictionary.record("tests", "词典", "en↔zh")
+        dictionary.linkHistory(id, "TEST", wordId)
+        val record = dictionary.history().single()
+        assertEquals("tests", record.text); assertEquals("test", record.headword)
+        helper.readableDatabase.rawQuery("SELECT word_id FROM query_history WHERE id=?", arrayOf(id.toString())).use {
+            assertTrue(it.moveToFirst()); assertEquals(wordId, it.getLong(0))
+        }
+        assertEquals("开放数据释义", dictionary.exact("test")!!.zh)
+        assertEquals(0, dictionary.knowledge("test").attempts)
+        dictionary.linkHistory(id, "online-only", null)
+        assertNull(dictionary.exact("online-only"))
+        assertEquals("online-only", dictionary.history().single().headword)
+    }
     @Test fun ecdictRepeatImportIsIdempotentAndBadFileRollsBack() = withDictionary { _, dictionary ->
         val csv = "word,phonetic,definition,translation,pos,tag,exchange\nissue,,subject,问题,n,cet4,p:issued\n"
         assertEquals(1, dictionary.importEcdict(csv.reader()) {})

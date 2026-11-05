@@ -13,6 +13,11 @@ class OnlineDictionaryTest {
         assertEquals("UK", detail.uk); assertEquals("US", detail.us)
         assertEquals(listOf("复数" to "tests"), detail.forms)
     }
+    @Test fun onlineHeadwordUsesCanonicalIdentityWithoutSavingTheResponse() = runBlocking {
+        val service = OnlineDictionary { answer.replace("\"ukphone\"", "\"return-phrase\":\"test\",\"ukphone\"") }
+        assertEquals("test", service.lookup("tests").entry!!.word)
+        assertEquals("query", OnlineDictionary.headword("{}", "query"))
+    }
     @Test fun cacheNormalizesQueriesAndEvictsLeastRecentlyReadAt64() = runBlocking {
         var requests = 0
         val service = OnlineDictionary { requests++; answer }

@@ -98,9 +98,10 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
     TeaModalBottomSheet(onDismissRequest = ::dismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = null,
         containerColor = MaterialTheme.colorScheme.background) {
+        val closeSheet = LocalTeaSheetClose.current
         Column(Modifier.fillMaxWidth().height((LocalConfiguration.current.screenHeightDp - 12).dp.coerceAtLeast(240.dp)).imePadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = ::dismiss) { Icon(AppSymbols.ArrowBack, "取消选择词书") }
+                IconButton(onClick = { closeSheet(null) }) { Icon(AppSymbols.ArrowBack, "取消选择词书") }
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("选择词书", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text("${books.size} 本" + (unionCount?.let { " · $it 个已下载词条" } ?: " · 正在统计词数"),
@@ -166,7 +167,7 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
                                 downloads.ensureDownloaded(selected) { title, done, total ->
                                     downloadStatus = if (total > 0) "$title · ${done * 100 / total}%" else "$title · ${done / 1024} KB"
                                 }
-                                onApply()
+                                closeSheet(onApply)
                             } catch (cancelled: CancellationException) { throw cancelled }
                             catch (failure: Exception) { error = failure.message ?: "下载失败，请重试；已有词书仍可使用。" }
                             finally { downloading = false }

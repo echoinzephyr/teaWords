@@ -170,7 +170,7 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
                 }
             }
         }
-        if (state.onlineBusy) item { LinearProgressIndicator(Modifier.fillMaxWidth()); TeaCaption("正在补充在线词典…") }
+        if (state.onlineBusy) item { LinearProgressIndicator(Modifier.fillMaxWidth()); TeaCaption("正在联网查词…") }
         state.notice?.let { item { TeaStatusMessage(it) } }
         state.error?.let { item { TeaCard {
             TeaStatusMessage(it, error = true)

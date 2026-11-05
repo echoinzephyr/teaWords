@@ -89,9 +89,8 @@ fun LearningScreen(
     val newCap = appPrefs.dailyNewCapOverride.takeIf { it > 0 } ?: strategy.dailyNewCap
     val retention = appPrefs.targetRetentionOverride.takeIf { it > 0 } ?: strategy.targetRetention
     var homeClock by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    val dayStart = Calendar.getInstance().apply { timeInMillis = homeClock }.apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
-    var newStudiedToday by remember { mutableIntStateOf(0) }
-    val newBudget = (newCap - newStudiedToday).coerceAtLeast(0)
+    // A new round receives a fresh allowance; completed rounds do not exhaust today's budget.
+    val newBudget = newCap.coerceAtLeast(0)
     var states by remember { mutableStateOf(emptyList<Knowledge>()) }
     var words by remember { mutableStateOf(emptyMap<String, VocabularyItem>()) }
     var mode by rememberSaveable { mutableStateOf("home") }
@@ -123,7 +122,6 @@ fun LearningScreen(
             val dictionary = com.teameow.teawords.data.search.DictionaryGateway.sourceOrNull()!!
             dictionary.books() to LearningCatalog(dbHelper, dictionary).load(selectedBookIds)
         }
-        newStudiedToday = withContext(Dispatchers.IO) { repo.newWordsSince(dayStart) }
         pocketRound = withContext(Dispatchers.IO) { pocketRepo.load() }
         wordSession = withContext(Dispatchers.IO) { sessionRepo.load() }
         favorites = withContext(Dispatchers.IO) { dbHelper.getVocabulary() }
@@ -185,13 +183,6 @@ fun LearningScreen(
     LaunchedEffect(mode, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) { homeClock = System.currentTimeMillis(); delay(15_000) }
-        }
-    }
-    LaunchedEffect(dayStart, mode) {
-        if (mode == "home" || mode == "learningHub") {
-            try {
-                newStudiedToday = withContext(Dispatchers.IO) { repo.newWordsSince(dayStart) }
-            } catch (e: Exception) { message = "刷新学习额度失败：${e.message}" }
         }
     }
     val now = homeClock
@@ -330,7 +321,7 @@ fun LearningScreen(
                         }
                     }
                     if (tasks.isEmpty()) {
-                        message = "本轮暂无任务：可选择其他词书、调整每日新词上限，或等待复习到期。"
+                        message = "本轮暂无任务：可选择其他词书、调整每轮新词上限，或等待复习到期。"
                         return@launch
                     }
                     withContext(Dispatchers.IO) { sessionRepo.start(tasks) }
@@ -404,9 +395,6 @@ fun LearningScreen(
                 sessionCorrect = saved.first.correct
                 AbilityStore(context).save(verdict.ability)
                 homeClock = now
-                newStudiedToday = withContext(Dispatchers.IO) { repo.newWordsSince(
-                    Calendar.getInstance().apply { timeInMillis = now; set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
-                ) }
                 ability = verdict.ability
                 memoryByWord = memoryByWord + (state.word to verdict.memory)
                 states = states.map { if (it.word == updated.word) updated else it }
@@ -502,6 +490,9 @@ fun LearningScreen(
         PocketLearningScreen(dbHelper, pocketRound!!, retention,
             onRoundChange = { pocketRound = it }, onBack = back,
             onBusyChange = { diagnosticBusy = it })
+    } else if (pageMode == "session" && queue.getOrNull(position) == null) {
+        StudyRoundSummary(wordSession, position, sessionCorrect,
+            onBack = back, onContinue = if (plan.isNotEmpty()) ({ startWordPlan() }) else null)
     } else if (pageMode == "session" && queue.getOrNull(position) != null) {
         val current = queue[position]
         val card = Triple(current, wordSession?.tasks?.getOrNull(position)?.definition.orEmpty(), position)
@@ -807,29 +798,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.sessionMode(
     onFinish: () -> Unit
 ) {
     val current = queue.getOrNull(position)
-    if (current == null) {
-        item {
-            val accuracy = if (position == 0) 0 else correct * 100 / position
-            TeaCard {
-                Text("本轮完成", style = MaterialTheme.typography.headlineSmall)
-                TeaMetricRow(
-                    "$position" to "完成题数",
-                    "$correct" to "独立回忆正确",
-                    if (position == 0) "—" to "独立回忆率" else "$accuracy%" to "独立回忆率"
-                )
-                session?.let {
-                    if (it.practiced > 0) TeaCaption("辅助练习正确 ${it.practiced} 个，不计入独立回忆正确。")
-                    if (it.missed.isNotEmpty()) {
-                        Text("需要巩固的词", style = MaterialTheme.typography.titleMedium)
-                        it.missed.forEach { word -> Text("$word · ${definitions[word].orEmpty()}") }
-                    }
-                }
-                TeaCaption("每次回答都已保存，下次按复习时间继续。答对一次只证明这一次的主动回忆。")
-                Button(onClick = onFinish, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("回到今日计划") }
-            }
-        }
-        return
-    }
+    if (current == null) return
     item {
         LinearProgressIndicator(progress = { position.toFloat() / queue.size.coerceAtLeast(1) }, modifier = Modifier.fillMaxWidth())
         TeaCaption("已完成 $position / ${queue.size} 个词 · 暂停将从当前词继续")

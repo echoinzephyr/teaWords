@@ -189,23 +189,43 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
                     LocalEntry(hit.wordId, hit.word, hit.phonetic, hit.zh, hit.en, hit.pos, hit.tags, hit.forms, hit.frequency, "ECDICT", hit.match, hit.books)
                 }.orEmpty()
             }
+            var historyId: Long? = null
             val detail = withContext(Dispatchers.IO) {
-                if (snapshot.historyEnabled && !snapshot.external) dictionary.record(snapshot.input, "词典", "en↔zh", selected?.id, selected?.word)
+                val exact = dictionary.exact(snapshot.input)
+                if (snapshot.historyEnabled && !snapshot.external) historyId = dictionary.record(snapshot.input, "词典", "en↔zh", exact?.id, exact?.word)
                 dictionary.knowledge(selected?.word ?: snapshot.input) to helper.isInVocabulary(LexicalText.normalize(selected?.word ?: snapshot.input))
             }
             currentCoroutineContext().ensureActive()
             mutable.update { it.copy(entries = result, selected = selected, knowledge = detail.first,
                 starred = detail.second, suggestions = suggestions, onlineEntry = null, onlineSuggestions = emptyList(),
                 busy = false, onlineBusy = true,
-                status = "正在补充在线词典…") }
+                status = "正在联网查词…") }
             refresh()
             // Nothing from this answer is written to lex_words, senses or learning evidence.
             val answer = onlineDictionary.lookup(snapshot.input)
             currentCoroutineContext().ensureActive()
-            if (state.value.input == snapshot.input) mutable.update {
-                it.copy(onlineEntry = answer.entry, onlineSuggestions = answer.suggestions, onlineBusy = false)
-            }
+            applyOnlineAnswer(answer, snapshot.input, selected, historyId)
         }
+    }
+    private suspend fun applyOnlineAnswer(answer: OnlineDictionaryResult, input: String, fallback: LocalEntry?, historyId: Long?) {
+        val online = answer.entry
+        if (online == null) {
+            mutable.update { it.copy(onlineEntry = null, onlineSuggestions = answer.suggestions, onlineBusy = false) }
+            return
+        }
+        val mapped = withContext(Dispatchers.IO) {
+            val local = dictionary.exact(online.word) ?: fallback?.takeIf {
+                LexicalText.normalize(it.word) == LexicalText.normalize(online.word)
+            }
+            historyId?.let { dictionary.linkHistory(it, local?.word ?: online.word, local?.id) }
+            Triple(local, dictionary.knowledge(local?.word ?: online.word), helper.isInVocabulary(LexicalText.normalize(online.word)))
+        }
+        currentCoroutineContext().ensureActive()
+        if (state.value.input == input) mutable.update {
+            it.copy(onlineEntry = online, onlineSuggestions = emptyList(), onlineBusy = false,
+                selected = mapped.first, knowledge = mapped.second, starred = mapped.third)
+        }
+        refresh()
     }
     fun starOnline(entry: OnlineWordEntry) { run("保存单词…", awaitReady = false) {
         withContext(Dispatchers.IO) {
@@ -219,8 +239,8 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
     fun select(entry: LocalEntry) { run("读取词条…") {
         mutable.update { it.copy(onlineEntry = null, onlineSuggestions = emptyList()) }
         val snapshot = state.value
-        withContext(Dispatchers.IO) {
-            if (snapshot.historyEnabled && !snapshot.external) dictionary.record(entry.word, "词典", "en↔zh", entry.id, entry.word)
+        val historyId = withContext(Dispatchers.IO) {
+            if (snapshot.historyEnabled && !snapshot.external) dictionary.record(entry.word, "词典", "en↔zh", entry.id, entry.word) else null
         }
         val knowledge = withContext(Dispatchers.IO) { dictionary.knowledge(entry.word) }
         val starred = withContext(Dispatchers.IO) { helper.isInVocabulary(LexicalText.normalize(entry.word)) }
@@ -228,7 +248,7 @@ class LookupViewModel(application: Application) : AndroidViewModel(application) 
         refresh()
         val answer = onlineDictionary.lookup(entry.word)
         currentCoroutineContext().ensureActive()
-        mutable.update { it.copy(onlineEntry = answer.entry, onlineSuggestions = answer.suggestions, onlineBusy = false) }
+        applyOnlineAnswer(answer, snapshot.input, entry, historyId)
     } }
     fun mark(entry: LocalEntry, report: SelfReport) { run("保存你的选择…") {
         val knowledge = withContext(Dispatchers.IO) { dictionary.mark(entry, report); dictionary.knowledge(entry.word) }

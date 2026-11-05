@@ -106,7 +106,11 @@ fun MainScreen(
     targetRetentionOverride: Double = 0.0,
     onTargetRetentionChange: (Double) -> Unit = {},
     pureBlack: Boolean = false,
-    onPureBlackChange: (Boolean) -> Unit = {}
+    onPureBlackChange: (Boolean) -> Unit = {},
+    themeSeedColor: Int = AppPreferences.DEFAULT_THEME_SEED,
+    onThemeSeedColorChange: (Int) -> Unit = {},
+    customFontScale: Float? = null,
+    onCustomFontScaleChange: (Float?) -> Unit = {}
 ) {
     val context = LocalContext.current
     val preferences = remember(appPreferences) { appPreferences ?: AppPreferences(context) }
@@ -386,6 +390,10 @@ fun MainScreen(
                         },
                         themeMode = themeMode,
                         pureBlack = pureBlack,
+                        themeSeedColor = themeSeedColor,
+                        onThemeSeedColorChange = onThemeSeedColorChange,
+                        customFontScale = customFontScale,
+                        onCustomFontScaleChange = onCustomFontScaleChange,
                         onPureBlackChange = onPureBlackChange,
                         dailyWallpaperUrl = bingWallpaperUrl,
                         onThemeModeChange = onThemeModeChange,

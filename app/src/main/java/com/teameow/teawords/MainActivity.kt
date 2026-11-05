@@ -55,13 +55,17 @@ class MainActivity : ComponentActivity() {
             var mode by remember { mutableStateOf(preferences.themeMode) }
             var dynamicColor by remember { mutableStateOf(preferences.dynamicColor) }
             var pureBlack by remember { mutableStateOf(preferences.pureBlack) }
+            var seedColor by remember { mutableIntStateOf(preferences.themeSeedColor) }
+            var fontScale by remember { mutableStateOf(preferences.customFontScale) }
             var strategy by remember { mutableStateOf(preferences.studyStrategy) }
             var dailyCap by remember { mutableIntStateOf(preferences.dailyNewCapOverride) }
             var retention by remember { mutableStateOf(preferences.targetRetentionOverride) }
             TeaWordsTheme(
                 darkTheme = resolveDarkTheme(mode, isSystemInDarkTheme()),
                 dynamicColor = dynamicColor,
-                pureBlack = pureBlack
+                pureBlack = pureBlack,
+                seedColor = seedColor,
+                customFontScale = fontScale
             ) {
               ProvidePronunciation {
                 MainScreen(
@@ -76,6 +80,10 @@ class MainActivity : ComponentActivity() {
                     },
                     dynamicColor = dynamicColor,
                     pureBlack = pureBlack,
+                    themeSeedColor = seedColor,
+                    onThemeSeedColorChange = { preferences.themeSeedColor = it; seedColor = it },
+                    customFontScale = fontScale,
+                    onCustomFontScaleChange = { preferences.customFontScale = it; fontScale = preferences.customFontScale },
                     onPureBlackChange = { preferences.pureBlack = it; pureBlack = it },
                     onDynamicColorChange = {
                         preferences.dynamicColor = it

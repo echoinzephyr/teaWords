@@ -7,12 +7,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.teameow.teawords.data.AppThemeMode
+import com.teameow.teawords.data.AppPreferences
+import com.google.android.material.color.MaterialColors
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.toArgb
 
 /** 品牌配色：浅色（设计稿 palette=purple）。 */
 private val PurpleLight = lightColorScheme(
@@ -77,13 +85,22 @@ fun TeaWordsTheme(
     darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
     pureBlack: Boolean = false,
+    seedColor: Int = AppPreferences.DEFAULT_THEME_SEED,
+    customFontScale: Float? = null,
     content: @Composable () -> Unit
 ) {
     val view = LocalView.current
     val context = LocalContext.current
     // 动态取色（Material You）用系统壁纸生成的配色；关掉时永远是品牌 Purple，设计稿的默认行为。
     // 这里必须内联 SDK_INT 判断：lint 的 NewApi 检查看不懂上面那个辅助函数。
-    val colorScheme = settingsColorScheme(context, darkTheme, dynamicColor, pureBlack)
+    val colorScheme = remember(context, darkTheme, dynamicColor, pureBlack, seedColor) {
+        settingsColorScheme(context, darkTheme, dynamicColor, pureBlack, seedColor)
+    }
+    val systemDensity = LocalDensity.current
+    val textDensity = remember(systemDensity, customFontScale) {
+        customFontScale?.takeIf { it.isFinite() && it in .75f..1.6f }
+            ?.let { Density(systemDensity.density, it) } ?: systemDensity
+    }
     if (!view.isInEditMode) SideEffect {
         (view.context as? Activity)?.window?.let { window ->
             WindowCompat.getInsetsController(window, view).apply {
@@ -92,6 +109,7 @@ fun TeaWordsTheme(
             }
         }
     }
+    CompositionLocalProvider(LocalDensity provides textDensity) {
     MaterialExpressiveTheme(
         colorScheme = colorScheme, motionScheme = MotionScheme.expressive(),
         typography = Typography,
@@ -99,18 +117,47 @@ fun TeaWordsTheme(
             medium = RoundedCornerShape(20.dp), large = RoundedCornerShape(20.dp), extraLarge = RoundedCornerShape(28.dp)),
         content = content
     )
+    }
 }
 
-internal fun settingsColorScheme(context: android.content.Context, darkTheme: Boolean, dynamicColor: Boolean, pureBlack: Boolean): ColorScheme {
+internal fun settingsColorScheme(context: android.content.Context, darkTheme: Boolean, dynamicColor: Boolean, pureBlack: Boolean,
+    seedColor: Int = AppPreferences.DEFAULT_THEME_SEED): ColorScheme {
     val colors = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             dynamicColorScheme(context, dark = darkTheme)
+        seedColor != AppPreferences.DEFAULT_THEME_SEED -> seededColorScheme(seedColor, darkTheme)
         darkTheme -> PurpleDark
         else -> PurpleLight
     }
     return if (darkTheme && pureBlack) colors.copy(background = Color.Black, surface = Color.Black,
         surfaceContainerLowest = Color.Black, surfaceContainerLow = Color(0xFF0D0B0E),
         surfaceContainer = Color(0xFF151316), surfaceContainerHigh = Color(0xFF211E23)) else colors
+}
+
+/** Use Material's public color-role API; no dependency on restricted palette internals. */
+internal fun seededColorScheme(seed: Int, dark: Boolean): ColorScheme {
+    val base = if (dark) PurpleDark else PurpleLight
+    val color = Color(seed)
+    val primary = MaterialColors.getColorRoles(seed, !dark)
+    val secondary = MaterialColors.getColorRoles(lerp(color, Color.Gray, .65f).toArgb(), !dark)
+    val tertiary = MaterialColors.getColorRoles(MaterialColors.harmonize(0xFFB15D76.toInt(), seed), !dark)
+    val inverse = MaterialColors.getColorRoles(seed, dark)
+    // Tint neutral surfaces gently, preserving the baseline scheme's readable text.
+    fun surface(tone: Int) = lerp(Color(tone / 100f, tone / 100f, tone / 100f), color, .035f)
+    return base.copy(
+        primary = Color(primary.accent), onPrimary = Color(primary.onAccent),
+        primaryContainer = Color(primary.accentContainer), onPrimaryContainer = Color(primary.onAccentContainer),
+        secondary = Color(secondary.accent), onSecondary = Color(secondary.onAccent),
+        secondaryContainer = Color(secondary.accentContainer), onSecondaryContainer = Color(secondary.onAccentContainer),
+        tertiary = Color(tertiary.accent), onTertiary = Color(tertiary.onAccent),
+        tertiaryContainer = Color(tertiary.accentContainer), onTertiaryContainer = Color(tertiary.onAccentContainer),
+        background = surface(if (dark) 6 else 98), surface = surface(if (dark) 6 else 98),
+        surfaceContainerLowest = surface(if (dark) 4 else 100), surfaceContainerLow = surface(if (dark) 10 else 96),
+        surfaceContainer = surface(if (dark) 12 else 94), surfaceContainerHigh = surface(if (dark) 17 else 92),
+        surfaceContainerHighest = surface(if (dark) 22 else 90), surfaceTint = Color(primary.accent),
+        surfaceDim = surface(if (dark) 6 else 87), surfaceBright = surface(if (dark) 24 else 98),
+        inversePrimary = Color(inverse.accent)
+    )
 }
 
 @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
