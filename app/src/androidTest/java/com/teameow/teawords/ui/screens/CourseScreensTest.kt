@@ -29,7 +29,12 @@ class CourseScreensTest {
     private val testContext get() = compose.activity
     private var helper: DatabaseHelper? = null
     private var name = ""
+    private var preservedAudio: ByteArray? = null
+    private fun cachedAudio() = File(testContext.filesDir,"course_audio/${CourseCatalog.all.first().audio.sha256}.mp3")
     @Before fun showTestActivity() {
+        val audio = cachedAudio()
+        preservedAudio = audio.takeIf { it.exists() }?.readBytes()
+        audio.delete()
         compose.activityRule.scenario.onActivity { activity ->
             @Suppress("DEPRECATION")
             activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
@@ -41,7 +46,11 @@ class CourseScreensTest {
         name="course-ui-${System.nanoTime()}.db"
         return DatabaseHelper(testContext,name).also { helper=it }
     }
-    @After fun cleanup() { helper?.close(); if(name.isNotEmpty()) testContext.deleteDatabase(name) }
+    @After fun cleanup() {
+        helper?.close(); if(name.isNotEmpty()) testContext.deleteDatabase(name)
+        cachedAudio().delete()
+        preservedAudio?.let { cachedAudio().apply { parentFile!!.mkdirs() }.writeBytes(it) }
+    }
 
     @Test fun directoryShowsNewRouteAndSearchesAcrossUnits() {
         val db=database()
@@ -112,7 +121,8 @@ class CourseScreensTest {
         capture("lesson-summary-dark")
         compose.runOnIdle { appearance="large" }
         compose.onNodeWithText("课文",useUnmergedTree=true).performClick()
-        compose.onNodeWithTag("course-segment-s09").performScrollTo().assertExists()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("course-segment-s09"))
+        compose.onNodeWithTag("course-segment-s09").assertIsDisplayed()
         capture("lesson-text-large-scrolled")
         audio.delete()
     }
@@ -156,5 +166,70 @@ class CourseScreensTest {
         // Waiting for idle also detects a recursive native error callback storm.
         compose.waitForIdle()
         file.delete()
+    }
+
+    @Test fun playbackFollowsSentenceAndTabChangesKeepItPaused() {
+        val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
+        val audio=cachedAudio().apply { parentFile!!.mkdirs() }
+        InstrumentationRegistry.getInstrumentation().context.assets.open("course-welcome.mp3").use { input -> audio.outputStream().use { input.copyTo(it) } }
+        compose.setContent { TeaWordsTheme { CourseLessonScreen(db,lesson,onBack={}) } }
+        compose.waitUntil(10000) { compose.onAllNodes(hasText("整课播放") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("整课播放").performClick()
+        compose.waitUntil(7000) { repo.progress(lesson.id).checkpoint.let { it.sentence>=1 && it.positionMs>2600 } }
+        compose.onNodeWithTag("course-segment-s02").assertIsDisplayed()
+        compose.onNodeWithText("讲解",useUnmergedTree=true).performClick()
+        compose.onNodeWithText("课文",useUnmergedTree=true).performClick()
+        compose.onNodeWithText("整课播放").assertIsEnabled()
+        assertTrue(repo.progress(lesson.id).checkpoint.positionMs>0)
+    }
+
+    @Test fun keyboardAtLargeFontKeepsDraftAndSubmitReachableAfterBackground() {
+        val db=database();val lesson=CourseCatalog.all.first();val repo=CourseRepository(db)
+        repo.save(lesson.id,CourseRepository.Checkpoint(section=2,question=4,started=true))
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density,1.5f)) {
+                TeaWordsTheme { Box(Modifier.widthIn(max=320.dp).height(640.dp)) { CourseLessonScreen(db,lesson,onBack={}) } }
+            }
+        }
+        compose.onNodeWithText("你的答案").performClick().performTextInput("Nice to meet you")
+        compose.onNodeWithText("提交答案").performScrollTo().assertIsDisplayed()
+        assertEquals("Nice to meet you",repo.progress(lesson.id).checkpoint.draft)
+        val directory=File(testContext.filesDir,"course-rebuild").apply{mkdirs()}
+        val screenshot=InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        File(directory,"lesson-keyboard-large.png").outputStream().use { screenshot.compress(Bitmap.CompressFormat.PNG,100,it) }
+        compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+        compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+        compose.onNodeWithText("Nice to meet you",substring=false).assertExists()
+        compose.onNodeWithText("提交答案").performScrollTo().performClick()
+        compose.waitUntil(5000) { repo.progress(lesson.id).answers[lesson.questions[4].id]?.correct==true }
+    }
+
+    @Test fun localRecordingCanBeSavedReplayedAndDeletedAfterBackground() {
+        val id="verification-${System.nanoTime()}"
+        val file=File(testContext.filesDir,"course_recordings/$id.m4a")
+        val automation=InstrumentationRegistry.getInstrumentation().uiAutomation
+        automation.executeShellCommand("pm grant ${testContext.packageName} android.permission.RECORD_AUDIO").close()
+        var recorded=false
+        compose.setContent { TeaWordsTheme {
+            androidx.compose.foundation.layout.Column { CourseVoiceRecorder(id,onHasRecordingChange={recorded=it}) }
+        } }
+        try {
+            compose.onNodeWithText("开始录音").performClick()
+            compose.onNodeWithText("结束录音").assertExists()
+            android.os.SystemClock.sleep(1200)
+            compose.onNodeWithText("结束录音").performClick()
+            compose.waitUntil(5000){recorded && file.length()>0}
+            android.media.MediaMetadataRetriever().use { media ->
+                media.setDataSource(file.absolutePath)
+                assertTrue(media.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)!!.toLong()>500)
+            }
+            compose.onNodeWithText("回听").performClick()
+            compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+            compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+            assertTrue("Recording must survive background",file.exists())
+            compose.waitUntil(5000) { compose.onAllNodes(hasText("删除录音")).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithText("删除录音").performClick()
+            compose.waitUntil(5000){!recorded && !file.exists()}
+        } finally { file.delete() }
     }
 }

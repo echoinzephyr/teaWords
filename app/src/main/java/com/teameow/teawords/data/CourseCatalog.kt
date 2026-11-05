@@ -6,7 +6,8 @@ import java.text.Normalizer
 import java.util.Locale
 
 data class CourseSource(val publisher: String, val url: String, val rightsUrl: String, val credit: String)
-data class CourseAudio(val url: String, val sha256: String, val bytes: Long, val durationMs: Int)
+data class CourseAudio(val url: String, val sha256: String, val bytes: Long, val durationMs: Int,
+                       val sourceUrl: String? = null)
 data class CourseSegment(val id: String, val speaker: String, val english: String, val chinese: String,
                          val startMs: Int, val endMs: Int)
 data class CourseKeyPhrase(val english: String, val chinese: String, val segmentId: String)
@@ -48,6 +49,7 @@ object CourseCatalog {
             require(lesson.source.rightsUrl.startsWith("https://") && lesson.objectives.isNotEmpty() && lesson.skills.isNotEmpty())
             require(lesson.prerequisites.all { id -> pack.lessons.take(index).any { it.id == id } })
             require(lesson.audio.url.startsWith("https://") && lesson.audio.sha256.matches(Regex("[a-f0-9]{64}")))
+            require(lesson.audio.sourceUrl?.startsWith("https://") != false)
             require(lesson.audio.bytes > 0 && lesson.audio.durationMs > 0 && lesson.segments.isNotEmpty())
             val ids = lesson.segments.map { it.id }.toSet()
             require(ids.size == lesson.segments.size)

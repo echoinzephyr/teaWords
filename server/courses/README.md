@@ -1,6 +1,6 @@
 # 入门英语原声镜像
 
-仅在本地准备，本轮不连接或配置阿里云。应用默认直接从 VOA 的 HTTPS 地址下载原声。
+仅在本地准备，本轮不连接或配置阿里云。应用默认从课程包中已校验的 VOA 音频 CDN HTTPS 地址下载原声，包内同时保留网页中的原始媒体地址。
 
 在仓库根目录运行 `python server/courses/build_data.py`，逐项下载并核对课程包固定的 SHA-256 和字节数，输出到 `tools/out/courses-server`，同时生成 `tools/out/teawords-courses-server.tar.gz`。已有下载可传入 `--source 目录`（文件命名为 `01.mp3` 至 `12.mp3`）。音频不进入 App。
 

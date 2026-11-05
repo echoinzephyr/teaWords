@@ -33,7 +33,7 @@ internal fun CourseVoiceRecorder(lessonId: String, onHasRecordingChange: (Boolea
     LaunchedEffect(hasRecording) { onHasRecordingChange(hasRecording) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    fun start() {
+    fun startRecording() {
         onBeforeRecord()
         error = null
         try {
@@ -55,7 +55,7 @@ internal fun CourseVoiceRecorder(lessonId: String, onHasRecordingChange: (Boolea
     }
 
     val requestPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) start() else error = "未获得麦克风权限；仍可听原声和阅读课文。"
+        if (granted) startRecording() else error = "未获得麦克风权限；仍可听原声和阅读课文。"
     }
     DisposableEffect(lessonId) { onDispose {
         recorder?.let { runCatching { it.stop() }; it.release() }
@@ -87,7 +87,7 @@ internal fun CourseVoiceRecorder(lessonId: String, onHasRecordingChange: (Boolea
                 } catch (e: Exception) { file.delete(); error = "录音未保存：${e.message}" }
                 finally { recorder?.release(); recorder = null }
             } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) start()
+                == PackageManager.PERMISSION_GRANTED) startRecording()
             else requestPermission.launch(Manifest.permission.RECORD_AUDIO)
         }) { Text(if (recorder == null) "开始录音" else "结束录音") }
         if (hasRecording && recorder == null) OutlinedButton(onClick = {
@@ -98,7 +98,7 @@ internal fun CourseVoiceRecorder(lessonId: String, onHasRecordingChange: (Boolea
                     setDataSource(file.absolutePath)
                     prepare()
                     setOnCompletionListener { it.release(); player = null }
-                    start()
+                    this.start()
                 }
             } catch (e: Exception) { error = "回听失败：${e.message}" }
         }) { Text("回听") }

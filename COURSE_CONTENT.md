@@ -1,10 +1,10 @@
 # 入门英语课程内容与校对
 
-课程包版本 `2026.11.05.1`，数据格式版本 `1`。目录与全部课文打包在 `app/src/main/resources/courses/beginner-v1.json`，旁边的 `.sha256` 固定其校验值。课程 ID 为 `voa1-01` 至 `voa1-12`，按 VOA 原顺序分为三个单元，每单元四课。每课八个重点词句、两个表达要点及六道固定练习（理解、听写、表达各两题），共 72 题。8–12 分钟是包含阅读、讲解、录音和练习的预计时间，并非原声长度或认证等级。
+课程包版本 `2026.11.05.2`，数据格式版本 `1`。目录与全部课文打包在 `app/src/main/resources/courses/beginner-v1.json`，旁边的 `.sha256` 固定其校验值。课程 ID 为 `voa1-01` 至 `voa1-12`，按 VOA 原顺序分为三个单元，每单元四课。每课八个重点词句、两个表达要点及六道固定练习（理解、听写、表达各两题），共 72 题。8–12 分钟是包含阅读、讲解、录音和练习的预计时间，并非原声长度或认证等级。
 
 ## 材料与来源
 
-- 原文及原声：[VOA Let’s Learn English Level 1](https://learningenglish.voanews.com/p/5644.html) 前十二课。各课原始页面、发布者、媒体 HTTPS 地址、字节数和 SHA-256 均记录在包内及 `tools/courses/voa-originals.json`。
+- 原文及原声：[VOA Let’s Learn English Level 1](https://learningenglish.voanews.com/p/5644.html) 前十二课。各课原始页面、发布者、媒体 HTTPS 地址、字节数和 SHA-256 均记录在包内及 `tools/courses/voa-originals.json`。手机直连网页给出的 `voa-audio.voanews.eu` 曾超时；下载地址改用同一音频的 `voa-audio-ns.akamaized.net`，十二份文件均逐项核对为完全相同的摘要，原始媒体地址仍保存在 `audio.sourceUrl` 中。
 - [VOA Learning English 使用说明](https://learningenglish.voanews.com/p/6861.html) 将其原创文本和 MP3 列为公有领域，并要求注明来源。本包只采用 VOA 自制教学对话和第十二课家谱旁白；不包含 AP、Reuters、AFP 素材、图片、视频或其第三方音乐素材的独立提取。
 - 中文译文、学习目标、重点讲解、干扰项、答案和中文解析由茶词编排并固定存储于 `tools/courses/editorial.json`。学习时不调用生成式 AI，也不声称教师审核或官方等级认证。
 - [FreeLingo](https://github.com/ArtCC/freelingo) 的目标、先修关系与技能组织方式，[nce-web](https://github.com/wxaiway/nce-web) 的逐句听读与听写交互作为设计参考。本轮没有移植其源代码，也没有收录新概念教材或录音。

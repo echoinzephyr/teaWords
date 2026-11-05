@@ -56,7 +56,10 @@ def build():
                       source=dict(publisher='VOA Learning English', url=original['url'],
                                   rightsUrl='https://learningenglish.voanews.com/p/6861.html',
                                   credit='课文及原声：VOA Learning English — learningenglish.voanews.com'),
-                      audio=original['audio'], segments=segments, keyPhrases=phrases, explanations=explanations, questions=questions)
+                      # Same pinned bytes on VOA's Akamai delivery host; retain the article's original media URL.
+                      audio=dict(original['audio'], sourceUrl=original['audio']['url'],
+                                 url=original['audio']['url'].replace('voa-audio.voanews.eu', 'voa-audio-ns.akamaized.net')),
+                      segments=segments, keyPhrases=phrases, explanations=explanations, questions=questions)
         assert len(questions) >= 6 and all(sum(q['type']==kind for q in questions)>=2 for kind in ['comprehension','dictation','expression'])
         assert 6 <= len(phrases) <= 10 and 1 <= len(explanations) <= 2
         previous = 0
@@ -65,7 +68,7 @@ def build():
             previous = s['endMs']
         lessons.append(lesson)
     assert len(lessons) == 12
-    return dict(schemaVersion=1,contentVersion='2026.11.05.1', title='入门英语', lessons=lessons)
+    return dict(schemaVersion=1,contentVersion='2026.11.05.2', title='入门英语', lessons=lessons)
 
 if __name__ == '__main__':
     data = (json.dumps(build(), ensure_ascii=False, indent=2) + '\n').encode('utf8')

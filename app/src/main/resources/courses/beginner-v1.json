@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentVersion": "2026.11.05.1",
+  "contentVersion": "2026.11.05.2",
   "title": "入门英语",
   "lessons": [
     {
@@ -28,10 +28,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/02/08/49485bf8-4277-47f6-9abe-617ee2473f8c.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/02/08/49485bf8-4277-47f6-9abe-617ee2473f8c.mp3",
         "sha256": "f9bd90edddbb8736f64fb5cb3a34ab5a27aecd6e99510977e7b820caf47c5cf7",
         "bytes": 236944,
-        "durationMs": 29571
+        "durationMs": 29571,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/02/08/49485bf8-4277-47f6-9abe-617ee2473f8c.mp3"
       },
       "segments": [
         {
@@ -267,10 +268,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/02/10/56246d7b-5fa4-42d2-90b0-d403e6b46227.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/02/10/56246d7b-5fa4-42d2-90b0-d403e6b46227.mp3",
         "sha256": "e943ca83c8a0d33bb3e505ba61cfda86c31f821bd065feb414aa83788faed2db",
         "bytes": 384603,
-        "durationMs": 48039
+        "durationMs": 48039,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/02/10/56246d7b-5fa4-42d2-90b0-d403e6b46227.mp3"
       },
       "segments": [
         {
@@ -554,10 +556,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/02/18/a82baaf4-0a91-4d43-8ab6-78f72cef8fce.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/02/18/a82baaf4-0a91-4d43-8ab6-78f72cef8fce.mp3",
         "sha256": "8a1d67ab3d32f3895747dc9bed42081f4f13e16ddf0879ade7bcce3ba0a7dcdb",
         "bytes": 962841,
-        "durationMs": 120320
+        "durationMs": 120320,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/02/18/a82baaf4-0a91-4d43-8ab6-78f72cef8fce.mp3"
       },
       "segments": [
         {
@@ -897,10 +900,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/02/26/af0324f6-67c5-4c0c-ab42-abb0cd33817c.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/02/26/af0324f6-67c5-4c0c-ab42-abb0cd33817c.mp3",
         "sha256": "a648e8181a2ef6b1fd106f0de0bc05f7bd09f99d66f2f8f380d78afe353c27c4",
         "bytes": 714643,
-        "durationMs": 89260
+        "durationMs": 89260,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/02/26/af0324f6-67c5-4c0c-ab42-abb0cd33817c.mp3"
       },
       "segments": [
         {
@@ -1256,10 +1260,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/03/01/ab9c2944-eddc-4806-9296-290bfa8c6ff2.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/03/01/ab9c2944-eddc-4806-9296-290bfa8c6ff2.mp3",
         "sha256": "d0a785ada7babff5d4a8e126dd2ee7aaeab8d1ae58d996c97abd2033d6202f61",
         "bytes": 485503,
-        "durationMs": 60656
+        "durationMs": 60656,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/03/01/ab9c2944-eddc-4806-9296-290bfa8c6ff2.mp3"
       },
       "segments": [
         {
@@ -1503,10 +1508,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/03/10/66b63229-1dc5-40ab-886d-1f4b891adf6b.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/03/10/66b63229-1dc5-40ab-886d-1f4b891adf6b.mp3",
         "sha256": "a2ea933905fe40a710160ac8d8b128631b8736c9b61dbd96cbc348c7d5a09cf5",
         "bytes": 864592,
-        "durationMs": 108042
+        "durationMs": 108042,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/03/10/66b63229-1dc5-40ab-886d-1f4b891adf6b.mp3"
       },
       "segments": [
         {
@@ -1854,10 +1860,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/03/16/5d724fbc-a907-4a48-9221-c1813d248168.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/03/16/5d724fbc-a907-4a48-9221-c1813d248168.mp3",
         "sha256": "ad1c48b2718a71f35082695dcd6506abcf84c027d510f0a06ce51d0ded7be610",
         "bytes": 1199471,
-        "durationMs": 149891
+        "durationMs": 149891,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/03/16/5d724fbc-a907-4a48-9221-c1813d248168.mp3"
       },
       "segments": [
         {
@@ -2437,10 +2444,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/03/25/ae6c5055-13ae-485b-995d-b347125ecf10.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/03/25/ae6c5055-13ae-485b-995d-b347125ecf10.mp3",
         "sha256": "3f395c7bf4eab262446e33bfea84de551775aa869c22d5cf541167e45ca63aed",
         "bytes": 948911,
-        "durationMs": 118570
+        "durationMs": 118570,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/03/25/ae6c5055-13ae-485b-995d-b347125ecf10.mp3"
       },
       "segments": [
         {
@@ -2837,10 +2845,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/04/01/fe67e651-87d0-4b62-9c68-749b2d3c2f21.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/04/01/fe67e651-87d0-4b62-9c68-749b2d3c2f21.mp3",
         "sha256": "6b19c02fbf4e0162c9633c1de7387e0068711b3a134485a0b824a6f9e543ca7c",
         "bytes": 975242,
-        "durationMs": 121861
+        "durationMs": 121861,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/04/01/fe67e651-87d0-4b62-9c68-749b2d3c2f21.mp3"
       },
       "segments": [
         {
@@ -3188,10 +3197,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/04/14/442a6a50-693e-411f-8cff-99e40d16614c.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/04/14/442a6a50-693e-411f-8cff-99e40d16614c.mp3",
         "sha256": "0cfd6224bc3b53319acc1b535cc81908f8f9880f8dcee1e0c2a8ff697d5c9a66",
         "bytes": 725721,
-        "durationMs": 90671
+        "durationMs": 90671,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/04/14/442a6a50-693e-411f-8cff-99e40d16614c.mp3"
       },
       "segments": [
         {
@@ -3491,10 +3501,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/04/20/de238e35-97b9-4c21-81e3-e3c26fbeccaa.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/04/20/de238e35-97b9-4c21-81e3-e3c26fbeccaa.mp3",
         "sha256": "b22a6f0531dcf943a2b23d5bd09696f2cfc5970f50a3911082b457c532625c6e",
         "bytes": 884445,
-        "durationMs": 110524
+        "durationMs": 110524,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/04/20/de238e35-97b9-4c21-81e3-e3c26fbeccaa.mp3"
       },
       "segments": [
         {
@@ -3858,10 +3869,11 @@
         "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
       },
       "audio": {
-        "url": "https://voa-audio.voanews.eu/vle/2016/04/28/d1527ef7-587d-45b5-b3cc-fecbe37167ab.mp3",
+        "url": "https://voa-audio-ns.akamaized.net/vle/2016/04/28/d1527ef7-587d-45b5-b3cc-fecbe37167ab.mp3",
         "sha256": "b2eeaf3cfb9cacf2626b0048eddac38c70ad56cf726039c3c068dae84acbfd94",
         "bytes": 1515810,
-        "durationMs": 189440
+        "durationMs": 189440,
+        "sourceUrl": "https://voa-audio.voanews.eu/vle/2016/04/28/d1527ef7-587d-45b5-b3cc-fecbe37167ab.mp3"
       },
       "segments": [
         {

@@ -97,7 +97,7 @@ class CourseMedia(context: Context, private val client: OkHttpClient = downloadC
     companion object {
         private val gate = Mutex()
         private val downloadClient = OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS).followSslRedirects(false).build()
+            .readTimeout(30, TimeUnit.SECONDS).callTimeout(60, TimeUnit.SECONDS).followSslRedirects(false).build()
     }
 }
 

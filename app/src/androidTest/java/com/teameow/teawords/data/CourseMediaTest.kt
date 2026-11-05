@@ -13,11 +13,40 @@ import okio.Timeout
 import okio.buffer
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.Assume.assumeTrue
+import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.io.IOException
 
 class CourseMediaTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
+    /** Explicit opt-in: network availability must not make the regular test suite flaky. */
+    @Test fun officialLessonDownloadsWithPinnedDigestAndOpensOffline() = runBlocking {
+        assumeTrue(InstrumentationRegistry.getArguments().getString("verifyCourseCdn") == "true")
+        val original=CourseCatalog.all.first().audio
+        val alternative=InstrumentationRegistry.getArguments().getString("courseMediaHost")
+        require(alternative == null || alternative == "voa-audio-ns.akamaized.net")
+        val audio=if(alternative==null) original else original.copy(url=original.url.replace("voa-audio.voanews.eu",alternative))
+        val file=File(context.filesDir,"course_audio/${audio.sha256}.mp3")
+        val part=File(context.filesDir,"course_audio/${audio.sha256}.part")
+        val previous=file.takeIf{it.exists()}?.readBytes()
+        val previousPart=part.takeIf{it.exists()}?.readBytes()
+        file.delete();part.delete()
+        try {
+            val downloaded=CourseMedia(context).download(audio)
+            assertEquals(audio.bytes,downloaded.length())
+            val metadata=android.media.MediaMetadataRetriever()
+            try {
+                metadata.setDataSource(downloaded.absolutePath)
+                assertTrue(kotlin.math.abs(metadata.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)!!.toInt()-audio.durationMs)<100)
+            } finally { metadata.release() }
+            val offline=OkHttpClient.Builder().addInterceptor{throw IOException("offline")}.build()
+            assertEquals(downloaded,CourseMedia(context,offline).download(audio))
+        } finally {
+            file.delete();part.delete()
+            previous?.let{file.writeBytes(it)};previousPart?.let{part.writeBytes(it)}
+        }
+    }
     @Test fun interruptionResumesOnlyVerifiedRangeThenReopensOffline() = runBlocking {
         val bytes = "audio-fixture-${System.nanoTime()}".toByteArray()
         val hash = WordbookProtocol.sha256(bytes)
