@@ -3,6 +3,23 @@
   "repository": "echoinzephyr/teaWords",
   "releases": [
     {
+      "tag_name": "v1.2.2-rc.2",
+      "name": "teaWords 1.2.2 RC2",
+      "body": "teaWords 1.2.2 RC2（versionCode 7），适用于 Android 7.0 及以上。本版本为预发布。\r\n\r\n- 主题页提供实时主页预览、配色选择、自定义颜色与文字缩放，修复切换字号闪屏；浮动导航保持原样。\r\n- 设置与学习共用带封面、分类和搜索的词书选择器；补齐确认、取消、关闭和子页返回的过渡。\r\n- 预测性返回改为顶层向下移动，取消手势恢复原位。\r\n- 词卡揭示后自动加载在线补充；改进菜单和壁纸显示。左滑或点击“拼写”进入专注拼写页，移除过渡中闪出的旧界面。\r\n- 新词额度按每轮计算，可连续开启下一轮；重做学习小结，认读练习不再显示为“0%”独立回忆率。\r\n- 在线查词优先展示有道结果；历史保存查询文字和精确本地身份，不新增在线释义磁盘缓存，也不把查询当作学习证据。\r\n- 更新检查新增公开清单备用源、短时缓存和限流等待，保留 Beta／RC 选择。\r\n- 移除课程功能及资源，完整开发快照保留在 experimental。\r\n\r\n### 安装与更新\r\n下载 teaWords-1.2.2-rc.2.apk。与 RC1 使用相同发布签名，可覆盖旧发布版并保留数据；调试签名构建需使用同签名包。\r\n\r\n应用内接收 RC 需开启“设置 → 检查更新 → 接收 Beta 更新”。旧版本遇到 GitHub 403 时，可先手动下载此 APK 更新。\r\n\r\n### 已知范围\r\n线上词书下载服务地址仍未配置；已下载词书及个人导入内容可离线使用，在线查词可用。词书服务部署包随附件提供，本轮未配置阿里云。\r\n\r\n### 验证\r\n175 项单元测试、73 项真机学习与设置回归、Debug／压缩 Release 构建和 lint 检查通过；签名与校验和已核对。\r\n",
+      "html_url": "https://github.com/echoinzephyr/teaWords/releases/tag/v1.2.2-rc.2",
+      "published_at": "2026-11-05T15:34:12Z",
+      "prerelease": true,
+      "draft": false,
+      "assets": [
+        {
+          "name": "teaWords-1.2.2-rc.2.apk",
+          "browser_download_url": "https://github.com/echoinzephyr/teaWords/releases/download/v1.2.2-rc.2/teaWords-1.2.2-rc.2.apk",
+          "size": 4272190,
+          "digest": "sha256:b31c0474d21614504a3c84e1b595bbb0b8ef77f36e931e8e4e8fa18908c44a0b"
+        }
+      ]
+    },
+    {
       "tag_name": "v1.2.2-rc.1",
       "name": "teaWords 1.2.2 RC1",
       "body": "teaWords 1.2.2-rc.1 候选预发布。\r\n\r\n**RC1 修订（versionCode 6）**：检查更新新增默认关闭的“接收 Beta 更新”开关。开启后可接收 Beta、RC 等 GitHub Pre-release；关闭后只检查稳定版。修复 rc.2 / rc.10 排序，并保存更新渠道偏好。已经安装旧 RC1 的用户，请重新下载安装本页 APK 一次，以获得此开关。\r\n\r\n修订源码：[375cf76](https://github.com/echoinzephyr/teaWords/commit/375cf76)。保持原 RC1 标签，不改写已有标签历史。\r\n\r\n- 大幅缩小安装包，移除完整词典和 ML Kit，保留原有词条编号及学习记录。\r\n- 新增有道在线释义、英美音标、短语、词形与搜索建议，查询结果最多在内存缓存 64 条。\r\n- 词书按需下载并校验，支持中断续传及下载后离线学习；服务端程序与部署包已准备。\r\n- 调整学习首页、词书封面、设置与搜索过渡，移除重复个人入口和重复词条详情卡。\r\n- 保留 MyMemory、DeepSeek、收藏、笔记、复习及暂停续学流程。\r\n\r\n**本 RC 尚未配置线上词书下载服务。** 升级用户可继续使用已有词书；新安装可使用在线查词、短课及个人词表导入。线上词书下载待域名和 HTTPS 部署后开放。阿里云未作修改。\r\n\r\nAndroid 7.0 及以上；使用既有发布签名，可覆盖同签名旧版本并保留数据。此版本标记为 Pre-release，不替代稳定版。\r\n\r\n已完成 168 项单元测试、Lint、调试/压缩构建与 OnePlus 真机页面、下载、进度持久化及压缩包启动检查。\r\n",
