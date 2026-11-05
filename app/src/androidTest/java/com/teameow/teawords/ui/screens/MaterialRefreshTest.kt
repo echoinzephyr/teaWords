@@ -164,7 +164,7 @@ class MaterialRefreshTest {
         var submitted = ""
         compose.setContent {
             TeaWordsTheme {
-                StudyOverview("大学英语四级", 100, 20, 3, 7, 10, 0, 60, 2, false, null,
+                StudyOverview("大学英语四级", 100, 20, 3, 7, 10, 2, false, null,
                     {}, {}, {}, {}, favorites = 5, onFavorites = { favoriteCalls++ },
                     query = query, onQuery = { query = it }, onSearch = { submitted = query })
             }
@@ -226,7 +226,6 @@ class MaterialRefreshTest {
                                 "home" -> HomeView("", {}, {}, emptyList(), false, {}, emptyList(),
                                     "茶词", "查词、翻译，慢慢记住。", {}, {}, {}, {})
                                 "learning" -> LearningScreen(database)
-                                "courses" -> CourseListScreen(database, onBack = {}, onOpen = {})
                                 "recall" -> RecordsView(emptyList(), 0, {}, {})
                                 "lookup" -> LookupScreen("apple", onBack = {})
                                 "statistics" -> StatsDashboard(database)
@@ -243,7 +242,7 @@ class MaterialRefreshTest {
             }
         }
         for (theme in listOf("light", "dark", "black", "dynamic", "large")) {
-            for (screen in listOf("home", "learning", "courses", "recall", "lookup", "statistics", "about", "translation", "word")) {
+            for (screen in listOf("home", "learning", "recall", "lookup", "statistics", "about", "translation", "word")) {
                 compose.runOnIdle { appearance = theme; page = screen }
                 compose.waitForIdle()
                 if (screen == "learning") compose.waitUntil(15000) {

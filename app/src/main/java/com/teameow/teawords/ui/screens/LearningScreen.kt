@@ -97,9 +97,6 @@ fun LearningScreen(
     var mode by rememberSaveable { mutableStateOf("home") }
     var wordReturnMode by rememberSaveable { mutableStateOf("home") }
     var homeReview by rememberSaveable { mutableStateOf(false) }
-    var activeLessonId by rememberSaveable { mutableStateOf<String?>(null) }
-    var courseReturnMode by rememberSaveable { mutableStateOf("learningHub") }
-    var courseProgress by remember { mutableStateOf(emptyMap<String, CourseRepository.Progress>()) }
     var busy by remember { mutableStateOf(true) }
     var message by remember { mutableStateOf<String?>(null) }
     var queue by remember { mutableStateOf(emptyList<Knowledge>()) }
@@ -141,11 +138,6 @@ fun LearningScreen(
         try { reload() } catch (e: Exception) { message = "读取失败：${e.message}" }
         finally { busy = false }
         if (mode != "learningHub") mode = "home"
-    }
-    LaunchedEffect(mode) {
-        if (mode == "home" || mode == "learningHub") courseProgress = withContext(Dispatchers.IO) {
-            CourseRepository(dbHelper).allProgress()
-        }
     }
 
     fun importWords(source: String = "用户导入", license: String = "用户提供，许可由用户确认", read: () -> String) {
@@ -440,35 +432,8 @@ fun LearningScreen(
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (_: Exception) { message = "收藏更新失败，请重试" }
             } }, onBack = back)
-    } else if (pageMode == "courses") {
-        CourseListScreen(dbHelper,
-            onBack = { mode = courseReturnMode }, onOpen = { lesson ->
-            activeLessonId = lesson.id
-            mode = "courseLesson"
-        })
-    } else if (pageMode == "courseLesson" && activeLessonId != null) {
-        val lesson = CourseCatalog.all.firstOrNull { it.id == activeLessonId }
-        if (lesson != null) CourseLessonScreen(dbHelper, lesson, onBack = { mode = "courses" })
     } else if (pageMode == "learningHub") {
-        TeaListPage("短课与专项练习", onBack = back) {
-            item {
-                val completed = CourseCatalog.all.count { courseProgress[it.id]?.complete == true }
-                val next = CourseCatalog.all.firstOrNull {
-                    courseProgress[it.id]?.let { state -> state.step > 0 && !state.complete } == true
-                }
-                TeaCard {
-                    Text("英语短课", style = MaterialTheme.typography.headlineSmall)
-                    Text("入门英语 · 三个单元，从日常交流开始")
-                    TeaCaption("已完成 $completed / ${CourseCatalog.all.size} 课 · 可暂停续学")
-                    next?.let { lesson ->
-                        Text("待续学：第 ${lesson.number} 课 · ${lesson.title}")
-                        Button(onClick = { activeLessonId = lesson.id; mode = "courseLesson" },
-                            modifier = Modifier.fillMaxWidth()) { Text("继续这节短课") }
-                    }
-                    OutlinedButton(onClick = { courseReturnMode = "learningHub"; mode = "courses" },
-                        modifier = Modifier.fillMaxWidth()) { Text("选择课程") }
-                }
-            }
+        TeaListPage("专项练习", onBack = back) {
             item {
                 val paused = pocketRound?.takeUnless { it.complete }
                 TeaCard {
@@ -579,7 +544,7 @@ fun LearningScreen(
             "screen" -> "凭印象判断，自评不计作测试掌握"
             "session" -> "主动回忆，答对一次不代表掌握"
             "diagnose" -> "自适应选题，快速定位你的水平"
-            else -> "单词、短课与专项练习"
+            else -> "单词与专项练习"
         },
         onBack = if (pageMode != "home") back else null,
         backEnabled = !busy,
@@ -628,8 +593,6 @@ fun LearningScreen(
                     bookName = books.filter { it.id in selectedBookIds }.joinToString("、") { it.name }.ifBlank { "个人词库" },
                     total = states.size, studied = states.count { it.attempts > 0 }, verified = verifiedCount,
                     due = dueCount, newBudget = newBudget, fuzzy = fuzzyCount, busy = busy,
-                    completedLessons = CourseCatalog.all.count { courseProgress[it.id]?.complete == true },
-                    lessonTotal = CourseCatalog.all.size,
                     paused = wordSession?.takeUnless { it.complete }?.let { WordStudyResume(it.position, it.tasks.size) },
                     onBooks = { draftBooks = selectedBookIds; showBooks = true },
                     favorites = favorites.size, onFavorites = { mode = "favorites" },
@@ -656,8 +619,6 @@ fun LearningScreen(
                 val leavingPocket = mode == "pocket"
                 mode = when (mode) {
                     "studySearch" -> studySearchReturn
-                    "courseLesson" -> "courses"
-                    "courses" -> courseReturnMode
                     "session" -> wordReturnMode
                     "pocket" -> if (homeReview) "home" else "learningHub"
                     "pocketSetup", "screen" -> "learningHub"

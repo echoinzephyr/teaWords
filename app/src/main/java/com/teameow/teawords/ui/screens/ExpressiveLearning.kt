@@ -36,7 +36,7 @@ internal fun ExpressiveLearningPlan(due: Int, fuzzy: Int, unseen: Int, busy: Boo
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("到期 / 模糊 / 待排查", style = MaterialTheme.typography.labelMedium)
-                    Text("进入后选择单词、短课或专项练习", style = MaterialTheme.typography.labelMedium)
+                    Text("进入后选择单词或专项练习", style = MaterialTheme.typography.labelMedium)
                 }
                 FilledIconButton(
                     onClick = onStart,

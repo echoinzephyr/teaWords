@@ -14,6 +14,6 @@
 
 ## 验证与备份
 
-163 项单元测试通过；Lint、调试构建及启用压缩的构建通过。OnePlus LE2101（Android 14）执行页面、设置、导航、学习与短课回归；另执行真实下载、续传、离线词形、固定编号迁移及会话持久化测试。无虚拟机，未发布正式版本。调试包使用 .materialreview，压缩验证包使用 .slimreview，均与正式应用分开。
+163 项单元测试通过；Lint、调试构建及启用压缩的构建通过。OnePlus LE2101（Android 14）执行页面、设置、导航、学习流程回归；另执行真实下载、续传、离线词形、固定编号迁移及会话持久化测试。无虚拟机，未发布正式版本。调试包使用 .materialreview，压缩验证包使用 .slimreview，均与正式应用分开。
 
 基线工作区（包含原有新增文件）保存在 validation/size-reduction/workspace-before.zip，文件校验见 baseline-sha256.json。构建、测试日志和体积对比均在同目录。安装包与服务端交付包不提交到 Git。正式源码推送目标为 https://github.com/echoinzephyr/teaWords 的 main。

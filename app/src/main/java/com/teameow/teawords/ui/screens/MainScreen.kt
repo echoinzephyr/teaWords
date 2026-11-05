@@ -292,7 +292,7 @@ fun MainScreen(
     // Settings remain in the original sheet while the home page stays mounted underneath.
     val childVisible = showReviewStats || isLookupExecuted || reviewSession != null || showLookupReview
     // Top-level destinations alone own the navigation bar. Child screens clear system insets.
-    val showDock = !childVisible && !isInputFocused && !keyboardVisible && learningMode != "learningHub" && learningMode != "session" && learningMode != "diagnose" && learningMode != "pocket" && learningMode != "pocketSetup" && learningMode != "courses" && learningMode != "courseLesson" && learningMode != "favorites" && learningMode != "studySearch"
+    val showDock = !childVisible && !isInputFocused && !keyboardVisible && learningMode != "learningHub" && learningMode != "session" && learningMode != "diagnose" && learningMode != "pocket" && learningMode != "pocketSetup" && learningMode != "favorites" && learningMode != "studySearch"
     val animatedDockClearance by animateDpAsState(
         targetValue = if (showDock) dockClearance else systemBottom,
         animationSpec = tween(300, easing = if (showDock) TeaEnterEasing else TeaExitEasing),

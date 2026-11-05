@@ -9,7 +9,7 @@
 
 ## 设计参考
 
-Material 页面层级与分组列表参考 [KernelSU Style UI Kit](https://github.com/chenaizhang/KernelSU-Style-UI-Kit)（GPL-3.0）；组件基于茶词现有 Compose API 实现，没有引入 Miuix。关于页包含相应致谢。学习首页和词书选择的布局依据用户提供的参考图实现，未复制第三方应用的代码、课程、封面图片或数据。
+Material 页面层级与分组列表参考 [KernelSU Style UI Kit](https://github.com/chenaizhang/KernelSU-Style-UI-Kit)（GPL-3.0）；组件基于茶词现有 Compose API 实现，没有引入 Miuix。关于页包含相应致谢。学习首页和词书选择的布局依据用户提供的参考图实现，未复制第三方应用的代码、封面图片或数据。
 
 ## 验证
 

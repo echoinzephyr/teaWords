@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 
 class DatabaseHelper(context: Context, databaseName: String = DATABASE_NAME) : SQLiteOpenHelper(context, databaseName, null, DATABASE_VERSION) {
 
-    internal val appContext = context.applicationContext
+    private val appContext = context.applicationContext
 
     init {
         // Without WAL, a reader (any lookup on the UI path) blocks behind the writer that builds the
@@ -31,6 +31,21 @@ class DatabaseHelper(context: Context, databaseName: String = DATABASE_NAME) : S
         private const val KEY_PHONETIC = "phonetic"
         private const val KEY_DEFINITION = "definition"
         private const val KEY_TIMESTAMP = "timestamp"
+    }
+
+    override fun onOpen(db: SQLiteDatabase) {
+        super.onOpen(db)
+        if (db.isReadOnly) return
+        // Drop only retired feature storage; word learning, vocabulary and notes stay intact.
+        db.beginTransaction()
+        try {
+            listOf("course_progress", "course_answers", "course_weak_words", "course_baseline",
+                "course_v2_state", "course_v2_answers").forEach { db.execSQL("DROP TABLE IF EXISTS $it") }
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+        listOf("course_audio", "course_recordings").forEach { folder ->
+            java.io.File(appContext.filesDir, folder).deleteRecursively()
+        }
     }
 
     override fun onCreate(db: SQLiteDatabase) {

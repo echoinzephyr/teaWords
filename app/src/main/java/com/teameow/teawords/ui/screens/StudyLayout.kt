@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.sp
 @Composable
 internal fun StudyOverview(
     bookName: String, total: Int, studied: Int, verified: Int, due: Int, newBudget: Int,
-    completedLessons: Int, lessonTotal: Int,
     fuzzy: Int, busy: Boolean, paused: WordStudyResume?,
     onBooks: () -> Unit, onStart: () -> Unit, onReview: () -> Unit, onMore: () -> Unit,
     favorites: Int = 0, onFavorites: () -> Unit = {}, query: String = "",
@@ -89,8 +88,8 @@ internal fun StudyOverview(
         Surface(onClick = onMore, enabled = !busy, shape = RoundedCornerShape(24.dp), color = colors.surfaceContainerLow) {
             Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("短课与专项练习", style = MaterialTheme.typography.titleMedium)
-                    TeaCaption("已完成 $completedLessons / $lessonTotal 课")
+                    Text("专项练习", style = MaterialTheme.typography.titleMedium)
+                    TeaCaption("混合小练习 · 打字记词")
                 }
                 Icon(AppSymbols.ArrowForward, null)
             }
