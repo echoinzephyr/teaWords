@@ -65,13 +65,13 @@ fun TeaListPage(
     loading: Boolean = false,
     expandedTitle: Boolean = true,
     embedded: Boolean = false,
+    listState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState(),
     header: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     content: LazyListScope.() -> Unit
 ) {
     val layout = teaLayoutSize()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-    val listState = rememberLazyListState()
     val reservedBottom = LocalReservedBottom.current
     var showLoading by remember { mutableStateOf(false) }
     LaunchedEffect(loading) {

@@ -1,98 +1,73 @@
 package com.teameow.teawords.data
 
 import android.content.ContentValues
+import android.database.sqlite.SQLiteDatabase
+import com.google.gson.Gson
+import java.io.File
 
-/** Course progress is user data. It lives in teawords.db, never in a replaceable content pack. */
+/** Course-only storage. Never writes vocabulary, knowledge, notes or learning_events. */
 class CourseRepository(private val helper: DatabaseHelper) {
     private val db get() = helper.writableDatabase
-
+    private val gson = Gson()
     init {
-        db.execSQL("CREATE TABLE IF NOT EXISTS course_progress (lesson_id TEXT PRIMARY KEY, step INTEGER NOT NULL DEFAULT 0, mistakes TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL)")
-        db.execSQL("CREATE TABLE IF NOT EXISTS course_answers (lesson_id TEXT NOT NULL, step INTEGER NOT NULL, word TEXT NOT NULL, correct INTEGER NOT NULL, elapsed_ms INTEGER NOT NULL, timestamp INTEGER NOT NULL, PRIMARY KEY(lesson_id,step))")
-        db.execSQL("CREATE TABLE IF NOT EXISTS course_weak_words (word TEXT PRIMARY KEY, mistakes INTEGER NOT NULL, updated_at INTEGER NOT NULL)")
-        db.execSQL("CREATE TABLE IF NOT EXISTS course_baseline (slot INTEGER PRIMARY KEY CHECK(slot=1), started_at INTEGER NOT NULL)")
-        db.execSQL("INSERT OR IGNORE INTO course_baseline(slot,started_at) VALUES(1,${System.currentTimeMillis()})")
+        db.beginTransaction()
+        try {
+            db.execSQL("CREATE TABLE IF NOT EXISTS course_v2_state (lesson_id TEXT PRIMARY KEY,payload TEXT NOT NULL)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS course_v2_answers (lesson_id TEXT NOT NULL,question_id TEXT NOT NULL,input TEXT NOT NULL,correct INTEGER NOT NULL,attempt INTEGER NOT NULL,PRIMARY KEY(lesson_id,question_id))")
+            // DEV reset: only the four tables owned by the retired course feature.
+            listOf("course_progress", "course_answers", "course_weak_words", "course_baseline").forEach {
+                db.execSQL("DROP TABLE IF EXISTS $it")
+            }
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+        File(helper.appContext.filesDir, "course_recordings").listFiles()?.filter {
+            it.isFile && it.name.matches(Regex("(ky|ielts|toefl)-[0-9]+\\.m4a"))
+        }?.forEach { it.delete() }
     }
 
-    data class Progress(val step: Int = 0, val mistakes: Set<String> = emptySet()) {
-        val complete: Boolean get() = step >= STEPS
+    data class Checkpoint(val section: Int = 0, val sentence: Int = 0, val positionMs: Int = 0,
+                          val question: Int = 0, val draft: String = "", val started: Boolean = false,
+                          val speed: Float = 1f, val follow: Boolean = true,
+                          val listIndex: Int = 0, val listOffset: Int = 0)
+    data class Answer(val input: String, val correct: Boolean, val attempt: Int)
+    data class Progress(val checkpoint: Checkpoint = Checkpoint(), val answers: Map<String, Answer> = emptyMap(),
+                        val total: Int = 0) {
+        val complete get() = total > 0 && answers.size == total
+        val step get() = if (checkpoint.started) answers.size + 1 else 0
+        val mistakes get() = answers.filterValues { !it.correct }.keys
     }
-
-    fun progress(id: String): Progress = db.rawQuery(
-        "SELECT step,mistakes FROM course_progress WHERE lesson_id=?", arrayOf(id)
-    ).use { cursor ->
-        if (!cursor.moveToFirst()) Progress() else Progress(cursor.getInt(0),
-            cursor.getString(1).split(',').filter { it.isNotBlank() }.toSet())
+    fun progress(id: String): Progress {
+        val checkpoint = db.rawQuery("SELECT payload FROM course_v2_state WHERE lesson_id=?", arrayOf(id)).use {
+            if (it.moveToFirst()) gson.fromJson(it.getString(0), Checkpoint::class.java) else Checkpoint()
+        }
+        val answers = db.rawQuery("SELECT question_id,input,correct,attempt FROM course_v2_answers WHERE lesson_id=?", arrayOf(id)).use {
+            buildMap { while (it.moveToNext()) put(it.getString(0), Answer(it.getString(1), it.getInt(2) != 0, it.getInt(3))) }
+        }
+        return Progress(checkpoint, answers, CourseCatalog.all.firstOrNull { it.id == id }?.questions?.size ?: 0)
     }
-
-    fun allProgress(): Map<String, Progress> = db.rawQuery(
-        "SELECT lesson_id,step,mistakes FROM course_progress", null
-    ).use { cursor -> buildMap {
-        while (cursor.moveToNext()) put(cursor.getString(0), Progress(cursor.getInt(1),
-            cursor.getString(2).split(',').filter { it.isNotBlank() }.toSet()))
-    } }
-
-    /** Incorrect lesson questions in their original order; reading them does not alter review state. */
-    fun wrongSteps(lessonId: String): List<Int> = db.rawQuery(
-        "SELECT step FROM course_answers WHERE lesson_id=? AND step BETWEEN 1 AND 7 AND correct=0 ORDER BY step",
-        arrayOf(lessonId)
-    ).use { cursor -> buildList { while (cursor.moveToNext()) add(cursor.getInt(0)) } }
-
-    /** One answer and its cursor are committed together; reopening cannot double-count a step. */
-    fun answer(lesson: CourseLesson, expectedStep: Int, correct: Boolean, elapsedMs: Long): Progress {
-        require(expectedStep in 0 until STEPS)
-        val now = System.currentTimeMillis()
+    fun allProgress(): Map<String, Progress> = CourseCatalog.all.associate { it.id to progress(it.id) }
+    fun save(lessonId: String, checkpoint: Checkpoint) {
+        require(CourseCatalog.all.any { it.id == lessonId })
+        db.insertWithOnConflict("course_v2_state", null, ContentValues().apply {
+            put("lesson_id", lessonId); put("payload", gson.toJson(checkpoint))
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+    /** Revision check makes rapid duplicate submits idempotent, including during retries. */
+    fun submit(lesson: CourseLesson, questionId: String, input: String, expectedAttempt: Int): Progress {
+        val question = lesson.questions.single { it.id == questionId }
+        require(input.isNotBlank() && expectedAttempt >= 0)
         db.beginTransaction()
         try {
             val old = progress(lesson.id)
-            check(old.step == expectedStep) { "课程进度已变化，请重新打开" }
-            val assessed = expectedStep != 0
-            val mistakes = if (assessed && !correct) old.mistakes + lesson.focus else old.mistakes
-            db.insertWithOnConflict("course_answers", null, ContentValues().apply {
-                put("lesson_id", lesson.id); put("step", expectedStep); put("word", lesson.focus)
-                put("correct", if (correct) 1 else 0); put("elapsed_ms", elapsedMs.coerceAtLeast(0))
-                put("timestamp", now)
-            }, android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT)
-            db.insertWithOnConflict("course_progress", null, ContentValues().apply {
-                put("lesson_id", lesson.id); put("step", expectedStep + 1)
-                put("mistakes", mistakes.joinToString(",")); put("updated_at", now)
-            }, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
-            if (assessed && !correct) {
-                db.execSQL("INSERT OR IGNORE INTO course_weak_words(word,mistakes,updated_at) VALUES(?,0,?)",
-                    arrayOf<Any>(lesson.focus, now))
-                db.execSQL("UPDATE course_weak_words SET mistakes=mistakes+1,updated_at=? WHERE word=?",
-                    arrayOf<Any>(now, lesson.focus))
+            if ((old.answers[questionId]?.attempt ?: 0) == expectedAttempt) {
+                db.insertWithOnConflict("course_v2_answers", null, ContentValues().apply {
+                    put("lesson_id", lesson.id); put("question_id", questionId); put("input", input)
+                    put("correct", if (question.accepts(input)) 1 else 0); put("attempt", expectedAttempt + 1)
+                }, SQLiteDatabase.CONFLICT_REPLACE)
+                save(lesson.id, old.checkpoint.copy(started = true, draft = ""))
             }
             db.setTransactionSuccessful()
-            return Progress(expectedStep + 1, mistakes)
         } finally { db.endTransaction() }
+        return progress(lesson.id)
     }
-
-    fun weakWords(limit: Int = 20): List<String> = db.rawQuery(
-        "SELECT word FROM course_weak_words ORDER BY mistakes DESC,updated_at DESC LIMIT ?",
-        arrayOf(limit.toString())
-    ).use { c -> buildList { while (c.moveToNext()) add(c.getString(0)) } }
-
-    data class RecallComparison(val beforeCorrect: Int, val beforeTotal: Int,
-                                val afterCorrect: Int, val afterTotal: Int) {
-        val beforePercent: Int get() = if (beforeTotal == 0) 0 else beforeCorrect * 100 / beforeTotal
-        val afterPercent: Int get() = if (afterTotal == 0) 0 else afterCorrect * 100 / afterTotal
-    }
-
-    /** Same active-recall answer definition on both sides of first course use; local and descriptive. */
-    fun recallComparison(): RecallComparison {
-        val start = db.rawQuery("SELECT started_at FROM course_baseline WHERE slot=1", null).use {
-            it.moveToFirst(); it.getLong(0)
-        }
-        fun counts(from: Long, to: Long): Pair<Int, Int> = db.rawQuery(
-            "SELECT COALESCE(SUM(correct),0),COUNT(*) FROM learning_events " +
-                "WHERE mode='RECALL' AND correct IS NOT NULL AND timestamp>=? AND timestamp<?",
-            arrayOf(from.toString(), to.toString())
-        ).use { c -> c.moveToFirst(); c.getInt(0) to c.getInt(1) }
-        val before = counts(start - 7L * 86_400_000L, start)
-        val after = counts(start, System.currentTimeMillis() + 1)
-        return RecallComparison(before.first, before.second, after.first, after.second)
-    }
-
-    companion object { const val STEPS = 8 }
 }

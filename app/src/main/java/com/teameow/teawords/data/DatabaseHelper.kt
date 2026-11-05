@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteOpenHelper
 
 class DatabaseHelper(context: Context, databaseName: String = DATABASE_NAME) : SQLiteOpenHelper(context, databaseName, null, DATABASE_VERSION) {
 
+    internal val appContext = context.applicationContext
+
     init {
         // Without WAL, a reader (any lookup on the UI path) blocks behind the writer that builds the
         // bundled index, which makes the app look frozen. WAL lets reads proceed during that write.

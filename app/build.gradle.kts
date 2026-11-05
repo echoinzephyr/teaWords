@@ -15,6 +15,10 @@ android {
         val wordbookUrl = providers.gradleProperty("wordbookBaseUrl").orElse("").get()
         require(wordbookUrl.none { it == '"' || it == '\\' || it.isISOControl() }) { "Invalid wordbookBaseUrl" }
         buildConfigField("String", "WORDBOOK_BASE_URL", "\"$wordbookUrl\"")
+        val courseUrl = providers.gradleProperty("courseBaseUrl").orElse("").get()
+        require(courseUrl.none { it == '"' || it == '\\' || it.isISOControl() }) { "Invalid courseBaseUrl" }
+        require(courseUrl.isEmpty() || courseUrl.startsWith("https://")) { "courseBaseUrl requires HTTPS" }
+        buildConfigField("String", "COURSE_BASE_URL", "\"$courseUrl\"")
         versionCode = 6
         versionName = "1.2.2-rc.1"
 

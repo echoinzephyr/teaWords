@@ -1,0 +1,4306 @@
+{
+  "schemaVersion": 1,
+  "contentVersion": "2026.11.05.1",
+  "title": "入门英语",
+  "lessons": [
+    {
+      "id": "voa1-01",
+      "number": 1,
+      "unit": 1,
+      "title": "Welcome!",
+      "subtitle": "初次见面与问候",
+      "minutes": 8,
+      "objectives": [
+        "向初次见面的人打招呼",
+        "介绍姓名并纠正拼写"
+      ],
+      "prerequisites": [],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-one/3111026.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/02/08/49485bf8-4277-47f6-9abe-617ee2473f8c.mp3",
+        "sha256": "f9bd90edddbb8736f64fb5cb3a34ab5a27aecd6e99510977e7b820caf47c5cf7",
+        "bytes": 236944,
+        "durationMs": 29571
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Pete",
+          "english": "Hi! Are you Anna?",
+          "startMs": 950,
+          "endMs": 2530,
+          "chinese": "嗨！你是安娜吗？"
+        },
+        {
+          "id": "s02",
+          "speaker": "Anna",
+          "english": "Yes! Hi there! Are you Pete?",
+          "startMs": 2610,
+          "endMs": 4580,
+          "chinese": "是的！你好！你是皮特吗？"
+        },
+        {
+          "id": "s03",
+          "speaker": "Pete",
+          "english": "I am Pete.",
+          "startMs": 4580,
+          "endMs": 5690,
+          "chinese": "我是皮特。"
+        },
+        {
+          "id": "s04",
+          "speaker": "Anna",
+          "english": "Nice to meet you.",
+          "startMs": 5690,
+          "endMs": 6710,
+          "chinese": "很高兴认识你。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Anna",
+          "english": "Let's try that again. I'm Anna. Nice to meet you.",
+          "startMs": 8730,
+          "endMs": 13180,
+          "chinese": "我们再来一次。我是安娜，很高兴认识你。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Pete",
+          "english": "I'm Pete. \"Anna\" Is that A-N-A?",
+          "startMs": 13180,
+          "endMs": 17090,
+          "chinese": "我是皮特。“Anna”是拼成 A-N-A 吗？"
+        },
+        {
+          "id": "s07",
+          "speaker": "Anna",
+          "english": "No. A-N-N-A",
+          "startMs": 17260,
+          "endMs": 19560,
+          "chinese": "不，是 A-N-N-A。"
+        },
+        {
+          "id": "s08",
+          "speaker": "Pete",
+          "english": "Well, Anna with two \"n's\" ... Welcome to ... 1400 Irving Street!",
+          "startMs": 20280,
+          "endMs": 27120,
+          "chinese": "好吧，名字里有两个 n 的安娜……欢迎来到欧文街 1400 号！"
+        },
+        {
+          "id": "s09",
+          "speaker": "Anna",
+          "english": "My new apartment!",
+          "startMs": 27120,
+          "endMs": 28590,
+          "chinese": "我的新公寓！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "Hi",
+          "chinese": "嗨，你好",
+          "segmentId": "s01"
+        },
+        {
+          "english": "Are you",
+          "chinese": "你是……吗",
+          "segmentId": "s01"
+        },
+        {
+          "english": "I am",
+          "chinese": "我是",
+          "segmentId": "s03"
+        },
+        {
+          "english": "Nice to meet you",
+          "chinese": "很高兴认识你",
+          "segmentId": "s04"
+        },
+        {
+          "english": "again",
+          "chinese": "再一次",
+          "segmentId": "s05"
+        },
+        {
+          "english": "Welcome to",
+          "chinese": "欢迎来到",
+          "segmentId": "s08"
+        },
+        {
+          "english": "Street",
+          "chinese": "街道",
+          "segmentId": "s08"
+        },
+        {
+          "english": "apartment",
+          "chinese": "公寓",
+          "segmentId": "s09"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "用 be 介绍和确认身份",
+          "text": "I am + 名字表示“我是……”。问对方是不是某人时，用 Are you + 名字?；肯定回答可用 Yes。",
+          "example": "I am Pete. / Are you Anna?",
+          "segmentId": "s03"
+        },
+        {
+          "title": "初次见面的礼貌问候",
+          "text": "Nice to meet you 用于初次见面。Hi there 比较随意；不要把 there 在这里理解为指路。",
+          "example": "Nice to meet you.",
+          "segmentId": "s04"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "谁欢迎安娜来到欧文街？",
+          "answers": [
+            "皮特"
+          ],
+          "options": [
+            "玛莎",
+            "皮特",
+            "乔纳森"
+          ],
+          "explanation": "皮特说 Welcome to ... 1400 Irving Street，欢迎安娜来到新住处。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "安娜的名字怎样拼写？",
+          "answers": [
+            "A-N-N-A"
+          ],
+          "options": [
+            "A-N-A",
+            "A-N-N-A",
+            "A-M-N-A"
+          ],
+          "explanation": "安娜用 No 纠正皮特，名字中有两个 n。",
+          "segmentId": "s07"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出皮特介绍自己的完整一句。",
+          "answers": [
+            "I am Pete."
+          ],
+          "options": [],
+          "explanation": "I am + 名字用来介绍自己。注意 Pete 是人名。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜第一次说的见面问候。",
+          "answers": [
+            "Nice to meet you."
+          ],
+          "options": [],
+          "explanation": "Nice to meet you 表示初次见面时的“很高兴认识你”。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "初次见面，怎样用英语说“很高兴认识你”？",
+          "answers": [
+            "Nice to meet you."
+          ],
+          "options": [],
+          "explanation": "固定表达 Nice to meet you 中的 to 不能省略。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全问句：___ you Anna?（你是安娜吗？只填空缺词）",
+          "answers": [
+            "Are"
+          ],
+          "options": [],
+          "explanation": "询问 You are ... 是否成立时，把 are 放在 you 前面。",
+          "segmentId": "s01"
+        }
+      ]
+    },
+    {
+      "id": "voa1-02",
+      "number": 2,
+      "unit": 1,
+      "title": "Hello, I'm Anna!",
+      "subtitle": "介绍自己与室友",
+      "minutes": 8,
+      "objectives": [
+        "询问并说明来自哪里",
+        "介绍住处和室友"
+      ],
+      "prerequisites": [
+        "voa1-01"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-2-hello/3113733.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/02/10/56246d7b-5fa4-42d2-90b0-d403e6b46227.mp3",
+        "sha256": "e943ca83c8a0d33bb3e505ba61cfda86c31f821bd065feb414aa83788faed2db",
+        "bytes": 384603,
+        "durationMs": 48039
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Jonathan",
+          "english": "Hey, Pete! Who’s your friend?",
+          "startMs": 1400,
+          "endMs": 3500,
+          "chinese": "嘿，皮特！你的朋友是谁？"
+        },
+        {
+          "id": "s02",
+          "speaker": "Pete",
+          "english": "She is Anna. She is new to D.C.",
+          "startMs": 4100,
+          "endMs": 6310,
+          "chinese": "她是安娜。她刚来到华盛顿特区。"
+        },
+        {
+          "id": "s03",
+          "speaker": "Jonathan",
+          "english": "Where are you from?",
+          "startMs": 6990,
+          "endMs": 7870,
+          "chinese": "你从哪里来？"
+        },
+        {
+          "id": "s04",
+          "speaker": "Anna",
+          "english": "I am from a small town.",
+          "startMs": 8040,
+          "endMs": 9990,
+          "chinese": "我来自一个小镇。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Jonathan",
+          "english": "Well, welcome to D.C.",
+          "startMs": 10640,
+          "endMs": 12270,
+          "chinese": "那欢迎你来到华盛顿特区。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Anna",
+          "english": "Thank you.",
+          "startMs": 12270,
+          "endMs": 13200,
+          "chinese": "谢谢。"
+        },
+        {
+          "id": "s07",
+          "speaker": "Jonathan",
+          "english": "I am Jonathan. I am in apartment B4.",
+          "startMs": 13200,
+          "endMs": 16170,
+          "chinese": "我是乔纳森。我住在 B4 公寓。"
+        },
+        {
+          "id": "s08",
+          "speaker": "Anna",
+          "english": "I am in apartment C2. Marsha is my roommate.",
+          "startMs": 16660,
+          "endMs": 21000,
+          "chinese": "我住在 C2 公寓。玛莎是我的室友。"
+        },
+        {
+          "id": "s09",
+          "speaker": "Jonathan",
+          "english": "I know Marsha. She is nice.",
+          "startMs": 21650,
+          "endMs": 24240,
+          "chinese": "我认识玛莎。她人很好。"
+        },
+        {
+          "id": "s10",
+          "speaker": "Pete",
+          "english": "And I am in Apartment D7. I have to go now.",
+          "startMs": 24970,
+          "endMs": 29910,
+          "chinese": "我住在 D7 公寓。我现在得走了。"
+        },
+        {
+          "id": "s11",
+          "speaker": "Anna",
+          "english": "Oh!",
+          "startMs": 30490,
+          "endMs": 30940,
+          "chinese": "哦！"
+        },
+        {
+          "id": "s12",
+          "speaker": "Pete",
+          "english": "Remember to call Marsha at work. Tell her you’re here.",
+          "startMs": 31760,
+          "endMs": 34990,
+          "chinese": "记得打玛莎的工作电话。告诉她你到了。"
+        },
+        {
+          "id": "s13",
+          "speaker": "Anna",
+          "english": "Right, thanks, Pete. Nice to meet you!",
+          "startMs": 34990,
+          "endMs": 38020,
+          "chinese": "好的，谢谢你，皮特。很高兴认识你！"
+        },
+        {
+          "id": "s14",
+          "speaker": "Jonathan",
+          "english": "You too, Bye.",
+          "startMs": 38020,
+          "endMs": 39390,
+          "chinese": "我也是，再见。"
+        },
+        {
+          "id": "s15",
+          "speaker": "Anna",
+          "english": "Apartment C2, here I come!",
+          "startMs": 42040,
+          "endMs": 44750,
+          "chinese": "C2 公寓，我来啦！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "friend",
+          "chinese": "朋友",
+          "segmentId": "s01"
+        },
+        {
+          "english": "new to",
+          "chinese": "刚来到",
+          "segmentId": "s02"
+        },
+        {
+          "english": "Where are you from",
+          "chinese": "你来自哪里",
+          "segmentId": "s03"
+        },
+        {
+          "english": "small town",
+          "chinese": "小镇",
+          "segmentId": "s04"
+        },
+        {
+          "english": "Thank you",
+          "chinese": "谢谢",
+          "segmentId": "s06"
+        },
+        {
+          "english": "roommate",
+          "chinese": "室友",
+          "segmentId": "s08"
+        },
+        {
+          "english": "at work",
+          "chinese": "在工作单位",
+          "segmentId": "s12"
+        },
+        {
+          "english": "have to",
+          "chinese": "不得不",
+          "segmentId": "s10"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "询问来自哪里",
+          "text": "Where are you from? 询问来源地。回答用 I am from + 地点；small town 前有 a。",
+          "example": "I am from a small town.",
+          "segmentId": "s04"
+        },
+        {
+          "title": "介绍第三个人",
+          "text": "She is + 名字或身份，介绍女性第三人称。my 表示“我的”，后接名词。",
+          "example": "She is Anna. / Marsha is my roommate.",
+          "segmentId": "s08"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "安娜来自哪里？",
+          "answers": [
+            "一个小镇"
+          ],
+          "options": [
+            "华盛顿市中心",
+            "一个小镇",
+            "乔纳森的公寓"
+          ],
+          "explanation": "I am from a small town 直接说明她来自一个小镇，并未说出镇名。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "谁是安娜的室友？",
+          "answers": [
+            "玛莎"
+          ],
+          "options": [
+            "皮特",
+            "乔纳森",
+            "玛莎"
+          ],
+          "explanation": "安娜说 Marsha is my roommate；roommate 是室友。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出询问来自哪里的整句问话。",
+          "answers": [
+            "Where are you from?"
+          ],
+          "options": [],
+          "explanation": "Where are you from? 询问来自哪里，from 放在句末。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜回答来自哪里的整句。",
+          "answers": [
+            "I am from a small town."
+          ],
+          "options": [],
+          "explanation": "a small town 是“一个小镇”，a 不可省略。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "向新朋友询问“你从哪里来？”，用本课的句型。",
+          "answers": [
+            "Where are you from?"
+          ],
+          "options": [],
+          "explanation": "Where + are + you + from 是本课的完整问句。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：Marsha is my ___.（玛莎是我的室友，只填一个词）",
+          "answers": [
+            "roommate"
+          ],
+          "options": [],
+          "explanation": "roommate 表示共同居住的室友，不等于 friend。",
+          "segmentId": "s08"
+        }
+      ]
+    },
+    {
+      "id": "voa1-03",
+      "number": 3,
+      "unit": 1,
+      "title": "I'm Here!",
+      "subtitle": "打电话和寻找超市",
+      "minutes": 10,
+      "objectives": [
+        "在电话中说明自己是谁",
+        "询问附近的超市"
+      ],
+      "prerequisites": [
+        "voa1-02"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-3-i-am-here/3126527.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/02/18/a82baaf4-0a91-4d43-8ab6-78f72cef8fce.mp3",
+        "sha256": "8a1d67ab3d32f3895747dc9bed42081f4f13e16ddf0879ade7bcce3ba0a7dcdb",
+        "bytes": 962841,
+        "durationMs": 120320
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "I am in my new apartment! Great!",
+          "startMs": 1550,
+          "endMs": 11670,
+          "chinese": "我在自己的新公寓里了！太棒了！"
+        },
+        {
+          "id": "s02",
+          "speaker": "Anna",
+          "english": "I live with Marsha. We’re roommates.",
+          "startMs": 12200,
+          "endMs": 15410,
+          "chinese": "我和玛莎住在一起。我们是室友。"
+        },
+        {
+          "id": "s03",
+          "speaker": "Anna",
+          "english": "I want to cook dinner. Oh! Hmmm. Is there a supermarket near here?",
+          "startMs": 16670,
+          "endMs": 29260,
+          "chinese": "我想做晚饭。哦！嗯……这附近有超市吗？"
+        },
+        {
+          "id": "s04",
+          "speaker": "Anna",
+          "english": "Marsha knows. Marsha's work number is 555-8986.",
+          "startMs": 30370,
+          "endMs": 41290,
+          "chinese": "玛莎知道。玛莎的工作电话是 555-8986。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Man",
+          "english": "Hello.",
+          "startMs": 42770,
+          "endMs": 43620,
+          "chinese": "你好。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Anna",
+          "english": "Hello. Is this Marsha? It is Anna.",
+          "startMs": 43620,
+          "endMs": 46400,
+          "chinese": "你好。请问是玛莎吗？我是安娜。"
+        },
+        {
+          "id": "s07",
+          "speaker": "Man",
+          "english": "I am sorry. You have the wrong number.",
+          "startMs": 46400,
+          "endMs": 49250,
+          "chinese": "抱歉，你打错号码了。"
+        },
+        {
+          "id": "s08",
+          "speaker": "Anna",
+          "english": "Oh. Is this 555-8986?",
+          "startMs": 49250,
+          "endMs": 53900,
+          "chinese": "哦，请问这是 555-8986 吗？"
+        },
+        {
+          "id": "s09",
+          "speaker": "Man",
+          "english": "No. This is 555-8689.",
+          "startMs": 54560,
+          "endMs": 58960,
+          "chinese": "不是，这是 555-8689。"
+        },
+        {
+          "id": "s10",
+          "speaker": "Anna",
+          "english": "Oh. Excuse me!",
+          "startMs": 60020,
+          "endMs": 61630,
+          "chinese": "哦，不好意思！"
+        },
+        {
+          "id": "s11",
+          "speaker": "Man",
+          "english": "Okay. 'Bye.",
+          "startMs": 61630,
+          "endMs": 62920,
+          "chinese": "没关系，再见。"
+        },
+        {
+          "id": "s12",
+          "speaker": "Anna",
+          "english": "One more time. 555-8986. Please be Marsha.",
+          "startMs": 64160,
+          "endMs": 72470,
+          "chinese": "再试一次。555-8986。希望这次是玛莎。"
+        },
+        {
+          "id": "s13",
+          "speaker": "Marsha",
+          "english": "Hello. This is Marsha.",
+          "startMs": 75620,
+          "endMs": 77660,
+          "chinese": "你好，我是玛莎。"
+        },
+        {
+          "id": "s14",
+          "speaker": "Anna",
+          "english": "Yes, Marsha. I want to cook dinner.",
+          "startMs": 77660,
+          "endMs": 80550,
+          "chinese": "是我，玛莎。我想做晚饭。"
+        },
+        {
+          "id": "s15",
+          "speaker": "Marsha",
+          "english": "Excuse me? Anna? Is that you?",
+          "startMs": 80550,
+          "endMs": 83610,
+          "chinese": "什么？安娜？是你吗？"
+        },
+        {
+          "id": "s16",
+          "speaker": "Anna",
+          "english": "Oh, yes. I am here!",
+          "startMs": 83610,
+          "endMs": 85160,
+          "chinese": "哦，是的。我到了！"
+        },
+        {
+          "id": "s17",
+          "speaker": "Marsha",
+          "english": "Good. You are there.",
+          "startMs": 85310,
+          "endMs": 87280,
+          "chinese": "好，你到那儿了。"
+        },
+        {
+          "id": "s18",
+          "speaker": "Anna",
+          "english": "I want to find a supermarket.",
+          "startMs": 87440,
+          "endMs": 90370,
+          "chinese": "我想找一家超市。"
+        },
+        {
+          "id": "s19",
+          "speaker": "Marsha",
+          "english": "Oh, okay. The supermarket is at 1500 Irving Street. It is near the apartment.",
+          "startMs": 90370,
+          "endMs": 98590,
+          "chinese": "哦，好的。超市在欧文街 1500 号，就在公寓附近。"
+        },
+        {
+          "id": "s20",
+          "speaker": "Anna",
+          "english": "Great! Goodbye!",
+          "startMs": 98590,
+          "endMs": 100710,
+          "chinese": "太好了！再见！"
+        },
+        {
+          "id": "s21",
+          "speaker": "Marsha",
+          "english": "Goodbye, Anna.",
+          "startMs": 100710,
+          "endMs": 101730,
+          "chinese": "再见，安娜。"
+        },
+        {
+          "id": "s22",
+          "speaker": "Anna",
+          "english": "There is a big supermarket on our street. And Marsha says I am a good cook! Until next time! Bye!",
+          "startMs": 102850,
+          "endMs": 115030,
+          "chinese": "我们这条街上有一家大超市。而且玛莎说我很会做饭！下次见！再见！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "live with",
+          "chinese": "与……一起住",
+          "segmentId": "s02"
+        },
+        {
+          "english": "roommates",
+          "chinese": "室友们",
+          "segmentId": "s02"
+        },
+        {
+          "english": "cook dinner",
+          "chinese": "做晚饭",
+          "segmentId": "s03"
+        },
+        {
+          "english": "supermarket",
+          "chinese": "超市",
+          "segmentId": "s03"
+        },
+        {
+          "english": "wrong number",
+          "chinese": "打错的号码",
+          "segmentId": "s07"
+        },
+        {
+          "english": "Excuse me",
+          "chinese": "不好意思",
+          "segmentId": "s10"
+        },
+        {
+          "english": "near",
+          "chinese": "在……附近",
+          "segmentId": "s03"
+        },
+        {
+          "english": "good cook",
+          "chinese": "擅长做饭的人",
+          "segmentId": "s22"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "电话中的 This is",
+          "text": "电话中用 This is + 名字说明自己是谁；Is this + 名字? 可以核实接电话者。",
+          "example": "Hello. This is Marsha.",
+          "segmentId": "s13"
+        },
+        {
+          "title": "想做某事",
+          "text": "want to 后面接动词原形。不能省掉 to，也不能把 cook 改成 cooking。",
+          "example": "I want to cook dinner.",
+          "segmentId": "s03"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "安娜为什么想找超市？",
+          "answers": [
+            "她想做晚饭"
+          ],
+          "options": [
+            "她想找工作",
+            "她想做晚饭",
+            "她要找室友"
+          ],
+          "explanation": "她先说 I want to cook dinner，随后询问附近的超市。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "超市在哪里？",
+          "answers": [
+            "欧文街 1500 号"
+          ],
+          "options": [
+            "欧文街 1400 号",
+            "欧文街 1500 号",
+            "城市另一端"
+          ],
+          "explanation": "玛莎给出的超市地址是 1500 Irving Street，并说离公寓很近。",
+          "segmentId": "s19"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜说明自己要找超市的完整一句。",
+          "answers": [
+            "I want to find a supermarket."
+          ],
+          "options": [],
+          "explanation": "want to 后接动词原形 find，supermarket 前有 a。",
+          "segmentId": "s18"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出玛莎确认安娜位置的两句。",
+          "answers": [
+            "Good. You are there."
+          ],
+          "options": [],
+          "explanation": "there 指对方所在的地方；这里 are 与 you 搭配。",
+          "segmentId": "s17"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "电话接通后，怎样按本课说“我是玛莎”？",
+          "answers": [
+            "This is Marsha."
+          ],
+          "options": [],
+          "explanation": "电话中常用 This is + 名字说明自己是谁。",
+          "segmentId": "s13"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：I want ___ cook dinner.（只填一个词）",
+          "answers": [
+            "to"
+          ],
+          "options": [],
+          "explanation": "want to do 表示想做某事，不能直接用 want cook。",
+          "segmentId": "s03"
+        }
+      ]
+    },
+    {
+      "id": "voa1-04",
+      "number": 4,
+      "unit": 1,
+      "title": "What Is It?",
+      "subtitle": "辨认身边的物品",
+      "minutes": 10,
+      "objectives": [
+        "辨认常见物品",
+        "用 have 说明拥有的东西"
+      ],
+      "prerequisites": [
+        "voa1-03"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-4/3168920.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/02/26/af0324f6-67c5-4c0c-ab42-abb0cd33817c.mp3",
+        "sha256": "a648e8181a2ef6b1fd106f0de0bc05f7bd09f99d66f2f8f380d78afe353c27c4",
+        "bytes": 714643,
+        "durationMs": 89260
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "Pete, hi! Hi, we are here!",
+          "startMs": 1230,
+          "endMs": 4520,
+          "chinese": "皮特，你好！嗨，我们在这儿！"
+        },
+        {
+          "id": "s02",
+          "speaker": "Pete",
+          "english": "Hi, Anna! Hi, Marsha!",
+          "startMs": 5480,
+          "endMs": 7350,
+          "chinese": "嗨，安娜！嗨，玛莎！"
+        },
+        {
+          "id": "s03",
+          "speaker": "Anna",
+          "english": "Hi!",
+          "startMs": 8080,
+          "endMs": 8940,
+          "chinese": "嗨！"
+        },
+        {
+          "id": "s04",
+          "speaker": "Pete",
+          "english": "How are you two?",
+          "startMs": 9880,
+          "endMs": 11240,
+          "chinese": "你们俩好吗？"
+        },
+        {
+          "id": "s05",
+          "speaker": "Marsha",
+          "english": "I am great!",
+          "startMs": 11770,
+          "endMs": 13240,
+          "chinese": "我很好！"
+        },
+        {
+          "id": "s06",
+          "speaker": "Anna",
+          "english": "You know, Pete, I am new to D.C. The city is big.",
+          "startMs": 13850,
+          "endMs": 18980,
+          "chinese": "你知道，皮特，我刚来华盛顿特区。这座城市很大。"
+        },
+        {
+          "id": "s07",
+          "speaker": "Pete",
+          "english": "Yeah. But you learn a little more every day. How's the new apartment?",
+          "startMs": 19960,
+          "endMs": 24980,
+          "chinese": "是啊。不过你每天都会多了解一点。新公寓怎么样？"
+        },
+        {
+          "id": "s08",
+          "speaker": "Anna",
+          "english": "The new apartment is great! Let's get coffee!",
+          "startMs": 25730,
+          "endMs": 30110,
+          "chinese": "新公寓很棒！我们去喝咖啡吧！"
+        },
+        {
+          "id": "s09",
+          "speaker": "Marsha",
+          "english": "Anna, do you have a pen?",
+          "startMs": 30920,
+          "endMs": 32840,
+          "chinese": "安娜，你有笔吗？"
+        },
+        {
+          "id": "s10",
+          "speaker": "Anna",
+          "english": "Yes. I have a pen in my bag.",
+          "startMs": 33850,
+          "endMs": 36360,
+          "chinese": "有，我包里有一支笔。"
+        },
+        {
+          "id": "s11",
+          "speaker": "Anna",
+          "english": "I have a …",
+          "startMs": 36860,
+          "endMs": 38210,
+          "chinese": "我有一个……"
+        },
+        {
+          "id": "s12",
+          "speaker": "Pete",
+          "english": "It is not a pen. It is a book. It is a big book.",
+          "startMs": 38210,
+          "endMs": 44990,
+          "chinese": "这不是笔，这是书，是一本大书。"
+        },
+        {
+          "id": "s13",
+          "speaker": "Anna",
+          "english": "Yes. Yes it is, Pete. I know I have a pen, though…",
+          "startMs": 45930,
+          "endMs": 50950,
+          "chinese": "是的，是的，皮特，我知道。不过我确实有一支笔……"
+        },
+        {
+          "id": "s14",
+          "speaker": "Anna",
+          "english": "I have a ....",
+          "startMs": 51850,
+          "endMs": 53190,
+          "chinese": "我有一个……"
+        },
+        {
+          "id": "s15",
+          "speaker": "Marsha",
+          "english": "It is not a pen, Anna ... a toy?",
+          "startMs": 53190,
+          "endMs": 58520,
+          "chinese": "这不是笔，安娜……是玩具吗？"
+        },
+        {
+          "id": "s16",
+          "speaker": "Anna",
+          "english": "I have a ....",
+          "startMs": 59340,
+          "endMs": 61170,
+          "chinese": "我有一个……"
+        },
+        {
+          "id": "s17",
+          "speaker": "Pete",
+          "english": "And it is a pillow!",
+          "startMs": 61930,
+          "endMs": 64330,
+          "chinese": "这还是个枕头！"
+        },
+        {
+          "id": "s18",
+          "speaker": "Anna",
+          "english": "Pete, Marsha, I know I have a pen.",
+          "startMs": 64910,
+          "endMs": 68720,
+          "chinese": "皮特，玛莎，我知道我有一支笔。"
+        },
+        {
+          "id": "s19",
+          "speaker": "Marsha",
+          "english": "Anna, it is a map.",
+          "startMs": 70210,
+          "endMs": 71900,
+          "chinese": "安娜，这是一张地图。"
+        },
+        {
+          "id": "s20",
+          "speaker": "Pete",
+          "english": "Why do you have a map of the world?",
+          "startMs": 72950,
+          "endMs": 75470,
+          "chinese": "你为什么带着世界地图？"
+        },
+        {
+          "id": "s21",
+          "speaker": "Anna",
+          "english": "Pete, Marsha. Now I know I have a pen.",
+          "startMs": 76000,
+          "endMs": 79760,
+          "chinese": "皮特，玛莎，现在我知道我有一支笔了。"
+        },
+        {
+          "id": "s22",
+          "speaker": "Pete",
+          "english": "And now you have a lamp.",
+          "startMs": 80760,
+          "endMs": 82910,
+          "chinese": "而现在你拿出了一盏灯。"
+        },
+        {
+          "id": "s23",
+          "speaker": "Marsha",
+          "english": "Anna.",
+          "startMs": 83780,
+          "endMs": 84440,
+          "chinese": "安娜。"
+        },
+        {
+          "id": "s24",
+          "speaker": "Anna",
+          "english": "I have a pen! Let’s get coffee!",
+          "startMs": 85170,
+          "endMs": 88350,
+          "chinese": "我有笔了！我们去喝咖啡吧！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "pen",
+          "chinese": "钢笔、笔",
+          "segmentId": "s09"
+        },
+        {
+          "english": "bag",
+          "chinese": "包",
+          "segmentId": "s10"
+        },
+        {
+          "english": "book",
+          "chinese": "书",
+          "segmentId": "s12"
+        },
+        {
+          "english": "toy",
+          "chinese": "玩具",
+          "segmentId": "s15"
+        },
+        {
+          "english": "pillow",
+          "chinese": "枕头",
+          "segmentId": "s17"
+        },
+        {
+          "english": "map",
+          "chinese": "地图",
+          "segmentId": "s19"
+        },
+        {
+          "english": "lamp",
+          "chinese": "灯",
+          "segmentId": "s22"
+        },
+        {
+          "english": "get coffee",
+          "chinese": "去喝咖啡",
+          "segmentId": "s08"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "辨认与否定物品",
+          "text": "It is a ... 说明这是什么。否定时在 is 后面加 not；单数可数名词通常需要 a 或其他限定词。",
+          "example": "It is not a pen. It is a book.",
+          "segmentId": "s12"
+        },
+        {
+          "title": "用 have 表达拥有",
+          "text": "I have a pen 表示“我有一支笔”。疑问句 Do you have a pen? 中 have 保持原形。",
+          "example": "Do you have a pen?",
+          "segmentId": "s09"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "玛莎想向安娜借什么？",
+          "answers": [
+            "一支笔"
+          ],
+          "options": [
+            "一本书",
+            "一支笔",
+            "一个枕头"
+          ],
+          "explanation": "玛莎问 Anna, do you have a pen?；之后安娜一直在包里找笔。",
+          "segmentId": "s09"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "安娜最后找到笔后提议做什么？",
+          "answers": [
+            "去喝咖啡"
+          ],
+          "options": [
+            "去买地图",
+            "去喝咖啡",
+            "回公寓睡觉"
+          ],
+          "explanation": "结尾说 I have a pen! Let's get coffee!，明确邀请去喝咖啡。",
+          "segmentId": "s24"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜说笔在哪里的两句。",
+          "answers": [
+            "Yes. I have a pen in my bag."
+          ],
+          "options": [],
+          "explanation": "in my bag 指在我的包里；have 表示拥有。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出玛莎指出那是地图的整句。",
+          "answers": [
+            "Anna, it is a map."
+          ],
+          "options": [],
+          "explanation": "it is + a + 单数名词，用于辨认物品。",
+          "segmentId": "s19"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "用本课句型说“我有一支笔”。",
+          "answers": [
+            "I have a pen."
+          ],
+          "options": [],
+          "explanation": "I have 表示“我有”；a pen 是一支笔。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：It is ___ a pen.（它不是笔，只填一个词）",
+          "answers": [
+            "not"
+          ],
+          "options": [],
+          "explanation": "be 动词后加 not 构成否定：It is not a pen。",
+          "segmentId": "s12"
+        }
+      ]
+    },
+    {
+      "id": "voa1-05",
+      "number": 5,
+      "unit": 2,
+      "title": "Where Are You?",
+      "subtitle": "谈论房间与活动",
+      "minutes": 10,
+      "objectives": [
+        "询问人在什么房间",
+        "描述房间里的日常活动"
+      ],
+      "prerequisites": [
+        "voa1-04"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-5-where-are-you/3168971.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/03/01/ab9c2944-eddc-4806-9296-290bfa8c6ff2.mp3",
+        "sha256": "d0a785ada7babff5d4a8e126dd2ee7aaeab8d1ae58d996c97abd2033d6202f61",
+        "bytes": 485503,
+        "durationMs": 60656
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "Hello, everyone! Today my friend Marsha is at her friend's house. She says it is beautiful. I want to see this house! Here we are!",
+          "startMs": 1770,
+          "endMs": 14940,
+          "chinese": "大家好！今天我的朋友玛莎在她朋友家。她说那儿很漂亮。我想看看这所房子！我们到了！"
+        },
+        {
+          "id": "s02",
+          "speaker": "Anna",
+          "english": "Marsha, I am in the kitchen! It is a beautiful kitchen!",
+          "startMs": 15670,
+          "endMs": 21370,
+          "chinese": "玛莎，我在厨房！这厨房真漂亮！"
+        },
+        {
+          "id": "s03",
+          "speaker": "Marsha",
+          "english": "It is beautiful. We cook in the kitchen.",
+          "startMs": 22080,
+          "endMs": 27120,
+          "chinese": "是很漂亮。我们在厨房做饭。"
+        },
+        {
+          "id": "s04",
+          "speaker": "Anna",
+          "english": "I eat in the kitchen.",
+          "startMs": 27560,
+          "endMs": 29920,
+          "chinese": "我在厨房吃饭。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Marsha",
+          "english": "We relax in the living room.",
+          "startMs": 30680,
+          "endMs": 33700,
+          "chinese": "我们在客厅休息。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Anna",
+          "english": "I relax in the living room. Marsha, let’s go upstairs!",
+          "startMs": 35000,
+          "endMs": 40520,
+          "chinese": "我在客厅休息。玛莎，我们上楼吧！"
+        },
+        {
+          "id": "s07",
+          "speaker": "Marsha",
+          "english": "Anna? Where are you?",
+          "startMs": 41670,
+          "endMs": 44430,
+          "chinese": "安娜？你在哪儿？"
+        },
+        {
+          "id": "s08",
+          "speaker": "Anna",
+          "english": "Marsha, I am in the bathroom! I wash in the bathroom.",
+          "startMs": 45820,
+          "endMs": 50660,
+          "chinese": "玛莎，我在浴室！我在浴室洗漱。"
+        },
+        {
+          "id": "s09",
+          "speaker": "Marsha",
+          "english": "I am in the bedroom. We sleep in the bedroom.",
+          "startMs": 51590,
+          "endMs": 56160,
+          "chinese": "我在卧室。我们在卧室睡觉。"
+        },
+        {
+          "id": "s10",
+          "speaker": "Anna",
+          "english": "I sleep in the bedroom!",
+          "startMs": 56670,
+          "endMs": 58940,
+          "chinese": "我在卧室睡觉！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "house",
+          "chinese": "房子",
+          "segmentId": "s01"
+        },
+        {
+          "english": "kitchen",
+          "chinese": "厨房",
+          "segmentId": "s02"
+        },
+        {
+          "english": "We cook",
+          "chinese": "我们做饭",
+          "segmentId": "s03"
+        },
+        {
+          "english": "eat",
+          "chinese": "吃饭",
+          "segmentId": "s04"
+        },
+        {
+          "english": "relax",
+          "chinese": "休息、放松",
+          "segmentId": "s05"
+        },
+        {
+          "english": "living room",
+          "chinese": "客厅",
+          "segmentId": "s05"
+        },
+        {
+          "english": "bathroom",
+          "chinese": "浴室",
+          "segmentId": "s08"
+        },
+        {
+          "english": "bedroom",
+          "chinese": "卧室",
+          "segmentId": "s09"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "用 where 问位置",
+          "text": "Where are you? 询问对方在哪里。回答可用 I am in the + 房间名。",
+          "example": "I am in the bedroom.",
+          "segmentId": "s09"
+        },
+        {
+          "title": "活动与房间",
+          "text": "用一般现在时谈日常活动：We cook / I eat / We relax。地点常用 in the + 房间。",
+          "example": "We relax in the living room.",
+          "segmentId": "s05"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "人们通常在哪个房间做饭？",
+          "answers": [
+            "厨房"
+          ],
+          "options": [
+            "卧室",
+            "厨房",
+            "客厅"
+          ],
+          "explanation": "玛莎说 We cook in the kitchen。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "人们在哪个房间睡觉？",
+          "answers": [
+            "卧室"
+          ],
+          "options": [
+            "浴室",
+            "客厅",
+            "卧室"
+          ],
+          "explanation": "玛莎说 We sleep in the bedroom；sleep 是睡觉。",
+          "segmentId": "s09"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜说自己在厨房做什么的整句。",
+          "answers": [
+            "I eat in the kitchen."
+          ],
+          "options": [],
+          "explanation": "eat 是吃饭；地点前用 in the。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出玛莎说在客厅做什么的整句。",
+          "answers": [
+            "We relax in the living room."
+          ],
+          "options": [],
+          "explanation": "relax 表示休息、放松，living room 是客厅。",
+          "segmentId": "s05"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "用本课句型说“我在卧室睡觉”。",
+          "answers": [
+            "I sleep in the bedroom."
+          ],
+          "options": [],
+          "explanation": "I + sleep + in the bedroom 描述日常活动和地点。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：Where ___ you?（你在哪里？只填一个词）",
+          "answers": [
+            "are"
+          ],
+          "options": [],
+          "explanation": "you 与 are 搭配；疑问词 where 问地点。",
+          "segmentId": "s07"
+        }
+      ]
+    },
+    {
+      "id": "voa1-06",
+      "number": 6,
+      "unit": 2,
+      "title": "Where Is the Gym?",
+      "subtitle": "询问与描述方位",
+      "minutes": 10,
+      "objectives": [
+        "询问地点",
+        "用对面、旁边和后面指路"
+      ],
+      "prerequisites": [
+        "voa1-05"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-6-where-is-the-gym/3225958.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/03/10/66b63229-1dc5-40ab-886d-1f4b891adf6b.mp3",
+        "sha256": "a2ea933905fe40a710160ac8d8b128631b8736c9b61dbd96cbc348c7d5a09cf5",
+        "bytes": 864592,
+        "durationMs": 108042
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "Hi there! I’m Anna and I live in Washington, D.C. Every day I learn more about this great city. People in Washington like to work out! Oh, hi, Pete. How’s it going?",
+          "startMs": 2000,
+          "endMs": 16830,
+          "chinese": "大家好！我是安娜，住在华盛顿特区。每天我都会更了解这座美丽的城市。这里的人喜欢锻炼！哦，嗨，皮特。最近怎么样？"
+        },
+        {
+          "id": "s02",
+          "speaker": "Pete",
+          "english": "Hi, Anna. It’s going great. How’s it going with you?",
+          "startMs": 17550,
+          "endMs": 22780,
+          "chinese": "嗨，安娜。一切很好。你最近怎么样？"
+        },
+        {
+          "id": "s03",
+          "speaker": "Anna",
+          "english": "Things are awesome! Pete, I want to work out. Where is the gym?",
+          "startMs": 23180,
+          "endMs": 29560,
+          "chinese": "一切都棒极了！皮特，我想锻炼。健身房在哪儿？"
+        },
+        {
+          "id": "s04",
+          "speaker": "Pete",
+          "english": "The gym is across from the lounge. It’s next to the mailroom. Go that way.",
+          "startMs": 30310,
+          "endMs": 37670,
+          "chinese": "健身房在休息室对面，在收发室旁边。往那边走。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Anna",
+          "english": "Thanks, Pete!",
+          "startMs": 38520,
+          "endMs": 39590,
+          "chinese": "谢谢你，皮特！"
+        },
+        {
+          "id": "s06",
+          "speaker": "Pete",
+          "english": "No, Anna! Not that way! Go that way!",
+          "startMs": 40090,
+          "endMs": 44550,
+          "chinese": "不，安娜！不是那边！往那边走！"
+        },
+        {
+          "id": "s07",
+          "speaker": "Anna",
+          "english": "Oh, Pete. This is not the gym.",
+          "startMs": 45500,
+          "endMs": 49220,
+          "chinese": "哦，皮特。这不是健身房。"
+        },
+        {
+          "id": "s08",
+          "speaker": "Pete",
+          "english": "That’s right, Anna. This is the mailroom.",
+          "startMs": 50140,
+          "endMs": 53440,
+          "chinese": "没错，安娜，这是收发室。"
+        },
+        {
+          "id": "s09",
+          "speaker": "Anna",
+          "english": "The gym is across from … what?",
+          "startMs": 54330,
+          "endMs": 57520,
+          "chinese": "健身房在……什么的对面？"
+        },
+        {
+          "id": "s10",
+          "speaker": "Pete",
+          "english": "The gym is across from the lounge.",
+          "startMs": 57890,
+          "endMs": 61390,
+          "chinese": "健身房在休息室对面。"
+        },
+        {
+          "id": "s11",
+          "speaker": "Anna",
+          "english": "Across from the lounge. Right. Thanks!",
+          "startMs": 61850,
+          "endMs": 65410,
+          "chinese": "在休息室对面。好的，谢谢！"
+        },
+        {
+          "id": "s12",
+          "speaker": "Anna",
+          "english": "Pete! This is not the gym!",
+          "startMs": 66760,
+          "endMs": 69650,
+          "chinese": "皮特！这不是健身房！"
+        },
+        {
+          "id": "s13",
+          "speaker": "Pete",
+          "english": "The gym is across from the lounge. It is behind the lobby.",
+          "startMs": 70730,
+          "endMs": 76120,
+          "chinese": "健身房在休息室对面，在大堂后面。"
+        },
+        {
+          "id": "s14",
+          "speaker": "Anna",
+          "english": "Right. Right. See you.",
+          "startMs": 76180,
+          "endMs": 78310,
+          "chinese": "好的，好的，再见。"
+        },
+        {
+          "id": "s15",
+          "speaker": "Pete",
+          "english": "See you, Anna!",
+          "startMs": 78760,
+          "endMs": 79840,
+          "chinese": "再见，安娜！"
+        },
+        {
+          "id": "s16",
+          "speaker": "Anna",
+          "english": "See you.",
+          "startMs": 80560,
+          "endMs": 81480,
+          "chinese": "再见。"
+        },
+        {
+          "id": "s17",
+          "speaker": "Pete",
+          "english": "See you, Anna.",
+          "startMs": 82130,
+          "endMs": 83390,
+          "chinese": "再见，安娜。"
+        },
+        {
+          "id": "s18",
+          "speaker": "Anna",
+          "english": "This is not the gym. This is a parking garage.",
+          "startMs": 84570,
+          "endMs": 89500,
+          "chinese": "这不是健身房，这是停车库。"
+        },
+        {
+          "id": "s19",
+          "speaker": "Anna",
+          "english": "Hello? Pete?",
+          "startMs": 90420,
+          "endMs": 92470,
+          "chinese": "喂？皮特？"
+        },
+        {
+          "id": "s20",
+          "speaker": "Anna",
+          "english": "This is not a gym. This is a rooftop.",
+          "startMs": 94360,
+          "endMs": 99000,
+          "chinese": "这不是健身房，这是屋顶。"
+        },
+        {
+          "id": "s21",
+          "speaker": "Anna",
+          "english": "Pete! Pete?",
+          "startMs": 100050,
+          "endMs": 101740,
+          "chinese": "皮特！皮特？"
+        },
+        {
+          "id": "s22",
+          "speaker": "Pete",
+          "english": "I want to work out too! Join me!",
+          "startMs": 102450,
+          "endMs": 105820,
+          "chinese": "我也想锻炼！和我一起吧！"
+        },
+        {
+          "id": "s23",
+          "speaker": "Anna",
+          "english": "I’m good.",
+          "startMs": 106290,
+          "endMs": 107170,
+          "chinese": "我就算了。"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "work out",
+          "chinese": "锻炼",
+          "segmentId": "s01"
+        },
+        {
+          "english": "gym",
+          "chinese": "健身房",
+          "segmentId": "s03"
+        },
+        {
+          "english": "across from",
+          "chinese": "在……对面",
+          "segmentId": "s04"
+        },
+        {
+          "english": "lounge",
+          "chinese": "休息室",
+          "segmentId": "s04"
+        },
+        {
+          "english": "next to",
+          "chinese": "紧挨着",
+          "segmentId": "s04"
+        },
+        {
+          "english": "mailroom",
+          "chinese": "收发室",
+          "segmentId": "s04"
+        },
+        {
+          "english": "behind",
+          "chinese": "在……后面",
+          "segmentId": "s13"
+        },
+        {
+          "english": "lobby",
+          "chinese": "大堂",
+          "segmentId": "s13"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "位置短语",
+          "text": "across from 表示对面，next to 表示紧挨着，behind 表示后面。它们表达不同关系，不可互换。",
+          "example": "The gym is across from the lounge.",
+          "segmentId": "s04"
+        },
+        {
+          "title": "询问地点",
+          "text": "Where is the gym? 中 gym 是单数。问地点用 where；is 放在主语前。",
+          "example": "Where is the gym?",
+          "segmentId": "s03"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "健身房在休息室的什么位置？",
+          "answers": [
+            "对面"
+          ],
+          "options": [
+            "里面",
+            "对面",
+            "上面"
+          ],
+          "explanation": "The gym is across from the lounge；across from 是在对面。",
+          "segmentId": "s04"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "健身房还在大堂的什么位置？",
+          "answers": [
+            "后面"
+          ],
+          "options": [
+            "后面",
+            "前面",
+            "楼顶上"
+          ],
+          "explanation": "皮特补充 It is behind the lobby；behind 是在后面。",
+          "segmentId": "s13"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜的道谢。",
+          "answers": [
+            "Thanks, Pete!"
+          ],
+          "options": [],
+          "explanation": "Thanks 是非正式的“谢谢”，后面直接称呼对方。",
+          "segmentId": "s05"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出皮特只说明健身房与休息室位置的完整一句。",
+          "answers": [
+            "The gym is across from the lounge."
+          ],
+          "options": [],
+          "explanation": "across from 作为一个整体表示“在……对面”。",
+          "segmentId": "s10"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "用本课句型问“健身房在哪里？”",
+          "answers": [
+            "Where is the gym?"
+          ],
+          "options": [],
+          "explanation": "单数地点 the gym 与 is 搭配。",
+          "segmentId": "s03"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：The gym is ___ the lobby.（在大堂后面，只填一个词）",
+          "answers": [
+            "behind"
+          ],
+          "options": [],
+          "explanation": "behind 表示在后面；不是 next to“在旁边”。",
+          "segmentId": "s13"
+        }
+      ]
+    },
+    {
+      "id": "voa1-07",
+      "number": 7,
+      "unit": 2,
+      "title": "What Are You Doing?",
+      "subtitle": "说说正在做的事",
+      "minutes": 10,
+      "objectives": [
+        "询问别人正在做什么",
+        "描述正在进行的活动"
+      ],
+      "prerequisites": [
+        "voa1-06"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-7-what-are-you-doing/3240468.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/03/16/5d724fbc-a907-4a48-9221-c1813d248168.mp3",
+        "sha256": "ad1c48b2718a71f35082695dcd6506abcf84c027d510f0a06ce51d0ded7be610",
+        "bytes": 1199471,
+        "durationMs": 149891
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Caty",
+          "english": "Come in.",
+          "startMs": 1120,
+          "endMs": 2140,
+          "chinese": "请进。"
+        },
+        {
+          "id": "s02",
+          "speaker": "Caty",
+          "english": "Well, Anna, welcome.",
+          "startMs": 4740,
+          "endMs": 8120,
+          "chinese": "好了，安娜，欢迎你。"
+        },
+        {
+          "id": "s03",
+          "speaker": "Anna",
+          "english": "Thank you.",
+          "startMs": 8120,
+          "endMs": 8830,
+          "chinese": "谢谢。"
+        },
+        {
+          "id": "s04",
+          "speaker": "Caty",
+          "english": "I am your boss, Caty Weaver. But, please call me Caty.",
+          "startMs": 9780,
+          "endMs": 14900,
+          "chinese": "我是你的上司凯蒂·韦弗。不过请叫我凯蒂。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Anna",
+          "english": "Thank you, Ms. Weaver.",
+          "startMs": 15070,
+          "endMs": 16330,
+          "chinese": "谢谢您，韦弗女士。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Caty",
+          "english": "Just Caty.",
+          "startMs": 17210,
+          "endMs": 18250,
+          "chinese": "叫凯蒂就好。"
+        },
+        {
+          "id": "s07",
+          "speaker": "Anna",
+          "english": "Sure thing, Ms. Weaver.",
+          "startMs": 18540,
+          "endMs": 20450,
+          "chinese": "没问题，韦弗女士。"
+        },
+        {
+          "id": "s08",
+          "speaker": "Caty",
+          "english": "Okay then. Are you excited?",
+          "startMs": 21530,
+          "endMs": 24430,
+          "chinese": "那好吧。你兴奋吗？"
+        },
+        {
+          "id": "s09",
+          "speaker": "Anna",
+          "english": "Yes, I am excited!",
+          "startMs": 24430,
+          "endMs": 26370,
+          "chinese": "是的，我很兴奋！"
+        },
+        {
+          "id": "s10",
+          "speaker": "Caty",
+          "english": "So sorry, but I am busy. Please meet your co-workers. But remember, they are busy working.",
+          "startMs": 27160,
+          "endMs": 36130,
+          "chinese": "很抱歉，我很忙。去认识一下你的同事吧。不过记住，他们正忙着工作。"
+        },
+        {
+          "id": "s11",
+          "speaker": "Anna",
+          "english": "Sure. Thanks, Ms. Weaver.",
+          "startMs": 36770,
+          "endMs": 38870,
+          "chinese": "好的，谢谢您，韦弗女士。"
+        },
+        {
+          "id": "s12",
+          "speaker": "Anna",
+          "english": "Hi there! I’m Anna.",
+          "startMs": 39230,
+          "endMs": 41150,
+          "chinese": "你好！我是安娜。"
+        },
+        {
+          "id": "s13",
+          "speaker": "Anne",
+          "english": "Hi, Anna. I’m Anne.",
+          "startMs": 41650,
+          "endMs": 43160,
+          "chinese": "你好，安娜。我是安妮。"
+        },
+        {
+          "id": "s14",
+          "speaker": "Anna",
+          "english": "Nice to meet you. What are you doing?",
+          "startMs": 43710,
+          "endMs": 45755,
+          "chinese": "很高兴认识你。你在做什么？"
+        },
+        {
+          "id": "s15",
+          "speaker": "Anne",
+          "english": "Um, I’m writing.",
+          "startMs": 45755,
+          "endMs": 47070,
+          "chinese": "嗯，我在写东西。"
+        },
+        {
+          "id": "s16",
+          "speaker": "Anna",
+          "english": "You are writing! You are writing a lot!",
+          "startMs": 47200,
+          "endMs": 50670,
+          "chinese": "你在写东西！你写了好多！"
+        },
+        {
+          "id": "s17",
+          "speaker": "Anna",
+          "english": "(Spills papers) Oh! Oh dear.",
+          "startMs": 50670,
+          "endMs": 52190,
+          "chinese": "（弄洒了纸张）哦！天哪。"
+        },
+        {
+          "id": "s18",
+          "speaker": "Anne",
+          "english": "No! No! That's okay.",
+          "startMs": 52250,
+          "endMs": 53340,
+          "chinese": "不！不！没关系。"
+        },
+        {
+          "id": "s19",
+          "speaker": "Anna",
+          "english": "I am sorry!",
+          "startMs": 53340,
+          "endMs": 54140,
+          "chinese": "对不起！"
+        },
+        {
+          "id": "s20",
+          "speaker": "Anne",
+          "english": "That’s okay. Really.",
+          "startMs": 54270,
+          "endMs": 55250,
+          "chinese": "没关系，真的。"
+        },
+        {
+          "id": "s21",
+          "speaker": "Anna",
+          "english": "I am sorry!",
+          "startMs": 55250,
+          "endMs": 55460,
+          "chinese": "对不起！"
+        },
+        {
+          "id": "s22",
+          "speaker": "Anne",
+          "english": "Please. Please. Please stop. Please.",
+          "startMs": 55460,
+          "endMs": 59930,
+          "chinese": "拜托，拜托，请停下吧，拜托。"
+        },
+        {
+          "id": "s23",
+          "speaker": "Anna",
+          "english": "Sorry. Sorry.",
+          "startMs": 61080,
+          "endMs": 63840,
+          "chinese": "抱歉，抱歉。"
+        },
+        {
+          "id": "s24",
+          "speaker": "Jonathan",
+          "english": "(in the studio) “and people all around the world are waiting to hear news about the next president…”",
+          "startMs": 65480,
+          "endMs": 72340,
+          "chinese": "（在演播室里）“全世界的人们都在等待有关下一任总统的消息……”"
+        },
+        {
+          "id": "s25",
+          "speaker": "Anna",
+          "english": "Jonathan, hi! Remember me? I live in your building.",
+          "startMs": 72340,
+          "endMs": 75990,
+          "chinese": "乔纳森，你好！还记得我吗？我和你住在同一栋楼。"
+        },
+        {
+          "id": "s26",
+          "speaker": "Jonathan",
+          "english": "Oh. Uh. Hi, Anna.",
+          "startMs": 76520,
+          "endMs": 78130,
+          "chinese": "哦，呃，安娜，你好。"
+        },
+        {
+          "id": "s27",
+          "speaker": "Anna",
+          "english": "What are you doing?",
+          "startMs": 78130,
+          "endMs": 79970,
+          "chinese": "你在做什么？"
+        },
+        {
+          "id": "s28",
+          "speaker": "Jonathan",
+          "english": "I am doing my show!",
+          "startMs": 79970,
+          "endMs": 82070,
+          "chinese": "我正在做我的节目！"
+        },
+        {
+          "id": "s29",
+          "speaker": "Anna",
+          "english": "Oh, sorry. Are you recording?",
+          "startMs": 82800,
+          "endMs": 85570,
+          "chinese": "哦，对不起。你在录制吗？"
+        },
+        {
+          "id": "s30",
+          "speaker": "Jonathan",
+          "english": "Yes! And, now I have to record again!",
+          "startMs": 85750,
+          "endMs": 89230,
+          "chinese": "是的！现在我得重新录了！"
+        },
+        {
+          "id": "s31",
+          "speaker": "Anna",
+          "english": "Sorry. Have a good show.",
+          "startMs": 89330,
+          "endMs": 91860,
+          "chinese": "对不起。祝节目顺利。"
+        },
+        {
+          "id": "s32",
+          "speaker": "Jonathan",
+          "english": "Thank you.",
+          "startMs": 92130,
+          "endMs": 93080,
+          "chinese": "谢谢。"
+        },
+        {
+          "id": "s33",
+          "speaker": "Anna",
+          "english": "Sorry.",
+          "startMs": 93750,
+          "endMs": 94300,
+          "chinese": "对不起。"
+        },
+        {
+          "id": "s34",
+          "speaker": "Amelia",
+          "english": "The word of the day is social. Social -",
+          "startMs": 95030,
+          "endMs": 98080,
+          "chinese": "今天的单词是 social。Social——"
+        },
+        {
+          "id": "s35",
+          "speaker": "Anna",
+          "english": "Oh! Hi!",
+          "startMs": 98080,
+          "endMs": 98550,
+          "chinese": "哦！你好！"
+        },
+        {
+          "id": "s36",
+          "speaker": "Amelia",
+          "english": "- is an adjective.",
+          "startMs": 98550,
+          "endMs": 99650,
+          "chinese": "——是一个形容词。"
+        },
+        {
+          "id": "s37",
+          "speaker": "Anna",
+          "english": "Hi! I’m Anna!",
+          "startMs": 99650,
+          "endMs": 101410,
+          "chinese": "你好！我是安娜！"
+        },
+        {
+          "id": "s38",
+          "speaker": "Amelia",
+          "english": "Hi. I’m Amelia.",
+          "startMs": 101610,
+          "endMs": 103040,
+          "chinese": "你好，我是阿米莉亚。"
+        },
+        {
+          "id": "s39",
+          "speaker": "Anna",
+          "english": "Nice to meet you!",
+          "startMs": 103040,
+          "endMs": 104010,
+          "chinese": "很高兴认识你！"
+        },
+        {
+          "id": "s40",
+          "speaker": "Anna",
+          "english": "What are you doing?",
+          "startMs": 104830,
+          "endMs": 106050,
+          "chinese": "你在做什么？"
+        },
+        {
+          "id": "s41",
+          "speaker": "Amelia",
+          "english": "I’m reading.",
+          "startMs": 106530,
+          "endMs": 108110,
+          "chinese": "我在朗读。"
+        },
+        {
+          "id": "s42",
+          "speaker": "Anna",
+          "english": "Are you reading the news? Hi!",
+          "startMs": 108500,
+          "endMs": 110690,
+          "chinese": "你在读新闻吗？嗨！"
+        },
+        {
+          "id": "s43",
+          "speaker": "Amelia",
+          "english": "No, I’m reading for my show.",
+          "startMs": 110740,
+          "endMs": 113670,
+          "chinese": "不是，我在为我的节目朗读。"
+        },
+        {
+          "id": "s44",
+          "speaker": "Amelia",
+          "english": "(to camera person) Can I read again?",
+          "startMs": 116920,
+          "endMs": 118030,
+          "chinese": "（对摄像师说）我可以再读一遍吗？"
+        },
+        {
+          "id": "s45",
+          "speaker": "Anna",
+          "english": "Sorry.",
+          "startMs": 119070,
+          "endMs": 119850,
+          "chinese": "对不起。"
+        },
+        {
+          "id": "s46",
+          "speaker": "Anna",
+          "english": "This day is not going well.",
+          "startMs": 121260,
+          "endMs": 124050,
+          "chinese": "今天过得不太顺利。"
+        },
+        {
+          "id": "s47",
+          "speaker": "Caty",
+          "english": "Anna! Hi! What’re you doing?",
+          "startMs": 124420,
+          "endMs": 125360,
+          "chinese": "安娜！你好！你在做什么？"
+        },
+        {
+          "id": "s48",
+          "speaker": "Anna",
+          "english": "I am bothering people, Ms. Weaver.",
+          "startMs": 125360,
+          "endMs": 128840,
+          "chinese": "我在打扰大家，韦弗女士。"
+        },
+        {
+          "id": "s49",
+          "speaker": "Caty",
+          "english": "Let’s go to my office and talk.",
+          "startMs": 128840,
+          "endMs": 131190,
+          "chinese": "我们去我的办公室聊聊吧。"
+        },
+        {
+          "id": "s50",
+          "speaker": "Anna",
+          "english": "I like to talk with you, Ms. Weaver.",
+          "startMs": 131190,
+          "endMs": 133710,
+          "chinese": "我喜欢和您聊天，韦弗女士。"
+        },
+        {
+          "id": "s51",
+          "speaker": "Caty",
+          "english": "It’s Caty.",
+          "startMs": 133710,
+          "endMs": 135880,
+          "chinese": "叫我凯蒂。"
+        },
+        {
+          "id": "s52",
+          "speaker": "Anna",
+          "english": "Right. Thanks ... Ms. Weaver",
+          "startMs": 135880,
+          "endMs": 140710,
+          "chinese": "好的，谢谢您……韦弗女士。"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "boss",
+          "chinese": "上司",
+          "segmentId": "s04"
+        },
+        {
+          "english": "co-workers",
+          "chinese": "同事们",
+          "segmentId": "s10"
+        },
+        {
+          "english": "busy",
+          "chinese": "忙碌的",
+          "segmentId": "s10"
+        },
+        {
+          "english": "writing",
+          "chinese": "正在写",
+          "segmentId": "s15"
+        },
+        {
+          "english": "recording",
+          "chinese": "正在录制",
+          "segmentId": "s29"
+        },
+        {
+          "english": "reading",
+          "chinese": "正在朗读",
+          "segmentId": "s41"
+        },
+        {
+          "english": "show",
+          "chinese": "节目",
+          "segmentId": "s28"
+        },
+        {
+          "english": "bothering",
+          "chinese": "正在打扰",
+          "segmentId": "s48"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "现在进行时",
+          "text": "be + 动词 ing 表示正在进行。I 用 am，you 用 are；write 变 writing 时去掉不发音的 e。",
+          "example": "I am doing my show!",
+          "segmentId": "s28"
+        },
+        {
+          "title": "询问当前活动",
+          "text": "What are you doing? 问此刻正在做什么。可以用 I'm writing / I'm reading 作答。",
+          "example": "What are you doing?",
+          "segmentId": "s14"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "安妮正在做什么？",
+          "answers": [
+            "写东西"
+          ],
+          "options": [
+            "录节目",
+            "写东西",
+            "整理安娜的公寓"
+          ],
+          "explanation": "安妮回答 I'm writing；后面安娜还感叹她写了很多。",
+          "segmentId": "s15"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "乔纳森为什么要重新录制？",
+          "answers": [
+            "安娜打断了他的节目"
+          ],
+          "options": [
+            "麦克风没电",
+            "安娜打断了他的节目",
+            "他在找公寓"
+          ],
+          "explanation": "乔纳森正在做节目，安娜闯入打招呼后，他说 now I have to record again。",
+          "segmentId": "s30"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜单独询问正在做什么的整句。",
+          "answers": [
+            "What are you doing?"
+          ],
+          "options": [],
+          "explanation": "What are you doing? 用现在进行时询问此刻的活动。",
+          "segmentId": "s27"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出乔纳森说明自己正在做节目的整句。",
+          "answers": [
+            "I am doing my show!"
+          ],
+          "options": [],
+          "explanation": "am doing 表示正在做，my show 是我的节目。",
+          "segmentId": "s28"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "补全：I am ___.（我正在写东西，只填一个词）",
+          "answers": [
+            "writing"
+          ],
+          "options": [],
+          "explanation": "write 的现在分词要去掉末尾不发音的 e 再加 ing。",
+          "segmentId": "s15"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：What are you ___?（你正在做什么，只填一个词）",
+          "answers": [
+            "doing"
+          ],
+          "options": [],
+          "explanation": "现在进行时由 be + 动词 ing 构成，这里用 doing。",
+          "segmentId": "s14"
+        }
+      ]
+    },
+    {
+      "id": "voa1-08",
+      "number": 8,
+      "unit": 2,
+      "title": "Are You Busy?",
+      "subtitle": "礼貌询问与道歉",
+      "minutes": 10,
+      "objectives": [
+        "礼貌询问对方是否忙碌",
+        "道歉并约定稍后见面"
+      ],
+      "prerequisites": [
+        "voa1-07"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-8-are-you-busy/3253185.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/03/25/ae6c5055-13ae-485b-995d-b347125ecf10.mp3",
+        "sha256": "3f395c7bf4eab262446e33bfea84de551775aa869c22d5cf541167e45ca63aed",
+        "bytes": 948911,
+        "durationMs": 118570
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "Hello, everyone. Here I am at my new job! Yesterday at my first day of work … Well, let’s not talk about yesterday. Today is a new day! Today I want to apologize to my co-workers.",
+          "startMs": 2300,
+          "endMs": 16780,
+          "chinese": "大家好。我在新工作的地方！昨天是我上班的第一天……算了，不说昨天了。今天是新的一天！今天我想向同事们道歉。"
+        },
+        {
+          "id": "s02",
+          "speaker": "Anna",
+          "english": "Hi, Anne. Are you busy?",
+          "startMs": 18780,
+          "endMs": 20890,
+          "chinese": "你好，安妮。你忙吗？"
+        },
+        {
+          "id": "s03",
+          "speaker": "Anne",
+          "english": "Hi, Anna. Yes. At 10 a.m. I am writing. Every day I do my morning show. Sorry!",
+          "startMs": 20960,
+          "endMs": 30240,
+          "chinese": "你好，安娜。是的。上午十点我在写东西。我每天都做早间节目，抱歉！"
+        },
+        {
+          "id": "s04",
+          "speaker": "Anna",
+          "english": "Okay. See you later, maybe.",
+          "startMs": 30890,
+          "endMs": 34780,
+          "chinese": "好的，也许晚点见。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Anne",
+          "english": "Maybe I’ll see you later.",
+          "startMs": 35820,
+          "endMs": 37250,
+          "chinese": "也许我们晚点能见面。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Anna",
+          "english": "Hi, Jonathan. Are you busy?",
+          "startMs": 38290,
+          "endMs": 40810,
+          "chinese": "你好，乔纳森。你忙吗？"
+        },
+        {
+          "id": "s07",
+          "speaker": "Jonathan",
+          "english": "Yes, I’m busy. When the studio light is on, I am recording my evening show.",
+          "startMs": 40810,
+          "endMs": 46780,
+          "chinese": "是的，我很忙。演播室灯亮着的时候，我正在录制晚间节目。"
+        },
+        {
+          "id": "s08",
+          "speaker": "Anna",
+          "english": "Right. Sorry about yesterday.",
+          "startMs": 46780,
+          "endMs": 49360,
+          "chinese": "好的。昨天的事对不起。"
+        },
+        {
+          "id": "s09",
+          "speaker": "Jonathan",
+          "english": "No worries.",
+          "startMs": 49440,
+          "endMs": 50460,
+          "chinese": "没关系。"
+        },
+        {
+          "id": "s10",
+          "speaker": "Anna",
+          "english": "May I see the studio?",
+          "startMs": 50550,
+          "endMs": 51930,
+          "chinese": "我可以看看演播室吗？"
+        },
+        {
+          "id": "s11",
+          "speaker": "Jonathan",
+          "english": "Um, maybe another time? Right now I am busy.",
+          "startMs": 51930,
+          "endMs": 55270,
+          "chinese": "嗯，也许改天吧？我现在很忙。"
+        },
+        {
+          "id": "s12",
+          "speaker": "Anna",
+          "english": "Sure. Okay, ’bye.",
+          "startMs": 55990,
+          "endMs": 58690,
+          "chinese": "当然，好的，再见。"
+        },
+        {
+          "id": "s13",
+          "speaker": "Jonathan",
+          "english": "‘Bye.",
+          "startMs": 58880,
+          "endMs": 59410,
+          "chinese": "再见。"
+        },
+        {
+          "id": "s14",
+          "speaker": "Anna",
+          "english": "Hi, Amelia! Are you busy?",
+          "startMs": 59430,
+          "endMs": 62040,
+          "chinese": "你好，阿米莉亚！你忙吗？"
+        },
+        {
+          "id": "s15",
+          "speaker": "Amelia",
+          "english": "I’m a little busy.",
+          "startMs": 62110,
+          "endMs": 63510,
+          "chinese": "我有一点忙。"
+        },
+        {
+          "id": "s16",
+          "speaker": "Anna",
+          "english": "I want to say I’m sorry for yesterday.",
+          "startMs": 63510,
+          "endMs": 67670,
+          "chinese": "我想为昨天的事说声对不起。"
+        },
+        {
+          "id": "s17",
+          "speaker": "Amelia",
+          "english": "It’s okay, Anna.",
+          "startMs": 67860,
+          "endMs": 69030,
+          "chinese": "没关系，安娜。"
+        },
+        {
+          "id": "s18",
+          "speaker": "Anna",
+          "english": "Well, I am sorry.",
+          "startMs": 69320,
+          "endMs": 70780,
+          "chinese": "嗯，我很抱歉。"
+        },
+        {
+          "id": "s19",
+          "speaker": "Amelia",
+          "english": "It’s okay, Anna. Come by this afternoon.",
+          "startMs": 70970,
+          "endMs": 73530,
+          "chinese": "没关系，安娜。今天下午过来吧。"
+        },
+        {
+          "id": "s20",
+          "speaker": "Anna",
+          "english": "Okay.",
+          "startMs": 74100,
+          "endMs": 74760,
+          "chinese": "好的。"
+        },
+        {
+          "id": "s21",
+          "speaker": "Caty",
+          "english": "Anna.",
+          "startMs": 75840,
+          "endMs": 76350,
+          "chinese": "安娜。"
+        },
+        {
+          "id": "s22",
+          "speaker": "Anna",
+          "english": "Yes, Ms. Weaver.",
+          "startMs": 77260,
+          "endMs": 78620,
+          "chinese": "是，韦弗女士。"
+        },
+        {
+          "id": "s23",
+          "speaker": "Caty",
+          "english": "Are you busy?",
+          "startMs": 78620,
+          "endMs": 79610,
+          "chinese": "你忙吗？"
+        },
+        {
+          "id": "s24",
+          "speaker": "Anna",
+          "english": "Yes, Ms. Weaver. I am busy.",
+          "startMs": 79610,
+          "endMs": 81530,
+          "chinese": "是的，韦弗女士。我很忙。"
+        },
+        {
+          "id": "s25",
+          "speaker": "Caty",
+          "english": "My office. 5:00 p.m.",
+          "startMs": 81970,
+          "endMs": 83890,
+          "chinese": "我的办公室，下午五点。"
+        },
+        {
+          "id": "s26",
+          "speaker": "Anna",
+          "english": "5:00 p.m.",
+          "startMs": 86280,
+          "endMs": 87100,
+          "chinese": "下午五点。"
+        },
+        {
+          "id": "s27",
+          "speaker": "Caty",
+          "english": "Come in.",
+          "startMs": 89000,
+          "endMs": 97410,
+          "chinese": "请进。"
+        },
+        {
+          "id": "s28",
+          "speaker": "Co-Workers",
+          "english": "Surprise!",
+          "startMs": 99150,
+          "endMs": 99750,
+          "chinese": "惊喜！"
+        },
+        {
+          "id": "s29",
+          "speaker": "Anna",
+          "english": "A party! Awesome! And I still have my job! Phew! Until next time!",
+          "startMs": 102180,
+          "endMs": 117210,
+          "chinese": "派对！太棒了！我还保住了工作！呼！下次见！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "apologize",
+          "chinese": "道歉",
+          "segmentId": "s01"
+        },
+        {
+          "english": "Are you busy",
+          "chinese": "你忙吗",
+          "segmentId": "s02"
+        },
+        {
+          "english": "morning show",
+          "chinese": "早间节目",
+          "segmentId": "s03"
+        },
+        {
+          "english": "No worries",
+          "chinese": "没关系",
+          "segmentId": "s09"
+        },
+        {
+          "english": "another time",
+          "chinese": "另找时间",
+          "segmentId": "s11"
+        },
+        {
+          "english": "Right now",
+          "chinese": "现在",
+          "segmentId": "s11"
+        },
+        {
+          "english": "afternoon",
+          "chinese": "下午",
+          "segmentId": "s19"
+        },
+        {
+          "english": "Surprise",
+          "chinese": "惊喜",
+          "segmentId": "s28"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "礼貌确认对方是否忙碌",
+          "text": "Are you busy? 问对方是否忙。a little busy 是“有一点忙”；right now 强调此刻。",
+          "example": "I'm a little busy.",
+          "segmentId": "s15"
+        },
+        {
+          "title": "回应道歉和约时间",
+          "text": "No worries 用于表示不介意。another time 是另找时间；this afternoon 是今天下午。a.m. 为上午，p.m. 为下午或晚上。",
+          "example": "No worries. / Come by this afternoon.",
+          "segmentId": "s09"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "安娜今天想对同事们做什么？",
+          "answers": [
+            "道歉"
+          ],
+          "options": [
+            "介绍公寓",
+            "道歉",
+            "借钱"
+          ],
+          "explanation": "开场说 Today I want to apologize to my co-workers；她在弥补昨天的打扰。",
+          "segmentId": "s01"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "凯蒂让安娜几点到办公室？",
+          "answers": [
+            "下午五点"
+          ],
+          "options": [
+            "上午十点",
+            "下午三点",
+            "下午五点"
+          ],
+          "explanation": "Caty 说 My office. 5:00 p.m.，p.m. 是中午以后的时间。",
+          "segmentId": "s25"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出阿米莉亚说自己有点忙的整句。",
+          "answers": [
+            "I'm a little busy.",
+            "I am a little busy."
+          ],
+          "options": [],
+          "explanation": "a little 表示程度较轻：“有一点”；缩写 I'm 读作一个整体。",
+          "segmentId": "s15"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出乔纳森表示不介意的两词回答。",
+          "answers": [
+            "No worries."
+          ],
+          "options": [],
+          "explanation": "No worries 是自然的安慰回应，相当于“没关系，别担心”。",
+          "segmentId": "s09"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "按本课用两个词回应他人的道歉：“没关系”。",
+          "answers": [
+            "No worries."
+          ],
+          "options": [],
+          "explanation": "本题练习固定回应 No worries；worries 用复数。",
+          "segmentId": "s09"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：Are you ___?（你忙吗，只填一个词）",
+          "answers": [
+            "busy"
+          ],
+          "options": [],
+          "explanation": "busy 是形容词；Are you busy? 询问对方是否有空。",
+          "segmentId": "s02"
+        }
+      ]
+    },
+    {
+      "id": "voa1-09",
+      "number": 9,
+      "unit": 3,
+      "title": "Is It Cold?",
+      "subtitle": "问天气与看预报",
+      "minutes": 10,
+      "objectives": [
+        "询问天气状况",
+        "分辨温度和预报地点"
+      ],
+      "prerequisites": [
+        "voa1-08"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-9-is-it-cold/3261789.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/04/01/fe67e651-87d0-4b62-9c68-749b2d3c2f21.mp3",
+        "sha256": "6b19c02fbf4e0162c9633c1de7387e0068711b3a134485a0b824a6f9e543ca7c",
+        "bytes": 975242,
+        "durationMs": 121861
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "Oh, hi, everyone! Here in Washington, DC, the weather changes often. One day is cold and windy. But the next day is warm and sunny! So, every day I check the forecast. Hello, Phone? What is today’s temperature?",
+          "startMs": 1810,
+          "endMs": 24820,
+          "chinese": "哦，大家好！华盛顿特区的天气经常变化。一天又冷又有风，第二天却温暖晴朗！所以我每天都查天气预报。你好，手机？今天多少度？"
+        },
+        {
+          "id": "s02",
+          "speaker": "Phone",
+          "english": "Today it is 18 degrees ...",
+          "startMs": 24820,
+          "endMs": 27650,
+          "chinese": "今天十八度……"
+        },
+        {
+          "id": "s03",
+          "speaker": "Anna",
+          "english": "Eighteen degrees! That is cold!",
+          "startMs": 27650,
+          "endMs": 30590,
+          "chinese": "十八度！那很冷！"
+        },
+        {
+          "id": "s04",
+          "speaker": "Phone",
+          "english": "… eighteen degrees Celsius.",
+          "startMs": 30590,
+          "endMs": 32870,
+          "chinese": "……摄氏十八度。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Anna",
+          "english": "Oh, Celsius. That is 65 degrees Fahrenheit. That’s warm.",
+          "startMs": 33020,
+          "endMs": 39250,
+          "chinese": "哦，摄氏度。那相当于华氏六十五度，很暖和。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Phone",
+          "english": "Yes, Anna. It is warm.",
+          "startMs": 39250,
+          "endMs": 41950,
+          "chinese": "是的，安娜。天气暖和。"
+        },
+        {
+          "id": "s07",
+          "speaker": "Anna",
+          "english": "Excuse me, Phone. Is it windy today?",
+          "startMs": 41950,
+          "endMs": 45380,
+          "chinese": "打扰一下，手机。今天有风吗？"
+        },
+        {
+          "id": "s08",
+          "speaker": "Phone",
+          "english": "No, it is not windy today.",
+          "startMs": 45990,
+          "endMs": 49520,
+          "chinese": "没有，今天没有风。"
+        },
+        {
+          "id": "s09",
+          "speaker": "Anna",
+          "english": "Is it sunny today?",
+          "startMs": 49520,
+          "endMs": 51550,
+          "chinese": "今天晴天吗？"
+        },
+        {
+          "id": "s10",
+          "speaker": "Phone",
+          "english": "Yes, Anna. It is sunny.",
+          "startMs": 51930,
+          "endMs": 55070,
+          "chinese": "是的，安娜。今天晴天。"
+        },
+        {
+          "id": "s11",
+          "speaker": "Anna",
+          "english": "Excuse me, Phone?",
+          "startMs": 55230,
+          "endMs": 56770,
+          "chinese": "打扰一下，手机？"
+        },
+        {
+          "id": "s12",
+          "speaker": "Phone",
+          "english": "Yes, Anna.",
+          "startMs": 56840,
+          "endMs": 58600,
+          "chinese": "是，安娜。"
+        },
+        {
+          "id": "s13",
+          "speaker": "Anna",
+          "english": "Is it snowy today?",
+          "startMs": 58600,
+          "endMs": 60280,
+          "chinese": "今天下雪吗？"
+        },
+        {
+          "id": "s14",
+          "speaker": "Phone",
+          "english": "No, Anna. It is not snowy.",
+          "startMs": 60280,
+          "endMs": 64570,
+          "chinese": "没有，安娜。今天不下雪。"
+        },
+        {
+          "id": "s15",
+          "speaker": "Anna",
+          "english": "Thank you, Phone!",
+          "startMs": 65030,
+          "endMs": 66920,
+          "chinese": "谢谢你，手机！"
+        },
+        {
+          "id": "s16",
+          "speaker": "Anna",
+          "english": "Today the weather is warm and sunny -- great for seeing Washington, D.C.",
+          "startMs": 66920,
+          "endMs": 73080,
+          "chinese": "今天温暖晴朗，很适合逛逛华盛顿特区。"
+        },
+        {
+          "id": "s17",
+          "speaker": "Anna",
+          "english": "Phone! It is not warm and sunny! It is cold and windy and snowy!",
+          "startMs": 75130,
+          "endMs": 82930,
+          "chinese": "手机！天气既不暖和也不晴朗！又冷又有风，还下着雪！"
+        },
+        {
+          "id": "s18",
+          "speaker": "Phone",
+          "english": "Anna, it is not cold, windy, or snowy. It is warm and sunny … in Mexico City, Mexico.",
+          "startMs": 83200,
+          "endMs": 101080,
+          "chinese": "安娜，天气既不冷，也没有风或雪。天气温暖晴朗……在墨西哥的墨西哥城。"
+        },
+        {
+          "id": "s19",
+          "speaker": "Anna",
+          "english": "Oh. I see. Mexico.",
+          "startMs": 101080,
+          "endMs": 102250,
+          "chinese": "哦，我明白了，是墨西哥。"
+        },
+        {
+          "id": "s20",
+          "speaker": "Anna",
+          "english": "Washington weather changes often. Remember to check the forecast -- the right forecast.",
+          "startMs": 102250,
+          "endMs": 108110,
+          "chinese": "华盛顿的天气经常变化。记得查预报——要查对地方。"
+        },
+        {
+          "id": "s21",
+          "speaker": "Phone",
+          "english": "Yes, Anna. Next time remember to check the right fore…",
+          "startMs": 108110,
+          "endMs": 112370,
+          "chinese": "是的，安娜。下次记得查正确的预……"
+        },
+        {
+          "id": "s22",
+          "speaker": "Anna",
+          "english": "Okay, thank you Phone. Goodbye, Phone.",
+          "startMs": 112370,
+          "endMs": 114920,
+          "chinese": "好了，谢谢你，手机。再见，手机。"
+        },
+        {
+          "id": "s23",
+          "speaker": "Anna",
+          "english": "Until next time!",
+          "startMs": 115030,
+          "endMs": 117780,
+          "chinese": "下次见！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "weather",
+          "chinese": "天气",
+          "segmentId": "s01"
+        },
+        {
+          "english": "forecast",
+          "chinese": "预报",
+          "segmentId": "s01"
+        },
+        {
+          "english": "temperature",
+          "chinese": "温度",
+          "segmentId": "s01"
+        },
+        {
+          "english": "cold",
+          "chinese": "寒冷的",
+          "segmentId": "s01"
+        },
+        {
+          "english": "windy",
+          "chinese": "有风的",
+          "segmentId": "s01"
+        },
+        {
+          "english": "warm",
+          "chinese": "温暖的",
+          "segmentId": "s01"
+        },
+        {
+          "english": "sunny",
+          "chinese": "晴朗的",
+          "segmentId": "s01"
+        },
+        {
+          "english": "snowy",
+          "chinese": "下雪的",
+          "segmentId": "s13"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "天气问句",
+          "text": "用 Is it + 形容词 + today? 问天气。否定回答用 No, it is not ...。",
+          "example": "Is it sunny today?",
+          "segmentId": "s09"
+        },
+        {
+          "title": "温度单位与预报地点",
+          "text": "Celsius 是摄氏度，Fahrenheit 是华氏度。18°C 约为 64.4°F，原对话取约数 65°F。还要核实预报的城市。",
+          "example": "eighteen degrees Celsius",
+          "segmentId": "s04"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "手机最初给出了哪个城市的天气？",
+          "answers": [
+            "墨西哥城"
+          ],
+          "options": [
+            "华盛顿特区",
+            "纽约",
+            "墨西哥城"
+          ],
+          "explanation": "手机后来说明温暖晴朗是在 Mexico City, Mexico，安娜查错了城市。",
+          "segmentId": "s18"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "安娜出门后实际遇到什么天气？",
+          "answers": [
+            "寒冷、有风、下雪"
+          ],
+          "options": [
+            "温暖晴朗",
+            "寒冷、有风、下雪",
+            "炎热潮湿"
+          ],
+          "explanation": "安娜抱怨 It is cold and windy and snowy，三种天气特征都提到了。",
+          "segmentId": "s17"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜询问是否晴天的整句。",
+          "answers": [
+            "Is it sunny today?"
+          ],
+          "options": [],
+          "explanation": "sunny 是晴朗的；it 指天气，today 是今天。",
+          "segmentId": "s09"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出手机回答今天没有风的整句。",
+          "answers": [
+            "No, it is not windy today."
+          ],
+          "options": [],
+          "explanation": "否定回答保留 it is not，windy 表示有风的。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "补全：Is it ___ today?（今天下雪吗，只填一个词）",
+          "answers": [
+            "snowy"
+          ],
+          "options": [],
+          "explanation": "snowy 是描述下雪天气的形容词，snow 是名词或动词。",
+          "segmentId": "s13"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "按本课用英语问“今天晴天吗？”",
+          "answers": [
+            "Is it sunny today?"
+          ],
+          "options": [],
+          "explanation": "天气问句可用 Is it + 天气形容词 + today?。",
+          "segmentId": "s09"
+        }
+      ]
+    },
+    {
+      "id": "voa1-10",
+      "number": 10,
+      "unit": 3,
+      "title": "Come Over to My Place",
+      "subtitle": "邀请朋友并指路",
+      "minutes": 10,
+      "objectives": [
+        "说出简单的行走路线",
+        "用地标说明住处"
+      ],
+      "prerequisites": [
+        "voa1-09"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-10/3285228.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/04/14/442a6a50-693e-411f-8cff-99e40d16614c.mp3",
+        "sha256": "0cfd6224bc3b53319acc1b535cc81908f8f9880f8dcee1e0c2a8ff697d5c9a66",
+        "bytes": 725721,
+        "durationMs": 90671
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "Hi! Today, my friend Ashley, is coming over. I am showing her my new apartment! Oh! That’s Ashley calling.",
+          "startMs": 1280,
+          "endMs": 11390,
+          "chinese": "嗨！今天我的朋友阿什莉要来。我会带她看看我的新公寓！哦，是阿什莉来电话了。"
+        },
+        {
+          "id": "s02",
+          "speaker": "Anna",
+          "english": "Hi Ashley!",
+          "startMs": 13250,
+          "endMs": 13890,
+          "chinese": "你好，阿什莉！"
+        },
+        {
+          "id": "s03",
+          "speaker": "Ashley",
+          "english": "Hi Anna! I’m coming to your apartment. Where is your apartment?",
+          "startMs": 14150,
+          "endMs": 18880,
+          "chinese": "你好，安娜！我正要去你的公寓。你的公寓在哪儿？"
+        },
+        {
+          "id": "s04",
+          "speaker": "Anna",
+          "english": "My apartment is near the Columbia Heights Metro.",
+          "startMs": 18880,
+          "endMs": 22660,
+          "chinese": "我的公寓在哥伦比亚高地地铁站附近。"
+        },
+        {
+          "id": "s05",
+          "speaker": "Ashley",
+          "english": "It is near the Columbia Heights Metro?",
+          "startMs": 23130,
+          "endMs": 25480,
+          "chinese": "在哥伦比亚高地地铁站附近？"
+        },
+        {
+          "id": "s06",
+          "speaker": "Anna",
+          "english": "Yes. Exit the Metro and turn right. Then at the bus station turn left. Then walk straight ahead.",
+          "startMs": 25600,
+          "endMs": 33190,
+          "chinese": "对。出地铁站后右转，然后在公交车站左转，接着一直往前走。"
+        },
+        {
+          "id": "s07",
+          "speaker": "Ashley",
+          "english": "Okay. Exit Metro, turn right, turn left, then go straight ahead?",
+          "startMs": 33740,
+          "endMs": 39260,
+          "chinese": "好的，出地铁站，右转，左转，再一直往前？"
+        },
+        {
+          "id": "s08",
+          "speaker": "Anna",
+          "english": "Yes. My apartment is near a coffee shop.",
+          "startMs": 40210,
+          "endMs": 43600,
+          "chinese": "对，我的公寓在一家咖啡店附近。"
+        },
+        {
+          "id": "s09",
+          "speaker": "Ashley",
+          "english": "Okay. See you soon!",
+          "startMs": 43880,
+          "endMs": 45410,
+          "chinese": "好的，一会儿见！"
+        },
+        {
+          "id": "s10",
+          "speaker": "Anna",
+          "english": "Hi, Ashley.",
+          "startMs": 48850,
+          "endMs": 49930,
+          "chinese": "你好，阿什莉。"
+        },
+        {
+          "id": "s11",
+          "speaker": "Ashley",
+          "english": "Anna, Which coffee shop? There are three coffee shops.",
+          "startMs": 49930,
+          "endMs": 54410,
+          "chinese": "安娜，哪家咖啡店？这里有三家咖啡店。"
+        },
+        {
+          "id": "s12",
+          "speaker": "Anna",
+          "english": "Okay, my apartment is across from a big department store.",
+          "startMs": 54760,
+          "endMs": 59260,
+          "chinese": "好吧，我的公寓在一家大百货商店对面。"
+        },
+        {
+          "id": "s13",
+          "speaker": "Ashley",
+          "english": "A big department store? Ah, I see it!",
+          "startMs": 59470,
+          "endMs": 63400,
+          "chinese": "一家大百货商店？啊，我看到了！"
+        },
+        {
+          "id": "s14",
+          "speaker": "Anna",
+          "english": "Okay! Bye, Ashley. See you soon!",
+          "startMs": 63400,
+          "endMs": 65460,
+          "chinese": "好！再见，阿什莉，一会儿见！"
+        },
+        {
+          "id": "s15",
+          "speaker": "Ashley",
+          "english": "Okay. See you soon.",
+          "startMs": 66000,
+          "endMs": 67470,
+          "chinese": "好的，一会儿见。"
+        },
+        {
+          "id": "s16",
+          "speaker": "Anna",
+          "english": "Ashley! Ashley! Ashley! Over here! It’s Anna! It’s Anna! Hi!",
+          "startMs": 77000,
+          "endMs": 82940,
+          "chinese": "阿什莉！阿什莉！阿什莉！这边！是我，安娜！是安娜！嗨！"
+        },
+        {
+          "id": "s17",
+          "speaker": "Anna",
+          "english": "I love having my friends over. Come on!",
+          "startMs": 85720,
+          "endMs": 89570,
+          "chinese": "我喜欢请朋友来家里。进来吧！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "coming over",
+          "chinese": "来家里做客",
+          "segmentId": "s01"
+        },
+        {
+          "english": "Metro",
+          "chinese": "地铁",
+          "segmentId": "s04"
+        },
+        {
+          "english": "turn right",
+          "chinese": "右转",
+          "segmentId": "s06"
+        },
+        {
+          "english": "turn left",
+          "chinese": "左转",
+          "segmentId": "s06"
+        },
+        {
+          "english": "straight ahead",
+          "chinese": "一直向前",
+          "segmentId": "s06"
+        },
+        {
+          "english": "coffee shop",
+          "chinese": "咖啡店",
+          "segmentId": "s08"
+        },
+        {
+          "english": "department store",
+          "chinese": "百货商店",
+          "segmentId": "s12"
+        },
+        {
+          "english": "See you soon",
+          "chinese": "一会儿见",
+          "segmentId": "s09"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "用祈使句指路",
+          "text": "直接以动词原形开头：Exit / turn / walk。用 Then 连接下一步，注意路线顺序。",
+          "example": "Exit the Metro and turn right.",
+          "segmentId": "s06"
+        },
+        {
+          "title": "用地标定位",
+          "text": "near 表示附近，across from 表示对面。多个同名地标时，可问 Which coffee shop?。",
+          "example": "My apartment is near a coffee shop.",
+          "segmentId": "s08"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "从地铁出来先向哪边转？",
+          "answers": [
+            "右转"
+          ],
+          "options": [
+            "左转",
+            "右转",
+            "掉头"
+          ],
+          "explanation": "安娜先说 Exit the Metro and turn right，然后才是在公交站左转。",
+          "segmentId": "s06"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "公寓在什么建筑的对面？",
+          "answers": [
+            "大百货商店"
+          ],
+          "options": [
+            "邮局",
+            "银行",
+            "大百货商店"
+          ],
+          "explanation": "当咖啡店不足以定位时，安娜改说 across from a big department store。",
+          "segmentId": "s12"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜说明公寓在咖啡店附近的两句。",
+          "answers": [
+            "Yes. My apartment is near a coffee shop."
+          ],
+          "options": [],
+          "explanation": "near 表示在附近；a coffee shop 是一家咖啡店。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出阿什莉第一次说一会儿见的两句。",
+          "answers": [
+            "Okay. See you soon!"
+          ],
+          "options": [],
+          "explanation": "See you soon 是分别时说的“一会儿见”，不是路线指令。",
+          "segmentId": "s09"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "按本课写“右转”的两个英语单词。",
+          "answers": [
+            "turn right"
+          ],
+          "options": [],
+          "explanation": "动词 turn 加方向 right；left 是左。",
+          "segmentId": "s06"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：walk straight ___.（一直往前走，只填一个词）",
+          "answers": [
+            "ahead"
+          ],
+          "options": [],
+          "explanation": "straight ahead 作为方向表达表示一直向前。",
+          "segmentId": "s06"
+        }
+      ]
+    },
+    {
+      "id": "voa1-11",
+      "number": 11,
+      "unit": 3,
+      "title": "This Is My Neighborhood",
+      "subtitle": "在社区里办事",
+      "minutes": 10,
+      "objectives": [
+        "说明日常办事的需求",
+        "询问社区设施的位置"
+      ],
+      "prerequisites": [
+        "voa1-10"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-11-this-is-my-neighborhood/3293986.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/04/20/de238e35-97b9-4c21-81e3-e3c26fbeccaa.mp3",
+        "sha256": "b22a6f0531dcf943a2b23d5bd09696f2cfc5970f50a3911082b457c532625c6e",
+        "bytes": 884445,
+        "durationMs": 110524
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "Hello! DC is a city for walking. In our neighborhood, I can do all my errands. Marsha, before we get ice cream, I need to return three books to the library. Where is the library?",
+          "startMs": 0,
+          "endMs": 15950,
+          "chinese": "你好！华盛顿特区适合步行。在我们社区里，我能把日常杂事都办好。玛莎，吃冰淇淋前，我得先去图书馆还三本书。图书馆在哪儿？"
+        },
+        {
+          "id": "s02",
+          "speaker": "Marsha",
+          "english": "It is on this street on the corner.",
+          "startMs": 16400,
+          "endMs": 19880,
+          "chinese": "就在这条街的拐角。"
+        },
+        {
+          "id": "s03",
+          "speaker": "Anna",
+          "english": "Awesome!",
+          "startMs": 19880,
+          "endMs": 20550,
+          "chinese": "太好了！"
+        },
+        {
+          "id": "s04",
+          "speaker": "Marsha",
+          "english": "Let's go!",
+          "startMs": 20550,
+          "endMs": 20990,
+          "chinese": "走吧！"
+        },
+        {
+          "id": "s05",
+          "speaker": "Anna",
+          "english": "Marsha, I can return the books here.",
+          "startMs": 23950,
+          "endMs": 26770,
+          "chinese": "玛莎，我可以在这里还书。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Marsha",
+          "english": "Anna, what are those in the books?",
+          "startMs": 29760,
+          "endMs": 32610,
+          "chinese": "安娜，书里那些是什么？"
+        },
+        {
+          "id": "s07",
+          "speaker": "Anna",
+          "english": "Marsha, these are letters to my family and friends back home … four letters! Is there a post office near here?",
+          "startMs": 33710,
+          "endMs": 43280,
+          "chinese": "玛莎，这些是写给家乡亲友的信……四封！这附近有邮局吗？"
+        },
+        {
+          "id": "s08",
+          "speaker": "Marsha",
+          "english": "Um, no. The post office is far from here. But there is a mailbox across from the store.",
+          "startMs": 44490,
+          "endMs": 50850,
+          "chinese": "嗯，没有。邮局离这里很远。不过商店对面有个邮筒。"
+        },
+        {
+          "id": "s09",
+          "speaker": "Anna",
+          "english": "Awesome! Let’s go!",
+          "startMs": 51130,
+          "endMs": 52590,
+          "chinese": "太好了！走吧！"
+        },
+        {
+          "id": "s10",
+          "speaker": "Anna",
+          "english": "Marsha, now I need to buy stamps.",
+          "startMs": 54320,
+          "endMs": 56970,
+          "chinese": "玛莎，我现在得买邮票。"
+        },
+        {
+          "id": "s11",
+          "speaker": "Marsha",
+          "english": "Do you have cash?",
+          "startMs": 56970,
+          "endMs": 58320,
+          "chinese": "你有现金吗？"
+        },
+        {
+          "id": "s12",
+          "speaker": "Anna",
+          "english": "No. Is there a bank near here?",
+          "startMs": 58560,
+          "endMs": 61240,
+          "chinese": "没有。这附近有银行吗？"
+        },
+        {
+          "id": "s13",
+          "speaker": "Marsha",
+          "english": "There is a bank behind you.",
+          "startMs": 61700,
+          "endMs": 63410,
+          "chinese": "你身后就有一家银行。"
+        },
+        {
+          "id": "s14",
+          "speaker": "Anna",
+          "english": "Thanks, Marsha. You know our neighborhood so well.",
+          "startMs": 63790,
+          "endMs": 67580,
+          "chinese": "谢谢你，玛莎。你真了解我们的社区。"
+        },
+        {
+          "id": "s15",
+          "speaker": "Anna",
+          "english": "Now I have cash. I can buy stamps.",
+          "startMs": 68540,
+          "endMs": 71440,
+          "chinese": "现在我有现金了，可以买邮票了。"
+        },
+        {
+          "id": "s16",
+          "speaker": "Marsha",
+          "english": "That store sells stamps.",
+          "startMs": 71840,
+          "endMs": 74140,
+          "chinese": "那家商店卖邮票。"
+        },
+        {
+          "id": "s17",
+          "speaker": "Anna",
+          "english": "Wait here.",
+          "startMs": 74490,
+          "endMs": 75400,
+          "chinese": "在这里等我。"
+        },
+        {
+          "id": "s18",
+          "speaker": "Anna",
+          "english": "I have stamps.",
+          "startMs": 77390,
+          "endMs": 78530,
+          "chinese": "我买到邮票了。"
+        },
+        {
+          "id": "s19",
+          "speaker": "Marsha",
+          "english": "Wow, you’re fast.",
+          "startMs": 78600,
+          "endMs": 80330,
+          "chinese": "哇，你真快。"
+        },
+        {
+          "id": "s20",
+          "speaker": "Anna",
+          "english": "Thank you, thank you letters, for sending my words… my love … to my family and friends -",
+          "startMs": 81330,
+          "endMs": 88910,
+          "chinese": "谢谢你，谢谢你们，信件，谢谢你们把我的话……我的爱……送给我的家人和朋友——"
+        },
+        {
+          "id": "s21",
+          "speaker": "Marsha",
+          "english": "Do you have more cash?",
+          "startMs": 90340,
+          "endMs": 91620,
+          "chinese": "你还有现金吗？"
+        },
+        {
+          "id": "s22",
+          "speaker": "Anna",
+          "english": "I do!",
+          "startMs": 92310,
+          "endMs": 92960,
+          "chinese": "有！"
+        },
+        {
+          "id": "s23",
+          "speaker": "Marsha & Anna",
+          "english": "Ice cream!!",
+          "startMs": 95830,
+          "endMs": 98460,
+          "chinese": "冰淇淋！！"
+        },
+        {
+          "id": "s24",
+          "speaker": "Anna",
+          "english": "I love my new neighborhood! Everything is near our apartment! Even hair salons, and ice cream!",
+          "startMs": 98460,
+          "endMs": 107140,
+          "chinese": "我喜欢我的新社区！什么都在公寓附近！连美发店和冰淇淋都有！"
+        },
+        {
+          "id": "s25",
+          "speaker": "Anna",
+          "english": "Until next time!",
+          "startMs": 107350,
+          "endMs": 108710,
+          "chinese": "下次见！"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "neighborhood",
+          "chinese": "社区",
+          "segmentId": "s01"
+        },
+        {
+          "english": "errands",
+          "chinese": "日常杂事",
+          "segmentId": "s01"
+        },
+        {
+          "english": "library",
+          "chinese": "图书馆",
+          "segmentId": "s01"
+        },
+        {
+          "english": "post office",
+          "chinese": "邮局",
+          "segmentId": "s07"
+        },
+        {
+          "english": "mailbox",
+          "chinese": "邮筒",
+          "segmentId": "s08"
+        },
+        {
+          "english": "cash",
+          "chinese": "现金",
+          "segmentId": "s11"
+        },
+        {
+          "english": "stamps",
+          "chinese": "邮票",
+          "segmentId": "s10"
+        },
+        {
+          "english": "bank",
+          "chinese": "银行",
+          "segmentId": "s12"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "表达办事需求",
+          "text": "need to + 动词原形说明需要做某事；return books 是还书，不是买书。",
+          "example": "I need to buy stamps.",
+          "segmentId": "s10"
+        },
+        {
+          "title": "表示某处有某物",
+          "text": "There is + 单数名词说明某处存在一个事物。位置可放在后面，如 behind you。",
+          "example": "There is a bank behind you.",
+          "segmentId": "s13"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "安娜要去图书馆做什么？",
+          "answers": [
+            "还三本书"
+          ],
+          "options": [
+            "寄四封信",
+            "还三本书",
+            "买邮票"
+          ],
+          "explanation": "开场说 I need to return three books to the library，return 在这里是归还。",
+          "segmentId": "s01"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "商店对面有什么？",
+          "answers": [
+            "邮筒"
+          ],
+          "options": [
+            "邮筒",
+            "银行",
+            "图书馆"
+          ],
+          "explanation": "玛莎说 there is a mailbox across from the store；邮局则离这里很远。",
+          "segmentId": "s08"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出玛莎询问有没有现金的整句。",
+          "answers": [
+            "Do you have cash?"
+          ],
+          "options": [],
+          "explanation": "cash 是现金，是不可数名词，这里不加 a。",
+          "segmentId": "s11"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出玛莎说明哪儿卖邮票的整句。",
+          "answers": [
+            "That store sells stamps."
+          ],
+          "options": [],
+          "explanation": "主语 That store 是第三人称单数，所以 sell 加 s。",
+          "segmentId": "s16"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "按本课说“你身后有一家银行”。",
+          "answers": [
+            "There is a bank behind you."
+          ],
+          "options": [],
+          "explanation": "There is 引出一个事物；behind you 说明银行的位置。",
+          "segmentId": "s13"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "补全：I need to ___ stamps.（我需要买邮票，只填一个词）",
+          "answers": [
+            "buy"
+          ],
+          "options": [],
+          "explanation": "need to 后接动词原形 buy；stamps 是邮票。",
+          "segmentId": "s10"
+        }
+      ]
+    },
+    {
+      "id": "voa1-12",
+      "number": 12,
+      "unit": 3,
+      "title": "Meet My Family",
+      "subtitle": "介绍家人与职业",
+      "minutes": 12,
+      "objectives": [
+        "用照片介绍亲属关系",
+        "询问和说明职业与活动"
+      ],
+      "prerequisites": [
+        "voa1-11"
+      ],
+      "skills": [
+        "listening",
+        "reading",
+        "speaking",
+        "writing"
+      ],
+      "source": {
+        "publisher": "VOA Learning English",
+        "url": "https://learningenglish.voanews.com/a/lets-learn-english-lesson-12-meet-my-family/3301733.html",
+        "rightsUrl": "https://learningenglish.voanews.com/p/6861.html",
+        "credit": "课文及原声：VOA Learning English — learningenglish.voanews.com"
+      },
+      "audio": {
+        "url": "https://voa-audio.voanews.eu/vle/2016/04/28/d1527ef7-587d-45b5-b3cc-fecbe37167ab.mp3",
+        "sha256": "b2eeaf3cfb9cacf2626b0048eddac38c70ad56cf726039c3c068dae84acbfd94",
+        "bytes": 1515810,
+        "durationMs": 189440
+      },
+      "segments": [
+        {
+          "id": "s01",
+          "speaker": "Anna",
+          "english": "Hello! Washington, D.C. has many beautiful parks. In fact, this park reminds me of my home very far away.",
+          "startMs": 640,
+          "endMs": 12950,
+          "chinese": "你好！华盛顿特区有许多漂亮的公园。其实，这座公园让我想起远方的家。"
+        },
+        {
+          "id": "s02",
+          "speaker": "Marsha",
+          "english": "Anna, here's your coffee.",
+          "startMs": 14180,
+          "endMs": 16470,
+          "chinese": "安娜，这是你的咖啡。"
+        },
+        {
+          "id": "s03",
+          "speaker": "Anna",
+          "english": "Thanks, Marsha.",
+          "startMs": 17090,
+          "endMs": 18070,
+          "chinese": "谢谢，玛莎。"
+        },
+        {
+          "id": "s04",
+          "speaker": "Marsha",
+          "english": "What's wrong?",
+          "startMs": 18290,
+          "endMs": 19360,
+          "chinese": "怎么了？"
+        },
+        {
+          "id": "s05",
+          "speaker": "Anna",
+          "english": "I'm thinking about my family. I'm feeling homesick.",
+          "startMs": 20020,
+          "endMs": 25380,
+          "chinese": "我在想我的家人。我想家了。"
+        },
+        {
+          "id": "s06",
+          "speaker": "Marsha",
+          "english": "Do you want to talk about it?",
+          "startMs": 25660,
+          "endMs": 27100,
+          "chinese": "你想聊聊吗？"
+        },
+        {
+          "id": "s07",
+          "speaker": "Anna",
+          "english": "Sure! I have some photos.",
+          "startMs": 27800,
+          "endMs": 30760,
+          "chinese": "当然！我有些照片。"
+        },
+        {
+          "id": "s08",
+          "speaker": "Marsha",
+          "english": "Yes. Yes, you do!",
+          "startMs": 31650,
+          "endMs": 33970,
+          "chinese": "是啊，你的照片可真不少！"
+        },
+        {
+          "id": "s09",
+          "speaker": "Anna",
+          "english": "Photos really help.",
+          "startMs": 34380,
+          "endMs": 36080,
+          "chinese": "照片真的很有帮助。"
+        },
+        {
+          "id": "s10",
+          "speaker": "Anna",
+          "english": "This is my mother and this is my father. They are rodeo clowns.",
+          "startMs": 37330,
+          "endMs": 43260,
+          "chinese": "这是我妈妈，这是我爸爸。他们是牛仔竞技表演的小丑。"
+        },
+        {
+          "id": "s11",
+          "speaker": "Marsha",
+          "english": "What do rodeo clowns do?",
+          "startMs": 43970,
+          "endMs": 47210,
+          "chinese": "牛仔竞技表演的小丑做什么？"
+        },
+        {
+          "id": "s12",
+          "speaker": "Anna",
+          "english": "They make jokes at a rodeo. They make people laugh.",
+          "startMs": 47740,
+          "endMs": 51230,
+          "chinese": "他们在竞技表演中讲笑话，逗人发笑。"
+        },
+        {
+          "id": "s13",
+          "speaker": "Marsha",
+          "english": "That—that's very different.",
+          "startMs": 51230,
+          "endMs": 54490,
+          "chinese": "那……那可真不一样。"
+        },
+        {
+          "id": "s14",
+          "speaker": "Marsha",
+          "english": "Who is that woman in the picture?",
+          "startMs": 54490,
+          "endMs": 56090,
+          "chinese": "照片里的那位女士是谁？"
+        },
+        {
+          "id": "s15",
+          "speaker": "Anna",
+          "english": "That is my Aunt Lavender. She is my mom's sister. She loves gardening and makes spoons.",
+          "startMs": 56090,
+          "endMs": 64760,
+          "chinese": "那是我的拉文德姨妈，她是我妈妈的姐妹。她喜欢园艺，还会做勺子。"
+        },
+        {
+          "id": "s16",
+          "speaker": "Marsha",
+          "english": "She makes spoons?",
+          "startMs": 65440,
+          "endMs": 67200,
+          "chinese": "她做勺子？"
+        },
+        {
+          "id": "s17",
+          "speaker": "Anna",
+          "english": "Of course.",
+          "startMs": 67630,
+          "endMs": 68580,
+          "chinese": "当然。"
+        },
+        {
+          "id": "s18",
+          "speaker": "Marsha",
+          "english": "That, too, is very different.",
+          "startMs": 69310,
+          "endMs": 72780,
+          "chinese": "那也很不一样。"
+        },
+        {
+          "id": "s19",
+          "speaker": "Anna",
+          "english": "Oh! This is my Uncle John. He is my father's brother.",
+          "startMs": 73590,
+          "endMs": 77870,
+          "chinese": "哦！这是我的约翰叔伯。他是我爸爸的兄弟。"
+        },
+        {
+          "id": "s20",
+          "speaker": "Marsha",
+          "english": "What does Uncle John do?",
+          "startMs": 78890,
+          "endMs": 81670,
+          "chinese": "约翰叔伯做什么工作？"
+        },
+        {
+          "id": "s21",
+          "speaker": "Anna",
+          "english": "He's a chicken farmer. And makes guitars. He's awesome, and I'm his favorite niece.",
+          "startMs": 81670,
+          "endMs": 89320,
+          "chinese": "他是养鸡的农场主，还制作吉他。他很棒，我是他最喜欢的侄女。"
+        },
+        {
+          "id": "s22",
+          "speaker": "Marsha",
+          "english": "Who are they?",
+          "startMs": 89800,
+          "endMs": 90640,
+          "chinese": "他们是谁？"
+        },
+        {
+          "id": "s23",
+          "speaker": "Anna",
+          "english": "They are my cousins. They are my Uncle John's daughter and son.",
+          "startMs": 90640,
+          "endMs": 96290,
+          "chinese": "他们是我的堂亲，是约翰叔伯的女儿和儿子。"
+        },
+        {
+          "id": "s24",
+          "speaker": "Marsha",
+          "english": "What do they do?",
+          "startMs": 96690,
+          "endMs": 97930,
+          "chinese": "他们做什么？"
+        },
+        {
+          "id": "s25",
+          "speaker": "Anna",
+          "english": "They raise sheep and make sweaters.",
+          "startMs": 98260,
+          "endMs": 101110,
+          "chinese": "他们养羊、做毛衣。"
+        },
+        {
+          "id": "s26",
+          "speaker": "Marsha",
+          "english": "Yeah, that's not a surprise.",
+          "startMs": 101330,
+          "endMs": 103930,
+          "chinese": "嗯，那就不奇怪了。"
+        },
+        {
+          "id": "s27",
+          "speaker": "Marsha",
+          "english": "Thanks for showing me your family photos. Your family is very different.",
+          "startMs": 104750,
+          "endMs": 111190,
+          "chinese": "谢谢你给我看家人的照片。你的家人很特别。"
+        },
+        {
+          "id": "s28",
+          "speaker": "Anna",
+          "english": "I do feel better. Thanks for listening. I have many more photos!",
+          "startMs": 111190,
+          "endMs": 116340,
+          "chinese": "我确实感觉好多了，谢谢你听我说。我还有好多照片！"
+        },
+        {
+          "id": "s29",
+          "speaker": "Marsha",
+          "english": "Yeah. Yeah, you do.",
+          "startMs": 116760,
+          "endMs": 119100,
+          "chinese": "是啊，是啊，你确实还有好多。"
+        },
+        {
+          "id": "s30",
+          "speaker": "Anna",
+          "english": "Washington, DC is my new home. But I like remembering my old home, too.",
+          "startMs": 119820,
+          "endMs": 125260,
+          "chinese": "华盛顿特区是我的新家。不过我也喜欢回忆以前的家。"
+        },
+        {
+          "id": "s31",
+          "speaker": "Narrator",
+          "english": "This is a family tree. Anna tells Marsha about her parents.",
+          "startMs": 127110,
+          "endMs": 132890,
+          "chinese": "这是一张家谱。安娜向玛莎介绍她的父母。"
+        },
+        {
+          "id": "s32",
+          "speaker": "Narrator",
+          "english": "Her mother and father are rodeo clowns.",
+          "startMs": 133870,
+          "endMs": 137390,
+          "chinese": "她的父母都是牛仔竞技表演的小丑。"
+        },
+        {
+          "id": "s33",
+          "speaker": "Narrator",
+          "english": "Her father's parents are from Italy. These grandparents speak Italian.",
+          "startMs": 138380,
+          "endMs": 144910,
+          "chinese": "她的祖父母来自意大利，他们说意大利语。"
+        },
+        {
+          "id": "s34",
+          "speaker": "Narrator",
+          "english": "Anna's mother's parents live in California. These grandparents have a farm and raise horses.",
+          "startMs": 146250,
+          "endMs": 154840,
+          "chinese": "安娜的外祖父母住在加利福尼亚州。他们有一座农场，养着马。"
+        },
+        {
+          "id": "s35",
+          "speaker": "Narrator",
+          "english": "Anna's mother's sister is Aunt Lavender. She loves gardening.",
+          "startMs": 156530,
+          "endMs": 162270,
+          "chinese": "安娜妈妈的姐妹是拉文德姨妈，她喜欢园艺。"
+        },
+        {
+          "id": "s36",
+          "speaker": "Narrator",
+          "english": "Anna's father has a brother. His name is John. Uncle John makes guitars.",
+          "startMs": 163440,
+          "endMs": 170730,
+          "chinese": "安娜的爸爸有一个兄弟，名叫约翰。约翰叔伯制作吉他。"
+        },
+        {
+          "id": "s37",
+          "speaker": "Narrator",
+          "english": "Uncle John has a daughter and a son. They are Anna's cousins. They raise sheep.",
+          "startMs": 171620,
+          "endMs": 178820,
+          "chinese": "约翰叔伯有一儿一女，是安娜的堂亲，他们养羊。"
+        },
+        {
+          "id": "s38",
+          "speaker": "Narrator",
+          "english": "Anna's brother has two children. They are Anna's niece and nephew.",
+          "startMs": 179850,
+          "endMs": 185790,
+          "chinese": "安娜的兄弟有两个孩子，分别是她的侄女和侄子。"
+        }
+      ],
+      "keyPhrases": [
+        {
+          "english": "homesick",
+          "chinese": "想家的",
+          "segmentId": "s05"
+        },
+        {
+          "english": "mother",
+          "chinese": "母亲",
+          "segmentId": "s10"
+        },
+        {
+          "english": "father",
+          "chinese": "父亲",
+          "segmentId": "s10"
+        },
+        {
+          "english": "aunt",
+          "chinese": "姨妈或姑妈",
+          "segmentId": "s15"
+        },
+        {
+          "english": "uncle",
+          "chinese": "叔伯或舅父等",
+          "segmentId": "s19"
+        },
+        {
+          "english": "cousins",
+          "chinese": "堂亲或表亲",
+          "segmentId": "s23"
+        },
+        {
+          "english": "niece",
+          "chinese": "侄女或外甥女",
+          "segmentId": "s21"
+        },
+        {
+          "english": "nephew",
+          "chinese": "侄子或外甥",
+          "segmentId": "s38"
+        }
+      ],
+      "explanations": [
+        {
+          "title": "亲属关系要结合上下文",
+          "text": "英语 aunt 和 uncle 不区分母系与父系；cousin 也不区分堂表。本课 Lavender 是妈妈的姐妹，因此译为姨妈，John 的子女是堂亲。",
+          "example": "She is my mom's sister.",
+          "segmentId": "s15"
+        },
+        {
+          "title": "询问职业",
+          "text": "What does + 单个人 + do? 询问职业或经常从事的活动。does 后的 do 用原形；they 则用 What do they do?。",
+          "example": "What does Uncle John do?",
+          "segmentId": "s20"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q01",
+          "type": "comprehension",
+          "prompt": "拉文德与安娜是什么关系？",
+          "answers": [
+            "姨妈（妈妈的姐妹）"
+          ],
+          "options": [
+            "姑妈（爸爸的姐妹）",
+            "姨妈（妈妈的姐妹）",
+            "堂姐"
+          ],
+          "explanation": "原文说明 Aunt Lavender 是 my mom's sister，因此这里译为姨妈。",
+          "segmentId": "s15"
+        },
+        {
+          "id": "q02",
+          "type": "comprehension",
+          "prompt": "安娜的堂亲做什么？",
+          "answers": [
+            "养羊、做毛衣"
+          ],
+          "options": [
+            "养鸡、做吉他",
+            "表演小丑",
+            "养羊、做毛衣"
+          ],
+          "explanation": "紧接着询问 cousins 做什么，安娜回答 They raise sheep and make sweaters。",
+          "segmentId": "s25"
+        },
+        {
+          "id": "q03",
+          "type": "dictation",
+          "prompt": "听原声，写出玛莎询问约翰叔伯职业的整句。",
+          "answers": [
+            "What does Uncle John do?"
+          ],
+          "options": [],
+          "explanation": "第三人称单数疑问句用 does，后面的 do 保持原形。",
+          "segmentId": "s20"
+        },
+        {
+          "id": "q04",
+          "type": "dictation",
+          "prompt": "听原声，写出安娜说明堂亲工作的整句。",
+          "answers": [
+            "They raise sheep and make sweaters."
+          ],
+          "options": [],
+          "explanation": "raise sheep 是养羊，make sweaters 是做毛衣；sheep 单复数同形。",
+          "segmentId": "s25"
+        },
+        {
+          "id": "q05",
+          "type": "expression",
+          "prompt": "补全：I'm feeling ___.（我想家了，只填一个词）",
+          "answers": [
+            "homesick"
+          ],
+          "options": [],
+          "explanation": "homesick 表示因离家而想家，不是身体生病。",
+          "segmentId": "s05"
+        },
+        {
+          "id": "q06",
+          "type": "expression",
+          "prompt": "按本课写“他们是谁？”的英语问句。",
+          "answers": [
+            "Who are they?"
+          ],
+          "options": [],
+          "explanation": "they 与 are 搭配；who 询问身份。",
+          "segmentId": "s22"
+        }
+      ]
+    }
+  ]
+}

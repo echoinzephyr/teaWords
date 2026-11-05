@@ -226,7 +226,7 @@ class MaterialRefreshTest {
                                 "home" -> HomeView("", {}, {}, emptyList(), false, {}, emptyList(),
                                     "茶词", "查词、翻译，慢慢记住。", {}, {}, {}, {})
                                 "learning" -> LearningScreen(database)
-                                "courses" -> CourseListScreen(database, onBack = {}, onOpen = {}, onReviewWeak = {})
+                                "courses" -> CourseListScreen(database, onBack = {}, onOpen = {})
                                 "recall" -> RecordsView(emptyList(), 0, {}, {})
                                 "lookup" -> LookupScreen("apple", onBack = {})
                                 "statistics" -> StatsDashboard(database)

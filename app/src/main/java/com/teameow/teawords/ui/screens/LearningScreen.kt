@@ -98,7 +98,6 @@ fun LearningScreen(
     var wordReturnMode by rememberSaveable { mutableStateOf("home") }
     var homeReview by rememberSaveable { mutableStateOf(false) }
     var activeLessonId by rememberSaveable { mutableStateOf<String?>(null) }
-    var courseTrack by rememberSaveable { mutableStateOf("ky") }
     var courseReturnMode by rememberSaveable { mutableStateOf("learningHub") }
     var courseProgress by remember { mutableStateOf(emptyMap<String, CourseRepository.Progress>()) }
     var busy by remember { mutableStateOf(true) }
@@ -306,28 +305,6 @@ fun LearningScreen(
         }
     }
 
-    fun startCourseReview(targetWords: List<String>, bookIds: Set<String>) {
-        if (pocketRound?.complete == false) { mode = "pocket"; return }
-        busy = true
-        scope.launch {
-            try {
-                val round = withContext(Dispatchers.IO) {
-                    val dictionary = checkNotNull(com.teameow.teawords.data.search.DictionaryGateway.sourceOrNull())
-                    val snapshot = LearningCatalog(dbHelper, dictionary).load(bookIds)
-                    PocketPlanner.typingRound(snapshot.states.filter { it.word in targetWords }, snapshot.words,
-                        newBudget, System.currentTimeMillis(), wordLimit = 10, preferredWords = targetWords)
-                }
-                if (round == null) { message = "今日新词额度已用完或薄弱词尚未到期"; mode = "courses" }
-                else {
-                    withContext(Dispatchers.IO) { pocketRepo.start(round) }
-                    pocketRound = round
-                    mode = "pocket"
-                }
-            } catch (e: Exception) { message = "复习启动失败：${e.message}"; mode = "courses" }
-            finally { busy = false }
-        }
-    }
-
     fun startDueReview() {
         if (busy) return
         if (pocketRound?.complete == false) { homeReview = true; mode = "pocket"; return }
@@ -464,15 +441,14 @@ fun LearningScreen(
                 catch (_: Exception) { message = "收藏更新失败，请重试" }
             } }, onBack = back)
     } else if (pageMode == "courses") {
-        CourseListScreen(dbHelper, initialTrack = courseTrack, onTrackChange = { courseTrack = it },
+        CourseListScreen(dbHelper,
             onBack = { mode = courseReturnMode }, onOpen = { lesson ->
             activeLessonId = lesson.id
             mode = "courseLesson"
-        }, onReviewWeak = { weak -> startCourseReview(weak, setOf("ky", "ielts", "toefl")) })
+        })
     } else if (pageMode == "courseLesson" && activeLessonId != null) {
         val lesson = CourseCatalog.all.firstOrNull { it.id == activeLessonId }
-        if (lesson != null) CourseLessonScreen(dbHelper, lesson, onBack = { mode = "courses" },
-            onReviewWeak = { weak -> startCourseReview(weak, setOf(lesson.bookId)) })
+        if (lesson != null) CourseLessonScreen(dbHelper, lesson, onBack = { mode = "courses" })
     } else if (pageMode == "learningHub") {
         TeaListPage("短课与专项练习", onBack = back) {
             item {
@@ -482,11 +458,11 @@ fun LearningScreen(
                 }
                 TeaCard {
                     Text("英语短课", style = MaterialTheme.typography.headlineSmall)
-                    Text("考研、雅思、托福 · 按主题单元逐课学习")
+                    Text("入门英语 · 三个单元，从日常交流开始")
                     TeaCaption("已完成 $completed / ${CourseCatalog.all.size} 课 · 可暂停续学")
                     next?.let { lesson ->
-                        Text("待续学：${CourseDirectory.trackName(lesson.bookId)} · ${lesson.title}")
-                        Button(onClick = { courseTrack = lesson.bookId; activeLessonId = lesson.id; mode = "courseLesson" },
+                        Text("待续学：第 ${lesson.number} 课 · ${lesson.title}")
+                        Button(onClick = { activeLessonId = lesson.id; mode = "courseLesson" },
                             modifier = Modifier.fillMaxWidth()) { Text("继续这节短课") }
                     }
                     OutlinedButton(onClick = { courseReturnMode = "learningHub"; mode = "courses" },

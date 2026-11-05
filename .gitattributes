@@ -1,1 +1,4 @@
 server/wordbooks/*.sh text eol=lf
+# Course checksums cover bytes; keep bundled JSON identical on Windows and Linux checkouts.
+app/src/main/resources/courses/* text eol=lf
+tools/courses/*.json text eol=lf

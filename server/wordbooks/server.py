@@ -8,7 +8,7 @@ import re
 from urllib.parse import unquote, urlsplit
 
 
-def handler(public: Path):
+def handler(public: Path, allowed_suffixes=frozenset({'.json', '.txt'}), service='teawords-wordbooks'):
     public = public.resolve()
 
     class Handler(BaseHTTPRequestHandler):
@@ -21,7 +21,7 @@ def handler(public: Path):
         def serve(self, head):
             path = unquote(urlsplit(self.path).path)
             if path == '/health':
-                payload = json.dumps(dict(ok=True, service='teawords-wordbooks', schemaVersion=1)).encode()
+                payload = json.dumps(dict(ok=True, service=service, schemaVersion=1)).encode()
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
                 self.send_header('Content-Length', str(len(payload)))
@@ -37,7 +37,7 @@ def handler(public: Path):
             except ValueError:
                 self.send_error(403)
                 return
-            if not target.is_file() or target.suffix not in {'.json', '.txt'}:
+            if not target.is_file() or target.suffix not in allowed_suffixes:
                 self.send_error(404)
                 return
             size = target.stat().st_size
@@ -53,7 +53,8 @@ def handler(public: Path):
                     return
                 start, end, status = int(match[1]), min(int(match[2]) if match[2] else end, end), 206
             self.send_response(status)
-            self.send_header('Content-Type', 'application/json; charset=utf-8' if target.suffix == '.json' else 'text/plain; charset=utf-8')
+            mime = {'.json': 'application/json; charset=utf-8', '.mp3': 'audio/mpeg'}
+            self.send_header('Content-Type', mime.get(target.suffix, 'text/plain; charset=utf-8'))
             self.send_header('Content-Length', str(end - start + 1))
             self.send_header('Accept-Ranges', 'bytes')
             self.send_header('Cache-Control', 'public, max-age=3600')
