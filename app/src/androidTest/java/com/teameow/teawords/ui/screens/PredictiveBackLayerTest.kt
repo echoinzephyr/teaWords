@@ -83,7 +83,9 @@ class PredictiveBackLayerTest {
         }
         compose.waitForIdle()
         val previewed = compose.onNodeWithTag("back").fetchSemanticsNode().boundsInRoot
-        assertTrue("Enabled predictive back must scale the page during the gesture", previewed.width < before.width)
+        assertEquals(before.width, previewed.width, 1f)
+        assertEquals(before.left, previewed.left, 1f)
+        assertTrue("Preview must slide the page downward", previewed.top > before.top)
         compose.runOnIdle { compose.activity.onBackPressedDispatcher.dispatchOnBackCancelled() }
         compose.waitForIdle()
         assertEquals(0, commits)
@@ -130,20 +132,24 @@ class PredictiveBackLayerTest {
         compose.mainClock.advanceTimeByFrame()
         compose.waitForIdle()
         val previewed = compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot
-        assertTrue("Both edges must retreat the page to the right", previewed.center.x > initial.center.x)
+        assertEquals(initial.left, previewed.left, 1f)
+        assertEquals(initial.width, previewed.width, 1f)
+        assertTrue("Both edges must move the topmost page downward", previewed.top > initial.top)
         compose.runOnIdle { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.mainClock.advanceTimeBy(80)
         compose.waitForIdle()
         val exiting = compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot
-        assertTrue("Release must continue retreating to the right", exiting.center.x > previewed.center.x)
+        assertEquals(initial.left, exiting.left, 1f)
+        assertEquals(initial.width, exiting.width, 1f)
+        assertTrue("Release must continue downward", exiting.top > previewed.top)
         compose.mainClock.autoAdvance = true
         compose.waitForIdle()
         assertEquals(1, commits)
     }
 
-    @Test fun rightEdgeReleaseContinuesRight() = verifyExitDirection(BackEventCompat.EDGE_RIGHT)
-    @Test fun leftEdgeReleaseContinuesRight() = verifyExitDirection(BackEventCompat.EDGE_LEFT)
-    @Test fun topLevelRightEdgeReleaseContinuesRight() = verifyExitDirection(BackEventCompat.EDGE_RIGHT, topLevel = true)
+    @Test fun rightEdgeReleaseContinuesDown() = verifyExitDirection(BackEventCompat.EDGE_RIGHT)
+    @Test fun leftEdgeReleaseContinuesDown() = verifyExitDirection(BackEventCompat.EDGE_LEFT)
+    @Test fun topLevelRightEdgeReleaseContinuesDown() = verifyExitDirection(BackEventCompat.EDGE_RIGHT, topLevel = true)
 
     @Test fun rightEdgeCancellationRestoresPosition() {
         mount()

@@ -80,7 +80,6 @@ enum class SettingsPage {
     Strategy,
     Pronunciation,
     Translation,
-    Wordbooks,
     About,
     Update,
     Logs
@@ -328,7 +327,7 @@ fun MainScreen(
                         val statsClose: () -> Unit = { scope.launch { statsSheetState.hide(); requestBack() } }
                         val sheetHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 72.dp)
                             .coerceIn(320.dp, 800.dp)
-                        ModalBottomSheet(
+                        TeaModalBottomSheet(
                             onDismissRequest = requestBack,
                             sheetState = statsSheetState,
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -342,6 +341,7 @@ fun MainScreen(
                         }
                     }
                     "settings" -> SettingsView(
+                        wordbookHelper = dbHelper,
                         pronunciationDialect = pronunciationDialect,
                         selectedWordbookIds = selectedWordbookIds,
                         homeTitle = homeTitle,

@@ -22,7 +22,7 @@ internal fun TeaActionSheet(
 ) {
     val available = LocalConfiguration.current.screenHeightDp
     val height = if (compact) (available * .65f).dp.coerceAtMost(420.dp) else (available * .9f).dp
-    ModalBottomSheet(onDismissRequest = onDismiss,
+    TeaModalBottomSheet(onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = compact),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {

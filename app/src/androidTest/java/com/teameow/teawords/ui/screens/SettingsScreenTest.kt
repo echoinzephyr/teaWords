@@ -1,6 +1,10 @@
 package com.teameow.teawords.ui.screens
 
 import androidx.activity.ComponentActivity
+import androidx.activity.BackEventCompat
+import androidx.activity.findViewTreeOnBackPressedDispatcherOwner
+import android.view.inspector.WindowInspector
+import androidx.test.filters.SdkSuppress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -42,11 +46,13 @@ class SettingsScreenTest {
             val density = LocalDensity.current
             CompositionLocalProvider(
                 LocalReservedBottom provides 100.dp,
+                LocalPredictiveBackEnabled provides predictiveBack,
                 LocalDensity provides Density(density.density, if (compact) 1.3f else 1f)
             ) {
                 TeaWordsTheme(darkTheme = resolveDarkTheme(mode, false), pureBlack = pureBlack) {
                     Box(if (compact) Modifier.width(320.dp).height(640.dp) else Modifier) {
                         SettingsView(
+                            wordbookHelper = remember { DatabaseHelper(compose.activity) },
                             pronunciationDialect = dialect, selectedWordbookIds = books,
                             homeTitle = title, homeSubtitle = subtitle, homeSubtitleMode = subtitleMode,
                             homeWallpaperMode = wallpaperMode, customWallpaperUri = customWallpaperUri,
@@ -177,18 +183,56 @@ class SettingsScreenTest {
         compose.onNodeWithText("40 个").performClick().assertIsSelected()
     }
 
-    @Test fun lastWordbookClearsDockAndEmptySelectionIsExplained() {
+    @Test fun wordbookManagementUsesSharedPickerAndCancellationKeepsSelection() {
         launch(compact = true)
         compose.onNodeWithText("词书管理").performScrollTo().performClick()
-        compose.onNodeWithText("大学英语四级").performScrollTo().performClick()
-        compose.onNodeWithText("选择至少一本词书，开启词书学习。").performScrollTo().assertIsDisplayed()
-        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("高考词汇"))
+        compose.onNodeWithText("选择词书").assertIsDisplayed()
+        compose.onNodeWithText("搜索词书").assertIsDisplayed()
+        compose.onNodeWithTag("study-book-list").performScrollToNode(hasText("高考词汇"))
         compose.onNodeWithText("高考词汇").assertIsDisplayed().performClick()
-        compose.runOnIdle { assertEquals(setOf("gk"), books) }
-        val bottom = compose.onNodeWithText("高考词汇").getUnclippedBoundsInRoot().bottom
-        val viewportBottom = compose.onNode(hasScrollToNodeAction()).getUnclippedBoundsInRoot().bottom
-        assertTrue("The final wordbook clears the settings list viewport", bottom <= viewportBottom)
+        compose.runOnIdle { assertEquals(setOf("cet4"), books) }
+        compose.onNodeWithContentDescription("取消选择词书").performClick()
+        compose.onNodeWithText("选择词书").assertDoesNotExist()
+        compose.runOnIdle { assertEquals(setOf("cet4"), books) }
     }
+    @Test fun wordbookSelectionIsAppliedOnlyAfterConfirmation() {
+        launch()
+        compose.onNodeWithText("词书管理").performScrollTo().performClick()
+        compose.onNodeWithTag("study-book-list").performScrollToNode(hasText("大学英语四级"))
+        compose.onNodeWithText("大学英语四级").performClick()
+        compose.runOnIdle { assertEquals(setOf("cet4"), books) }
+        compose.onNodeWithText("仅学习个人词库").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("选择词书").fetchSemanticsNodes().isEmpty() }
+        compose.runOnIdle { assertTrue(books.isEmpty()) }
+    }
+
+    @SdkSuppress(minSdkVersion = 29)
+    @Test fun updateSubpagePreviewsDownwardAndCancellationRetainsPage() {
+        predictiveBack = true
+        launch()
+        compose.onNodeWithText("检查更新").performScrollTo().performClick()
+        val before = compose.onNodeWithTag("settings-subpage").fetchSemanticsNode().boundsInRoot
+        val dispatcher = compose.runOnIdle {
+            WindowInspector.getGlobalWindowViews().mapNotNull { it.findViewTreeOnBackPressedDispatcherOwner() }
+                .last { it !== compose.activity }.onBackPressedDispatcher
+        }
+        compose.runOnIdle { dispatcher.dispatchOnBackStarted(BackEventCompat(0f, 200f, 0f, BackEventCompat.EDGE_LEFT)) }
+        compose.runOnIdle { dispatcher.dispatchOnBackProgressed(BackEventCompat(120f, 200f, .6f, BackEventCompat.EDGE_LEFT)) }
+        compose.waitForIdle()
+        val moving = compose.onNodeWithTag("settings-subpage").fetchSemanticsNode().boundsInRoot
+        assertEquals(before.left, moving.left, 1f)
+        assertEquals(before.width, moving.width, 1f)
+        assertTrue(moving.top > before.top)
+        compose.runOnIdle { dispatcher.dispatchOnBackCancelled() }
+        compose.waitForIdle()
+        assertEquals(before, compose.onNodeWithTag("settings-subpage").fetchSemanticsNode().boundsInRoot)
+        compose.onNodeWithText("接收 Beta 更新").assertIsDisplayed()
+        compose.runOnIdle { dispatcher.onBackPressed() }
+        compose.waitForIdle()
+        compose.onNodeWithText("个性化").assertIsDisplayed()
+        compose.onNodeWithText("日志获取").assertIsDisplayed()
+    }
+
     @Test fun roundTargetIsSavedFromMainStudySettings() {
         val prefs = compose.activity.getSharedPreferences("learning", 0)
         val existed = prefs.contains("expressive_round_limit")

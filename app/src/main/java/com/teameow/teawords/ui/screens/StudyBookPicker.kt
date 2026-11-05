@@ -36,10 +36,32 @@ private fun bookCategory(book: BookInfo): String = when (book.category) {
     else -> "其他"
 }
 
+/** Settings and the learning page share the same picker and apply/download behavior. */
+@Composable
+internal fun StudyBookPicker(helper: DatabaseHelper, selected: Set<String>,
+    onSelection: (Set<String>) -> Unit, onDismiss: () -> Unit, onApply: () -> Unit) {
+    val context = LocalContext.current
+    var books by remember(context) { mutableStateOf(OnlineWordbooks(context).catalog().map {
+        BookInfo(it.id, it.title, it.description, it.count, it.category)
+    }) }
+    var error by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(helper) {
+        try {
+            books = withContext(Dispatchers.IO) {
+                check(DictionaryGateway.open(context)) { "词书目录暂时无法读取，请关闭后重试。" }
+                checkNotNull(DictionaryGateway.sourceOrNull()).books()
+            }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (failure: Exception) { error = failure.message ?: "词书目录暂时无法读取。" }
+    }
+    StudyBookPicker(helper, books, selected, onSelection, onDismiss, onApply, catalogError = error)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, selected: Set<String>,
-    onSelection: (Set<String>) -> Unit, onDismiss: () -> Unit, onApply: () -> Unit) {
+    onSelection: (Set<String>) -> Unit, onDismiss: () -> Unit, onApply: () -> Unit,
+    catalogError: String? = null) {
     val context = LocalContext.current
     val downloads = remember(context) { OnlineWordbooks(context) }
     val scope = rememberCoroutineScope()
@@ -73,7 +95,7 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
     val ordered = books.sortedWith(compareBy({ listOf("cet4", "cet6", "ielts", "toefl", "gre", "zk", "gk", "ky").indexOf(it.id).let { n -> if (n < 0) Int.MAX_VALUE else n } }, { it.name }))
     val filtered = ordered.filter { book -> (category == "全部" || bookCategory(book) == category) &&
         (query.isBlank() || listOf(book.name, book.id, book.description).any { it.contains(query.trim(), ignoreCase = true) }) }
-    ModalBottomSheet(onDismissRequest = ::dismiss,
+    TeaModalBottomSheet(onDismissRequest = ::dismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = null,
         containerColor = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxWidth().height((LocalConfiguration.current.screenHeightDp - 12).dp.coerceAtLeast(240.dp)).imePadding()) {
@@ -98,6 +120,7 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
             }
             LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("study-book-list"),
                 contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                catalogError?.let { item { TeaStatusMessage(it, error = true) } }
                 error?.let { item { TeaStatusMessage(it, error = true) } }
                 if (filtered.isEmpty()) item { TeaEmptyState("没有匹配的词书", "换个关键词或分类试试。") }
                 filtered.groupBy(::bookCategory).forEach { (group, entries) ->

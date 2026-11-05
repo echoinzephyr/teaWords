@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -80,6 +81,7 @@ internal fun installedVersionCode(): Long {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsView(
+    wordbookHelper: DatabaseHelper,
     pronunciationDialect: PronunciationDialect,
     selectedWordbookIds: Set<String>,
     homeTitle: String,
@@ -117,6 +119,7 @@ fun SettingsView(
     dailyWallpaperUrl: String? = null
 ) {
     var currentPage by rememberSaveable { mutableStateOf(SettingsPage.Main) }
+    var wordbookDraft by rememberSaveable { mutableStateOf<Set<String>?>(null) }
     val pageStates = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
     val mainListState = rememberLazyListState()
     val version = installedVersionName()
@@ -164,7 +167,6 @@ fun SettingsView(
                     SettingsPage.Strategy -> "学习策略"
                     SettingsPage.Pronunciation -> "发音偏好"
                     SettingsPage.Translation -> "句子与长文翻译"
-                    SettingsPage.Wordbooks -> "词书管理"
                     SettingsPage.About -> "关于茶词"
                     SettingsPage.Update -> "检查更新"
                     SettingsPage.Logs -> "日志获取"
@@ -365,28 +367,6 @@ fun SettingsView(
                         item { TeaCaption("默认口音用于学习和快速排雷；词典页仍可分别播放 UK 与 US。") }
                         item { PronunciationResourcePanel() }
                     }
-                    SettingsPage.Wordbooks -> {
-                        item {
-                            TeaCard(containerColor = MaterialTheme.colorScheme.secondaryContainer) {
-                                Text("已选择 ${books.size} 本词书", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                                Text(if (books.isEmpty()) "选择至少一本词书，开启词书学习。" else "可同时选择多本词书；调整选择会保留已有学习记录。", color = MaterialTheme.colorScheme.onSecondaryContainer)
-                            }
-                        }
-                        items(LearningWordbook.available, key = { it.id }) { book ->
-                            val selected = book.id in selectedWordbookIds
-                            Surface(shape = RoundedCornerShape(20.dp), color = if (selected) MaterialTheme.colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent) {
-                                Row(Modifier.fillMaxWidth().toggleable(selected, role = Role.Checkbox) { checked ->
-                                    onSelectedWordbooksChange(if (checked) selectedWordbookIds + book.id else selectedWordbookIds - book.id)
-                                }.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text(book.title, style = MaterialTheme.typography.titleMedium)
-                                        Text(book.subtitle, style = MaterialTheme.typography.bodySmall)
-                                    }
-                                    Checkbox(selected, onCheckedChange = null)
-                                }
-                            }
-                        }
-                    }
                     SettingsPage.Translation -> Unit
                     SettingsPage.About -> {
                         item { AboutIdentity() }
@@ -422,7 +402,7 @@ fun SettingsView(
         }
         draggingHeader = false; headerDrag = 0f
     }
-    ModalBottomSheet(
+    TeaModalBottomSheet(
         modifier = Modifier.graphicsLayer { if (dragFromMain && currentPage == SettingsPage.Main) translationY = headerOffset },
         onDismissRequest = { if (currentPage == SettingsPage.Main) onBack() else currentPage = SettingsPage.Main },
         sheetState = sheetState,
@@ -430,15 +410,12 @@ fun SettingsView(
         dragHandle = null,
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        properties = ModalBottomSheetProperties(shouldDismissOnBackPress = currentPage == SettingsPage.Main)
+        backEnabled = currentPage == SettingsPage.Main
     ) {
-        BackHandler(currentPage != SettingsPage.Main) { currentPage = SettingsPage.Main }
         CompositionLocalProvider(LocalSettingsHeaderDrag provides dragBy, LocalSettingsHeaderRelease provides releaseDrag) {
         Box(Modifier.fillMaxWidth()) {
             val height = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 12.dp)
                 .coerceAtLeast(240.dp)
-            var lastPage by remember { mutableStateOf(SettingsPage.Appearance) }
-            if (currentPage != SettingsPage.Main) SideEffect { lastPage = currentPage }
             Box(Modifier.fillMaxWidth().height(height)) {
                 CoveredPage(covered = currentPage != SettingsPage.Main) {
                     Column(Modifier.fillMaxSize()) {
@@ -456,7 +433,7 @@ fun SettingsView(
                     item {
                         SettingsMenuGroup {
                             SettingsMenuRow(AppSymbols.Book5, "学习策略", "调整节奏") { currentPage = SettingsPage.Strategy }
-                            SettingsMenuRow(AppSymbols.BookmarkFlag, "词书管理", books.joinToString("、") { it.subtitle }.ifEmpty { "未选词书" }) { currentPage = SettingsPage.Wordbooks }
+                            SettingsMenuRow(AppSymbols.BookmarkFlag, "词书管理", books.joinToString("、") { it.subtitle }.ifEmpty { "未选词书" }) { wordbookDraft = selectedWordbookIds }
                             SettingsMenuRow(AppSymbols.VoiceSelection, "发音偏好", "美音 · 英音") { currentPage = SettingsPage.Pronunciation }
                             SettingsMenuRow(AppSymbols.Search, "句子与长文翻译", translationSummary) { currentPage = SettingsPage.Translation }
                         }
@@ -473,20 +450,27 @@ fun SettingsView(
                         }
                     }
                 }
-                androidx.compose.animation.AnimatedVisibility(visible = currentPage != SettingsPage.Main,
-                    enter = slideInVertically(spring(dampingRatio = .9f, stiffness = 450f)) { it / 3 } + fadeIn(),
-                    exit = slideOutVertically(spring(dampingRatio = 1f, stiffness = 500f)) { it / 3 } + fadeOut()) {
+                if (currentPage != SettingsPage.Main) key(currentPage) {
+                    PredictiveBackLayer(onBack = { currentPage = SettingsPage.Main }) { requestBack ->
                     Surface(Modifier.fillMaxSize().graphicsLayer { if (!dragFromMain) translationY = headerOffset },
                         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                         color = MaterialTheme.colorScheme.surfaceContainerLow, shadowElevation = 12.dp) {
                         CompositionLocalProvider(LocalSettingsInSheet provides true, LocalReservedBottom provides null) {
-                            screen(if (currentPage == SettingsPage.Main) lastPage else currentPage) { currentPage = SettingsPage.Main }
+                            Box(Modifier.fillMaxSize().testTag("settings-subpage")) {
+                                screen(currentPage, requestBack)
+                            }
                         }
+                    }
                     }
                 }
             }
         }
     }
+    }
+    wordbookDraft?.let { draft ->
+        StudyBookPicker(wordbookHelper, draft,
+            onSelection = { wordbookDraft = it }, onDismiss = { wordbookDraft = null },
+            onApply = { onSelectedWordbooksChange(draft); wordbookDraft = null })
     }
     if (confirmRemoveWallpaper) AlertDialog(
         onDismissRequest = { confirmRemoveWallpaper = false },

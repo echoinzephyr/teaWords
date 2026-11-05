@@ -48,7 +48,6 @@ internal fun PredictiveBackLayer(
     var phase by remember { mutableStateOf(BackPhase.Entering) }
     var gestureGeneration by remember { mutableIntStateOf(0) }
     var animationJob by remember { mutableStateOf<Job?>(null) }
-    var gestureExit by remember { mutableStateOf(false) }
     val latestEnabled by rememberUpdatedState(enabled)
     val commitBack = {
         if (phase != BackPhase.Committed) {
@@ -70,7 +69,6 @@ internal fun PredictiveBackLayer(
             gestureGeneration++
             animationJob?.cancel()
             // A back pressed during restoration continues the page retreat.
-            gestureExit = preview.value > 0f
             phase = BackPhase.Exiting
             onExitStarted()
             animationJob = scope.launch {
@@ -99,7 +97,6 @@ internal fun PredictiveBackLayer(
                 }
                 // Settle outside the gesture job: another back event cannot cancel a committed exit.
                 if (generation == gestureGeneration) {
-                    gestureExit = preview.value > 0f
                     phase = BackPhase.Exiting
                     onExitStarted()
                     animationJob = scope.launch {
@@ -135,16 +132,15 @@ internal fun PredictiveBackLayer(
             Modifier.fillMaxSize().graphicsLayer {
                 val shown = visibility.value.coerceIn(0f, 1f)
                 val gesture = preview.value.coerceIn(0f, 1f)
-                alpha = shown
-                val finishingGesture = gestureExit && (phase == BackPhase.Exiting || phase == BackPhase.Committed)
-                // Both system edges retreat the page toward the right, reversing its entrance.
-                translationX = if (topLevel && !finishingGesture) 0f else
-                    32.dp.toPx() * (1f - shown)
-                translationX += 24.dp.toPx() * gesture
-                translationY = if (topLevel && !finishingGesture) 12.dp.toPx() * (1f - shown) else 0f
-                scaleX = (1f - 0.015f * (1f - shown)) * (1f - 0.1f * gesture)
-                scaleY = scaleX
-                shape = RoundedCornerShape((28f * gesture).dp)
+                val exiting = phase == BackPhase.Exiting || phase == BackPhase.Committed
+                alpha = if (exiting) 1f else shown
+                // Both system edges reveal the source from the top without shrinking either page.
+                translationX = 0f
+                val distance = if (exiting) size.height else (if (topLevel) 12.dp else 32.dp).toPx()
+                translationY = distance * (1f - shown) + size.height * .35f * gesture * shown
+                scaleX = 1f
+                scaleY = 1f
+                shape = RoundedCornerShape((28f * maxOf(gesture, 1f - shown)).dp)
                 clip = true
             }.background(MaterialTheme.colorScheme.background)
                 // Absorb taps on empty space without merging the entire page into one
