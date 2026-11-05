@@ -37,10 +37,10 @@ private sealed interface UpdateOutcome {
  * 没有 release 也没有 tag 时如实说明，不谎报「已是最新」。
  */
 @Composable
-internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long) {
+internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long, updateChecker: UpdateChecker? = null) {
     val uri = LocalUriHandler.current
     val scope = rememberCoroutineScope()
-    val checker = remember { UpdateChecker() }
+    val checker = remember(updateChecker) { updateChecker ?: UpdateChecker() }
     val context = LocalContext.current
     val preferences = remember(context) { AppPreferences(context) }
     var receiveBeta by remember { mutableStateOf(preferences.receiveBetaUpdates) }
@@ -103,7 +103,7 @@ internal fun UpdateCheckCard(currentVersion: String, currentVersionCode: Long) {
                         content = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Text(
-                        "如为私有仓库，请在浏览器中登录有访问权限的 GitHub 账号。",
+                        "可稍后重试，或打开发布页手动下载。",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

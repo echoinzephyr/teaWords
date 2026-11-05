@@ -5,12 +5,15 @@ import com.google.gson.JsonObject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
 
 /** 一次「检查更新」拿到的版本信息。 */
 data class UpdateInfo(
@@ -86,33 +89,55 @@ fun isNewerVersion(latest: String?, current: String?): Boolean {
 }
 
 /**
- * 只读 GitHub 公开 API 的版本检查：
- *
- * - 匿名获取公开发布信息及 APK 附件，不发送设备或账号信息。
- * - 先问 `/releases/latest`，404（仓库还没有正式发布）时退回 `/releases` 列表，再退回 `/tags`。
- * - 三者都为空时返回 `null`，由界面如实说明「仓库还没有发布版本」，而不是假装是最新版。
+ * 匿名读取公开发布信息。API 不可用时读取同一仓库维护的静态清单；
+ * 正式版与预发布分别缓存五分钟，并遵守 GitHub 返回的限流等待时间。
  */
 class UpdateChecker(
-    private val client: OkHttpClient = OkHttpClient(),
+    private val client: OkHttpClient = OkHttpClient.Builder().callTimeout(20, TimeUnit.SECONDS).build(),
     private val owner: String = OWNER,
-    private val repo: String = REPO
+    private val repo: String = REPO,
+    private val now: () -> Long = System::currentTimeMillis
 ) {
+    private val mutex = Mutex()
+    private data class Cached(val time: Long, val info: UpdateInfo?)
+    private val cached = mutableMapOf<Boolean, Cached>()
+    private var apiRetryAt = 0L
+    private var apiFailure: IOException? = null
+
     suspend fun latest(includePrereleases: Boolean = false): Result<UpdateInfo?> = withContext(Dispatchers.IO) {
+        mutex.withLock { checkLatest(includePrereleases) }
+    }
+
+    private fun checkLatest(includePrereleases: Boolean): Result<UpdateInfo?> {
         try {
-            if (!includePrereleases) releaseLatest()?.let { return@withContext Result.success(it) }
-            releaseList(includePrereleases)?.let { return@withContext Result.success(it) }
-            tagList(includePrereleases)?.let { return@withContext Result.success(it) }
-            Result.success(null)
+            cached[includePrereleases]?.takeIf { now() - it.time in 0 until CACHE_MILLIS }
+                ?.let { return Result.success(it.info) }
+            val info = try {
+                if (now() < apiRetryAt) throw checkNotNull(apiFailure)
+                (if (!includePrereleases) releaseLatest() else null)
+                    ?: releaseList(includePrereleases) ?: tagList(includePrereleases)
+            } catch (e: IOException) {
+                if (e is ApiException && e.code !in listOf(403, 429, 500, 502, 503, 504)) throw e
+                try { manifestLatest(includePrereleases) } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (fallback: Exception) {
+                    throw IOException("${e.message}；备用更新源也暂时无法访问，请稍后重试或打开发布页", e)
+                }
+            }
+            cached[includePrereleases] = Cached(now(), info)
+            return Result.success(info)
         } catch (e: CancellationException) {
             throw e
         } catch (e: SocketTimeoutException) {
-            Result.failure(IOException("连接 GitHub 超时，请检查网络后重试", e))
+            return Result.failure(IOException("连接 GitHub 超时，请检查网络后重试", e))
         } catch (e: UnknownHostException) {
-            Result.failure(IOException("无法解析 api.github.com，当前网络可能无法访问 GitHub", e))
+            return Result.failure(IOException("无法连接 GitHub，请检查网络后重试", e))
         } catch (e: Exception) {
-            Result.failure(IOException(e.message ?: "检查更新失败", e))
+            return Result.failure(IOException(e.message ?: "检查更新失败", e))
         }
     }
+
+    private class ApiException(val code: Int, message: String) : IOException(message)
 
     private fun get(path: String): Pair<Int, String> {
         val request = Request.Builder()
@@ -122,8 +147,41 @@ class UpdateChecker(
             .header("User-Agent", "teaWords-android")
             .build()
         client.newCall(request).execute().use { response ->
-            return response.code to (response.body?.string().orEmpty())
+            val body = response.body?.string().orEmpty()
+            if (!response.isSuccessful && response.code != 404) {
+                val limited = response.code == 429 || response.header("X-RateLimit-Remaining") == "0" ||
+                    response.header("Retry-After") != null || body.contains("rate limit", ignoreCase = true)
+                val message = when {
+                    limited -> "GitHub 更新接口请求过于频繁（HTTP ${response.code}），请稍后重试"
+                    response.code == 403 -> "GitHub 更新接口暂时拒绝访问（HTTP 403）"
+                    else -> "GitHub 更新接口返回 HTTP ${response.code}"
+                }
+                val failure = ApiException(response.code, message)
+                if (response.code == 403 || response.code == 429) {
+                    val reset = response.header("X-RateLimit-Reset")?.toLongOrNull()?.times(1000)
+                    val retry = response.header("Retry-After")?.toLongOrNull()?.coerceIn(0, 86_400)?.times(1000)
+                    apiRetryAt = maxOf(now() + 60_000, reset ?: 0, now() + (retry ?: 0))
+                    apiFailure = failure
+                }
+                throw failure
+            }
+            return response.code to body
         }
+    }
+
+    /** 清单由发布工作流生成，不使用第三方镜像，也不在客户端嵌入访问令牌。 */
+    private fun manifestLatest(includePrereleases: Boolean): UpdateInfo {
+        val request = Request.Builder()
+            .url("https://raw.githubusercontent.com/$owner/$repo/main/updates/releases.json")
+            .header("User-Agent", "teaWords-android").build()
+        val json = client.newCall(request).execute().use { response ->
+            check(response.isSuccessful) { "备用更新源返回 HTTP ${response.code}" }
+            JsonParser.parseString(response.body?.string().orEmpty()).asJsonObject
+        }
+        check(json.get("schema")?.asInt == 1 && json.text("repository") == "$owner/$repo") { "更新清单格式不正确" }
+        return json.getAsJsonArray("releases").mapNotNull { releaseInfo(it.asJsonObject, includePrereleases) }
+            .reduceOrNull { best, next -> if (isNewerVersion(next.tag, best.tag)) next else best }
+            ?: throw IOException("备用清单暂无对应渠道的发布版本")
     }
 
     /** 仓库没有正式发布时返回 null；其它非 2xx 直接抛错，交给调用方显示原因。 */
@@ -201,5 +259,6 @@ class UpdateChecker(
         const val REPO = "teaWords"
         const val PAGE_URL = "https://github.com/echoinzephyr/teaWords"
         const val RELEASES_URL = "https://github.com/echoinzephyr/teaWords/releases"
+        private const val CACHE_MILLIS = 5 * 60_000L
     }
 }

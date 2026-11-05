@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "repository": "echoinzephyr/teaWords",
+  "releases": [
+    {
+      "tag_name": "v1.2.2-rc.1",
+      "name": "teaWords 1.2.2 RC1",
+      "body": "teaWords 1.2.2-rc.1 候选预发布。\r\n\r\n**RC1 修订（versionCode 6）**：检查更新新增默认关闭的“接收 Beta 更新”开关。开启后可接收 Beta、RC 等 GitHub Pre-release；关闭后只检查稳定版。修复 rc.2 / rc.10 排序，并保存更新渠道偏好。已经安装旧 RC1 的用户，请重新下载安装本页 APK 一次，以获得此开关。\r\n\r\n修订源码：[375cf76](https://github.com/echoinzephyr/teaWords/commit/375cf76)。保持原 RC1 标签，不改写已有标签历史。\r\n\r\n- 大幅缩小安装包，移除完整词典和 ML Kit，保留原有词条编号及学习记录。\r\n- 新增有道在线释义、英美音标、短语、词形与搜索建议，查询结果最多在内存缓存 64 条。\r\n- 词书按需下载并校验，支持中断续传及下载后离线学习；服务端程序与部署包已准备。\r\n- 调整学习首页、词书封面、设置与搜索过渡，移除重复个人入口和重复词条详情卡。\r\n- 保留 MyMemory、DeepSeek、收藏、笔记、复习及暂停续学流程。\r\n\r\n**本 RC 尚未配置线上词书下载服务。** 升级用户可继续使用已有词书；新安装可使用在线查词、短课及个人词表导入。线上词书下载待域名和 HTTPS 部署后开放。阿里云未作修改。\r\n\r\nAndroid 7.0 及以上；使用既有发布签名，可覆盖同签名旧版本并保留数据。此版本标记为 Pre-release，不替代稳定版。\r\n\r\n已完成 168 项单元测试、Lint、调试/压缩构建与 OnePlus 真机页面、下载、进度持久化及压缩包启动检查。\r\n",
+      "html_url": "https://github.com/echoinzephyr/teaWords/releases/tag/v1.2.2-rc.1",
+      "published_at": "2026-11-04T14:51:20Z",
+      "prerelease": true,
+      "draft": false,
+      "assets": [
+        {
+          "name": "teaWords-1.2.2-rc.1.apk",
+          "browser_download_url": "https://github.com/echoinzephyr/teaWords/releases/download/v1.2.2-rc.1/teaWords-1.2.2-rc.1.apk",
+          "size": 4304994,
+          "digest": "sha256:7757c74076fd02d5157d38b804587fd63a947401d56cccb815d6b06e1ccdecae"
+        }
+      ]
+    },
+    {
+      "tag_name": "v1.2.1",
+      "name": "teaWords 1.2.1",
+      "body": "## 首页与设置体验\n\n- 首页移除常驻搜索框，改为下拉呼出搜索；输入框跟随键盘，联想结果显示在上方，让壁纸有更多展示空间。\n- 调整首页底部操作区和导航栏透明度，修复下拉搜索时底栏尺寸跳动及壁纸发白。\n- 设置与词汇统计改用从底部升起的面板；设置子页支持横向进入、返回手势回到设置主页，修复面板下滑时的抖动。\n- 重新设计主页定制，可选择纯色、每日壁纸或设备图片；自定义壁纸会保存到应用内，重启后保留，也可更换或移除。\n- 词汇统计面板改为右上角关闭按钮。\n\n## 安装\n\n下载下方 **teaWords-1.2.1.apk**。与 1.2.0 使用同一发布签名，可覆盖安装并保留数据。也可在 1.2.0 的“检查更新”中下载安装；系统安装确认仍需用户操作。\n\n## 验证\n\n145 项单元测试、发布构建和签名检查通过；已在三星设备上检查搜索、设置返回、面板下滑、自定义壁纸保存与重启留存。1.2.0 已正确发现 v1.2.1，当前设备网络连接 GitHub 附件超时，应用内下载和后续安装未能完成；同签名 APK 覆盖安装至 1.2.1 已成功。\n",
+      "html_url": "https://github.com/echoinzephyr/teaWords/releases/tag/v1.2.1",
+      "published_at": "2026-10-04T10:37:54Z",
+      "prerelease": false,
+      "draft": false,
+      "assets": [
+        {
+          "name": "teaWords-1.2.1.apk",
+          "browser_download_url": "https://github.com/echoinzephyr/teaWords/releases/download/v1.2.1/teaWords-1.2.1.apk",
+          "size": 108646773,
+          "digest": "sha256:57235f320e95d5b15c9cd02969777c28c7c73e437e1eaaf56b3fc5576377d4f9"
+        }
+      ]
+    },
+    {
+      "tag_name": "v1.2.0",
+      "name": "teaWords 1.2.0 · 随手练与应用内更新",
+      "body": "## 随手练与更新安装\n\n- 点“开始小练习”先选择词数：3、5、10、20，或输入 1–100；记住选择，优先到期词，遵守每日新词额度。\n- 增加词义单选、听音选词、整组配对反馈、随机字母拼写填空和已有离线例句的语境题；每步保存，可暂停续接。\n- 随手练接入复习调度，展示到期与待复习数量；辅助练习不会冒充独立回忆掌握。\n- 修复三星 SMT 美音识别，听音无法使用时可切换文字题。\n- 检查更新支持直接下载 APK、后台下载、进度恢复和安装包校验，完成后进入 Android 系统安装确认。\n- 改善页面过渡；预测性返回默认关闭，可在设置中打开。\n- 首页下拉进入搜索，返回箭头退出搜索，叉号清空输入；修复键盘与底栏显示、加载进度闪动，调整回望标题，移除排雷说明卡。\n\n## 安装\n\n下载下方 **teaWords-1.2.0.apk**。与 1.1.0 使用相同发布签名，可覆盖旧发布版保留数据。\n旧版 1.1.0 请先手动安装本次更新；1.2.0 起后续版本可在应用内下载并打开系统安装确认。首次使用需允许茶词安装未知应用。\nAndroid Studio 调试版须使用同签名安装包，不能直接覆盖正式发布版。\n\n## 验证与范围\n\n- 145 项单元测试、36 项三星 S10e 设备回归测试通过，正式构建和 lint 通过。\n- 原生预测性返回预览需要 Android 14+；本次 Android 12 真机尚不能验证高版本系统手势。\n- 完整 WordNet / Kaikki 数据尚未接入；英音需要对应系统语音资源。",
+      "html_url": "https://github.com/echoinzephyr/teaWords/releases/tag/v1.2.0",
+      "published_at": "2026-09-30T08:47:07Z",
+      "prerelease": false,
+      "draft": false,
+      "assets": [
+        {
+          "name": "teaWords-1.2.0.apk",
+          "browser_download_url": "https://github.com/echoinzephyr/teaWords/releases/download/v1.2.0/teaWords-1.2.0.apk",
+          "size": 108630389,
+          "digest": "sha256:75135caff59261b8fe3634eb5a6d1bf2026d71c13aad9c43fbfdb0095b01c2ce"
+        }
+      ]
+    },
+    {
+      "tag_name": "v1.1.0",
+      "name": "茶词 1.1.0",
+      "body": "茶词 1.1.0 将新版工程统一到仓库根目录，提供免下载的中英句子与长文翻译，并整理学习、回望和查词体验。\r\n\r\n### 本次更新\r\n- 默认在线翻译，无需下载语言模型；长文保留换行，支持进度、部分译文、重试和复制。\r\n- 可选 DeepSeek 全文翻译（本人密钥，服务商按用量计费）及 Google 设备端离线翻译；偏好统一放在设置。\r\n- 回望复习查过的生词，暂不包含句子；学习保留快速模式开关，删除重复入口。\r\n- 统一 Expressive 圆角菜单，长菜单改为简洁主菜单和二级选项。\r\n- 重写关于，暂时移除关于页检查更新，修复来源链接圆角裁切文字。\r\n- 重绘茶杯与书页图标，支持自适应图标及 Android 13 主题图标。\r\n- 修复学习保存、数据迁移、页面恢复与偏好持久化；更新 README 和更新日志。\r\n\r\n### 下载与安装\r\n下载 `teaWords-1.1.0.apk`，最低支持 Android 7.0。版本号 1.1.0，versionCode 2；附带 SHA256 校验文件和图标预览。\r\n\r\n发布包使用独立发布签名，不能覆盖 Android Studio 的调试签名安装。切换前请保留数据；卸载调试版会清除其应用数据。模拟器继续保留同签名调试版和既有数据。\r\n\r\n免费翻译受网络和每日额度限制；DeepSeek 需要本人 API 密钥，本次未进行真实付费调用。设备端离线翻译仍需提前下载模型。\r\n\r\n### 验证\r\n139 项 JVM 单元测试通过，9 项模拟器测试通过；菜单精简和关于修复后再次通过 5 项相关界面测试。模拟器已实际完成在线长文翻译，保留两段换行。Debug/Release 构建与静态检查通过，APK 签名和版本信息核查通过。\r\n",
+      "html_url": "https://github.com/echoinzephyr/teaWords/releases/tag/v1.1.0",
+      "published_at": "2026-09-29T14:30:42Z",
+      "prerelease": false,
+      "draft": false,
+      "assets": [
+        {
+          "name": "teaWords-1.1.0.apk",
+          "browser_download_url": "https://github.com/echoinzephyr/teaWords/releases/download/v1.1.0/teaWords-1.1.0.apk",
+          "size": 108547917,
+          "digest": "sha256:38d9e3b3384fdea5bcdf110fe35a05349a94b8f3d1699b611fab035eec1d1a36"
+        }
+      ]
+    }
+  ]
+}
