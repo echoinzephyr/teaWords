@@ -4,13 +4,13 @@ import android.graphics.Bitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
-import com.teameow.teawords.MainActivity
+import com.teameow.teawords.TeaWordsActivity
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
 
 class SearchTransitionTest {
-    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    @get:Rule val compose = createAndroidComposeRule<TeaWordsActivity>()
 
     @Test fun homeSearchMovesIntoResultAndReturnsWithDraft() {
         compose.waitUntil(15_000) { compose.onAllNodesWithContentDescription("打开下拉搜索").fetchSemanticsNodes().isNotEmpty() }

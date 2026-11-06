@@ -14,7 +14,7 @@ PATHS = {'back': BACK, 'front': FRONT, 'leaf': LEAF, 'a': LETTER_A, 'wen': LETTE
 COLORS = {'back': '#045674', 'front': '#28AAA0', 'leaf': '#087582', 'a': '#F7FAFC', 'wen': '#F7FAFC'}
 GRADIENTS = {'back': ('#075D7D', '#034A66'), 'front': ('#32B5A8', '#22A19D'), 'leaf': ('#148894', '#00626E')}
 
-def vector(kinds, *, adaptive=False, background=None, monochrome=False, mask=False):
+def vector(kinds, *, adaptive=False, background=None, monochrome=False, mask=False, monet=False):
     lines = ['<?xml version="1.0" encoding="utf-8"?>', '<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="108dp" android:height="108dp" android:viewportWidth="1254" android:viewportHeight="1254">']
     if background:
         lines.append(f'    <path android:fillColor="{BACKGROUND}" android:pathData="{background}" />')
@@ -29,9 +29,10 @@ def vector(kinds, *, adaptive=False, background=None, monochrome=False, mask=Fal
         lines.append(f'        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="{BACK} {LETTER_A} {FRONT} {LETTER_WEN} {LEAF}" />')
     else:
         for kind in kinds:
-            color = '#FFFFFFFF' if mask else COLORS[kind]
+            role = {'back': 'primary', 'front': 'tertiary', 'leaf': 'primary', 'a': 'on_primary', 'wen': 'on_tertiary'}[kind]
+            color = '#FFFFFFFF' if mask else f'@color/launcher_monet_{role}' if monet else COLORS[kind]
             attrs = f'android:fillColor="{color}" android:fillType="evenOdd" android:pathData="{PATHS[kind]}"'
-            if not mask and kind in GRADIENTS:
+            if not mask and not monet and kind in GRADIENTS:
                 attrs = attrs.replace(f'android:fillColor="{color}" ', '')
                 first, last = GRADIENTS[kind]
                 lines.extend([f'        <path {attrs}>', f'            <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="159" android:startY="269" android:endX="1098" android:endY="1085" android:startColor="{first}" android:endColor="{last}" /></aapt:attr>', '        </path>'])
@@ -45,12 +46,30 @@ def write(path, content):
 
 rounded = 'M320,0 H934 Q1254,0 1254,320 V934 Q1254,1254 934,1254 H320 Q0,1254 0,934 V320 Q0,0 320,0 Z'
 write(RES / 'drawable/teawords_mark.xml', vector(PATHS, adaptive=True))
+write(RES / 'drawable/teawords_mark_monet.xml', vector(PATHS, adaptive=True, monet=True))
 write(RES / 'drawable/teawords_monochrome.xml', vector([], adaptive=True, monochrome=True))
 write(RES / 'drawable/teawords_logo.xml', vector(PATHS, background=rounded))
 write(RES / 'drawable/teawords_logo_round.xml', vector(PATHS, background='M627,0 A627,627 0,1 1,627,1254 A627,627 0,1 1,627,0 Z'))
 for filename, kind in [('symbol', 'back'), ('accent', 'front'), ('leaf', 'leaf'), ('letter_a', 'a'), ('letter_wen', 'wen')]:
     write(RES / f'drawable/teawords_{filename}.xml', vector([kind], mask=True))
-write(RES / 'values/icon_colors.xml', f'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="launcher_background">{BACKGROUND}</color>\n</resources>\n')
+def color_resources(colors):
+    return '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n' + ''.join(f'    <color name="{name}">{value}</color>\n' for name, value in colors.items()) + '</resources>\n'
+
+fallback = {'background': BACKGROUND, 'primary': COLORS['back'], 'tertiary': COLORS['front'], 'on_primary': COLORS['a'], 'on_tertiary': COLORS['wen']}
+write(RES / 'values/icon_colors.xml', color_resources({'launcher_background': BACKGROUND, **{f'launcher_monet_{role}': value for role, value in fallback.items()}}))
+for dark in (False, True):
+    night = '-night' if dark else ''
+    tones = {'background': 'accent1_700' if dark else 'accent1_100', 'primary': 'accent1_200' if dark else 'accent1_600',
+             'tertiary': 'accent3_200' if dark else 'accent3_600', 'on_primary': 'accent1_800' if dark else 'accent1_0',
+             'on_tertiary': 'accent3_800' if dark else 'accent3_0'}
+    write(RES / f'values{night}-v31/icon_monet_colors.xml', color_resources({f'launcher_monet_{role}': f'@android:color/system_{tone}' for role, tone in tones.items()}))
+    mode = 'dark' if dark else 'light'
+    roles = {'background': 'primary_container', 'primary': 'primary', 'tertiary': 'tertiary', 'on_primary': 'on_primary', 'on_tertiary': 'on_tertiary'}
+    write(RES / f'values{night}-v34/icon_monet_colors.xml', color_resources({f'launcher_monet_{role}': f'@android:color/system_{native}_{mode}' for role, native in roles.items()}))
+write(RES / 'mipmap-anydpi/ic_launcher_monet.xml', '<?xml version="1.0" encoding="utf-8"?>\n<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item android:drawable="@drawable/teawords_logo" /></layer-list>\n')
+for version in (26, 33):
+    mono = '\n    <monochrome android:drawable="@drawable/teawords_monochrome" />' if version >= 33 else ''
+    write(RES / f'mipmap-anydpi-v{version}/ic_launcher_monet.xml', f'<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n    <background android:drawable="@color/launcher_monet_background" />\n    <foreground android:drawable="@drawable/teawords_mark_monet" />{mono}\n</adaptive-icon>\n')
 defs = '\n'.join(f'<linearGradient id="{kind}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="{first}"/><stop offset="1" stop-color="{last}"/></linearGradient>' for kind, (first, last) in GRADIENTS.items())
 shapes = '\n'.join(f'<path d="{path}" fill="{("url(#" + kind + ")") if kind in GRADIENTS else COLORS[kind]}" fill-rule="evenodd"/>' for kind, path in PATHS.items())
 write(BRAND / 'teawords-logo.svg', f'''<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 1254 1254">

@@ -418,13 +418,13 @@ internal fun TeaStatusMessage(message: String, error: Boolean = false) {
 @Composable
 internal fun TeaPanelHeader(title: String, onClose: () -> Unit,
     enabled: Boolean = true, closeLabel: String = "关闭$title", onBack: (() -> Unit)? = null,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier, titleStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleLarge) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column {
             Row(modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 onBack?.let { IconButton(onClick = it, enabled = enabled) { Icon(AppSymbols.ArrowBack, "返回") } }
-                Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge,
+                Text(title, Modifier.weight(1f), style = titleStyle,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
                 FilledTonalIconButton(onClick = onClose, enabled = enabled, modifier = Modifier.size(44.dp),
                     colors = IconButtonDefaults.filledTonalIconButtonColors(

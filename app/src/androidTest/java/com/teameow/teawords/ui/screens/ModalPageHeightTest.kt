@@ -2,13 +2,13 @@ package com.teameow.teawords.ui.screens
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import com.teameow.teawords.MainActivity
+import com.teameow.teawords.TeaWordsActivity
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 class ModalPageHeightTest {
-    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    @get:Rule val compose = createAndroidComposeRule<TeaWordsActivity>()
 
     @Test fun statisticsAndSettingsExpandToTheSameTopAndShareHeaderHeight() {
         compose.waitUntil(15_000) { compose.onAllNodesWithContentDescription("设置").fetchSemanticsNodes().isNotEmpty() }

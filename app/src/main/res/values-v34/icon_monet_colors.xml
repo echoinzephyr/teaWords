@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="launcher_monet_background">@android:color/system_primary_container_light</color>
+    <color name="launcher_monet_primary">@android:color/system_primary_light</color>
+    <color name="launcher_monet_tertiary">@android:color/system_tertiary_light</color>
+    <color name="launcher_monet_on_primary">@android:color/system_on_primary_light</color>
+    <color name="launcher_monet_on_tertiary">@android:color/system_on_tertiary_light</color>
+</resources>

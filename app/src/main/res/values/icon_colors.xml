@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="launcher_background">#B9E4FB</color>
+    <color name="launcher_monet_background">#B9E4FB</color>
+    <color name="launcher_monet_primary">#045674</color>
+    <color name="launcher_monet_tertiary">#28AAA0</color>
+    <color name="launcher_monet_on_primary">#F7FAFC</color>
+    <color name="launcher_monet_on_tertiary">#F7FAFC</color>
 </resources>

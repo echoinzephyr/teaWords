@@ -206,6 +206,7 @@ internal fun SettingsPanelHeader(title: String, onBack: (() -> Unit)? = null,
     val currentDrag by rememberUpdatedState(drag)
     val currentRelease by rememberUpdatedState(release)
     TeaPanelHeader(title, onClose, enabled, if (onBack == null) "关闭设置" else "关闭子设置", onBack,
+        titleStyle = if (onBack == null) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge,
         modifier = Modifier.testTag("settings-panel-header").pointerInput(Unit) {
             detectVerticalDragGestures(onDragEnd = { currentRelease() }, onDragCancel = { currentRelease() }) { change, amount ->
                 change.consume(); currentDrag(amount)

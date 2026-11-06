@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
 
-class MainActivity : ComponentActivity() {
+class TeaWordsActivity : ComponentActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var levelProvider: WordLevelProvider
@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
         levelProvider = WordLevelProvider(this)
         api = DictionaryApi()
         val preferences = AppPreferences(this)
+        LauncherIconController.sync(this, preferences.dynamicColor)
 
         // Render first; migrations and the compact index must not hold the first UI frame.
         // MainScreen is mounted only after both are ready, so readers cannot race schema setup.
@@ -112,6 +113,7 @@ class MainActivity : ComponentActivity() {
                     onCustomFontScaleChange = { preferences.customFontScale = it; fontScale = preferences.customFontScale },
                     onPureBlackChange = { preferences.pureBlack = it; pureBlack = it },
                     onDynamicColorChange = {
+                        LauncherIconController.sync(this, it)
                         preferences.dynamicColor = it
                         dynamicColor = it
                     },

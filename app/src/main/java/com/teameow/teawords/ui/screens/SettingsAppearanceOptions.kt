@@ -91,7 +91,7 @@ internal fun SettingsAppearanceOptions(
                     val selected = pureBlack == (index == 1)
                     Surface(shape = RoundedCornerShape(20.dp),
                         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-                        modifier = Modifier.selectable(selected, role = Role.RadioButton, onClick = { onPureBlack(index == 1) })) {
+                        modifier = Modifier.clip(RoundedCornerShape(20.dp)).selectable(selected, role = Role.RadioButton, onClick = { onPureBlack(index == 1) })) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Surface(Modifier.size(34.dp, 26.dp), shape = RoundedCornerShape(8.dp),
                                 color = if (index == 1) Color.Black else MaterialTheme.colorScheme.surfaceContainerHighest) {
@@ -172,7 +172,7 @@ private fun AppearanceSegments(labels: List<String>, selected: Int, tag: String,
             labels.forEachIndexed { index, label ->
                 Surface(shape = CircleShape,
                     color = if (index == selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
-                    modifier = Modifier.weight(1f).selectable(index == selected, role = Role.RadioButton, onClick = { onSelected(index) })) {
+                    modifier = Modifier.weight(1f).clip(CircleShape).selectable(index == selected, role = Role.RadioButton, onClick = { onSelected(index) })) {
                     Box(Modifier.heightIn(min = 44.dp).padding(horizontal = 8.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
                         Text(label, style = MaterialTheme.typography.labelLarge)
                     }
@@ -184,7 +184,7 @@ private fun AppearanceSegments(labels: List<String>, selected: Int, tag: String,
 
 @Composable
 private fun ThemeColorDisc(label: String, selected: Boolean, colors: ColorScheme, onClick: () -> Unit) {
-    Box(Modifier.size(56.dp).selectable(selected, role = Role.RadioButton, onClick = onClick)
+    Box(Modifier.size(56.dp).clip(CircleShape).selectable(selected, role = Role.RadioButton, onClick = onClick)
         .semantics { contentDescription = label }.then(if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier)
         .padding(5.dp).clip(CircleShape), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
