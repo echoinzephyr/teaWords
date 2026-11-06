@@ -37,6 +37,17 @@ class ReviewCoordinator(
     private val tracer: KnowledgeTracer = BayesianKnowledgeTracing,
     private val scheduler: SpacedRepetitionScheduler = FsrsScheduler
 ) {
+    companion object {
+        /** Learning steps are product policy; keep the FSRS memory equations unchanged. */
+        fun scheduledIntervalDays(memory: MemoryState, grade: ReviewGrade, retention: Double): Double? {
+            val interval = FsrsScheduler.nextIntervalDays(memory, retention) ?: return null
+            return when {
+                grade == ReviewGrade.AGAIN -> minOf(interval, 10.0 / 1440.0)
+                memory.reps == 1 -> minOf(interval, 1.0)
+                else -> interval
+            }
+        }
+    }
     /** Recognition schedules practice without upgrading free-recall mastery or ability. */
     fun gradeRecognition(
         belief: KnowledgeBelief, memory: MemoryState, ability: AbilityEstimate,
@@ -44,7 +55,8 @@ class ReviewCoordinator(
     ): ReviewVerdict {
         val grade = if (correct) ReviewGrade.HARD else ReviewGrade.AGAIN
         val nextMemory = scheduler.review(memory, grade, now)
-        val interval = scheduler.nextIntervalDays(nextMemory, targetRetention)?.coerceAtMost(1.0)
+        val interval = scheduler.nextIntervalDays(nextMemory, targetRetention)?.coerceAtMost(
+            if (grade == ReviewGrade.AGAIN) 10.0 / 1440.0 else 1.0)
         return ReviewVerdict(grade, belief, nextMemory, ability, interval,
             interval?.let { now + (it * MemoryState.MILLIS_PER_DAY).toLong() })
     }
@@ -72,7 +84,13 @@ class ReviewCoordinator(
         }
         val knowledge = tracer.observe(belief, correct = correct && !revealed, context = context, now = now)
         val nextMemory = scheduler.review(memory, grade, now)
-        val interval = scheduler.nextIntervalDays(nextMemory, targetRetention)
+        val interval = scheduler.nextIntervalDays(nextMemory, targetRetention)?.let {
+            when {
+                grade == ReviewGrade.AGAIN -> minOf(it, 10.0 / 1440.0)
+                nextMemory.reps == 1 -> minOf(it, 1.0)
+                else -> it
+            }
+        }
         val nextAbility = if (revealed) ability else AbilityEstimator.update(ability, ResponseObservation(difficulty, correct, elapsedMillis))
         return ReviewVerdict(
             grade = grade,

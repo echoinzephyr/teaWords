@@ -129,6 +129,7 @@ class SenseRepository(private val helper: DatabaseHelper) {
             )
             db.execSQL("CREATE INDEX IF NOT EXISTS test_records_time ON $TABLE_TEST_RECORDS(timestamp)")
             db.execSQL("CREATE INDEX IF NOT EXISTS test_records_word ON $TABLE_TEST_RECORDS(word_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS test_records_sense_mode_time ON $TABLE_TEST_RECORDS(sense_id,mode,timestamp)")
             addEventColumns(db)
             addTestRecordColumns(db)
         }

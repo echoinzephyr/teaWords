@@ -144,6 +144,9 @@ internal fun ImmersiveWordScreen(
     LaunchedEffect(word, revealed) { if (revealed && !onlineAttempted) lookupOnline() }
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(typing, editingNote) {
+        if (!typing && !editingNote) { focus.clearFocus(force = true); keyboard?.hide() }
+    }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val activeTime = remember(word) { longArrayOf(0, 0) }
     DisposableEffect(word, lifecycle) {
@@ -232,10 +235,9 @@ internal fun ImmersiveWordScreen(
                     contentPadding = PaddingValues(horizontal = layout.horizontalPadding, vertical = if (layout.compact) 12.dp else 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     item {
                         Box(Modifier.fillMaxWidth()) {
-                            Column(Modifier.fillMaxWidth().padding(horizontal = 42.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                            Column(Modifier.fillMaxWidth().padding(horizontal = 52.dp), horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(word, fontSize = layout.wordSize,
-                                    fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = layout.wordSize * 1.2f)
+                                StudyAdaptiveWord(word)
                                 TextButton(onClick = {
                                     val dialect = pronunciation.dialect ?: PronunciationDialect.US
                                     if (dictionaryAudio) audio.play(word, dialect) else { audio.stop(); speech.manager.play(word, dialect) }
@@ -252,8 +254,11 @@ internal fun ImmersiveWordScreen(
                                     }, fontSize = 15.sp)
                                     Spacer(Modifier.width(5.dp)); Icon(AppSymbols.VolumeUp, "播放发音", Modifier.size(16.dp))
                                 }
-                                if (onlineEntry == null && details.phonetic.isNotBlank()  )
-                                    Text("/${details.phonetic.trim('/')}/", fontSize = 14.sp, color = StudyInk.copy(alpha = .65f))
+                                if (onlineEntry == null && details.phonetic.isNotBlank())
+                                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = .92f)) {
+                                        Text("/${details.phonetic.trim('/')}/", Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                                            fontSize = 14.sp, color = StudyInk, textAlign = TextAlign.Center)
+                                    }
                                 Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                                     repeat(3) { dot -> Box(Modifier.size(8.dp).background(
                                         if (revealed && dot == 0) StudyInk else StudyInk.copy(alpha = .25f), CircleShape)) }
@@ -284,8 +289,12 @@ internal fun ImmersiveWordScreen(
                             }
                         }
                     }
-                    if (!revealed) item { Text("← 左滑进入拼写", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
-                        fontSize = 12.sp, color = StudyInk.copy(alpha = .7f)) }
+                    if (!revealed) item { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = .92f)) {
+                            Text("← 左滑进入拼写", Modifier.padding(horizontal = 14.dp, vertical = 7.dp), textAlign = TextAlign.Center,
+                                fontSize = 12.sp, color = StudyInk)
+                        }
+                    } }
                     (error ?: localError)?.let { message -> item {
                         Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.errorContainer,
                             contentColor = MaterialTheme.colorScheme.onErrorContainer) {

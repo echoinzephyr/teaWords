@@ -12,8 +12,8 @@ import kotlin.math.roundToInt
 enum class ReviewGrade(val label: String) {
     /** Could not produce it at all, even after thinking. */
     AGAIN("完全想不起来"),
-    /** Wrong, or only vaguely familiar. */
-    HARD("答错 / 很吃力"),
+    /** Correct, but effortful. */
+    HARD("答对，很吃力"),
     /** Correct with some effort. */
     GOOD("答对，正常"),
     /** Correct immediately and effortlessly. */
@@ -23,7 +23,7 @@ enum class ReviewGrade(val label: String) {
         fun fromAnswer(correct: Boolean, revealed: Boolean, elapsedMillis: Long): ReviewGrade = when {
             revealed || !correct -> AGAIN
             elapsedMillis > 0 && elapsedMillis > SLOW_MILLIS -> HARD
-            elapsedMillis in 1..FAST_MILLIS -> EASY
+            // Speed alone cannot establish effortless recall (short words and guesses are fast too).
             else -> GOOD
         }
 
@@ -110,7 +110,7 @@ object FsrsScheduler : SpacedRepetitionScheduler {
         /* w4  */ 5.1618,  // initial difficulty baseline
         /* w5  */ 1.2298,  // initial difficulty slope per grade step
         /* w6  */ 0.8975,  // difficulty change per grade step
-        /* w7  */ 0.031,   // difficulty mean reversion towards the easy anchor
+        /* w7  */ 0.031,   // difficulty mean reversion towards w4
         /* w8  */ 1.6474,  // successful recall: growth scale
         /* w9  */ 0.1367,  // successful recall: stability exponent (S^-w9)
         /* w10 */ 1.0461,  // successful recall: retrievability exponent
@@ -139,8 +139,8 @@ object FsrsScheduler : SpacedRepetitionScheduler {
 
     private fun nextDifficulty(difficulty: Double, grade: ReviewGrade): Double {
         val delta = -DEFAULT_WEIGHTS[6] * (grade.ordinal - 2)
-        // Mean reversion towards the "easy" anchor keeps D from drifting forever.
-        val reverted = DEFAULT_WEIGHTS[7] * initDifficulty(ReviewGrade.EASY) +
+        // FSRS-4.5 reverts towards w4 (the initial GOOD difficulty).
+        val reverted = DEFAULT_WEIGHTS[7] * DEFAULT_WEIGHTS[4] +
             (1 - DEFAULT_WEIGHTS[7]) * (difficulty + delta)
         return reverted.coerceIn(1.0, 10.0)
     }
@@ -180,10 +180,10 @@ object FsrsScheduler : SpacedRepetitionScheduler {
 
         val stability = if (grade == ReviewGrade.AGAIN) {
             // Forgetting: stability drops, scaled by how hard the item is and how well it was known.
-            val s = DEFAULT_WEIGHTS[11] * difficulty.pow(-DEFAULT_WEIGHTS[12]) *
+            val s = DEFAULT_WEIGHTS[11] * state.difficulty.pow(-DEFAULT_WEIGHTS[12]) *
                 ((state.stability + 1).pow(DEFAULT_WEIGHTS[13]) - 1) *
-                expm1((1 - r) * DEFAULT_WEIGHTS[14])
-            s.coerceAtLeast(0.05)
+                exp((1 - r) * DEFAULT_WEIGHTS[14])
+            s.coerceAtMost(state.stability).coerceAtLeast(0.05)
         } else {
             val hardPenalty = DEFAULT_WEIGHTS[15]
             val easyBonus = DEFAULT_WEIGHTS[16]
@@ -198,7 +198,7 @@ object FsrsScheduler : SpacedRepetitionScheduler {
             val retrievabilityDecay = expm1((1 - r) * DEFAULT_WEIGHTS[10])
             val s = state.stability * (
                 1 + exp(DEFAULT_WEIGHTS[8]) *
-                    (11 - difficulty) *
+                    (11 - state.difficulty) *
                     state.stability.pow(-DEFAULT_WEIGHTS[9]) *
                     retrievabilityDecay *
                     gradeFactor

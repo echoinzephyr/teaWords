@@ -36,14 +36,15 @@ internal fun StudyRoundSummary(session: WordLearningSession?, completed: Int, re
                     Text("本轮完成", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     Text("$completed", fontSize = 64.sp, lineHeight = 72.sp, fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary)
-                    Text("个单词已练习", style = MaterialTheme.typography.titleMedium)
+                    Text(if ((session?.exerciseVersion ?: 1) >= 2) "个单词完成三项练习" else "个单词已练习", style = MaterialTheme.typography.titleMedium)
                     Text("进度已保存，按自己的节奏继续。", style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
             }
             item {
                 TeaCard {
-                    if ((session?.practiced ?: 0) > 0) Text("已完成认读练习 ${session!!.practiced} 个，可继续用拼写巩固。")
+                    if ((session?.practiced ?: 0) > 0) Text(if (session!!.exerciseVersion >= 2)
+                        "${session.practiced} 个词使用过提示或重练，已保存辅助学习记录。" else "已完成认读练习 ${session.practiced} 个，可继续用拼写巩固。")
                     if (recalled > 0) Text("独立回忆正确 $recalled 个", style = MaterialTheme.typography.titleMedium)
                     val missed = session?.missed.orEmpty()
                     if (missed.isNotEmpty()) Text("${missed.size} 个词需要再巩固", color = MaterialTheme.colorScheme.primary)

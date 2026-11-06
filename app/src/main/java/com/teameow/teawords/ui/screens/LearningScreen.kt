@@ -68,7 +68,10 @@ fun LearningScreen(
     onModeChange: (String) -> Unit = {},
     profileOpen: Boolean = false,
     onProfileDismiss: () -> Unit = {},
-    studyWallpaper: String? = null
+    studyWallpaper: String? = null,
+    exercisePhraseLookup: suspend (String) -> List<Pair<String, String>> = {
+        OnlineDictionary.shared.lookup(it).entry?.detail?.phrases.orEmpty()
+    }
 ) {
     val context = LocalContext.current
     val repo = remember(dbHelper) { LearningRepository(dbHelper) }
@@ -110,11 +113,11 @@ fun LearningScreen(
     var queue by remember { mutableStateOf(emptyList<Knowledge>()) }
     var position by remember { mutableIntStateOf(0) }
     var sessionCorrect by remember { mutableIntStateOf(0) }
-    var selectedLimit by rememberSaveable { mutableStateOf(prefs.getInt("expressive_round_limit", 0).takeIf { it in listOf(10, 15, 20) }) }
-    val limit = selectedLimit ?: 10
+    var selectedLimit by rememberSaveable { mutableStateOf(prefs.getInt("expressive_round_limit", 5).takeIf { it in listOf(5, 10, 15, 20) }) }
+    val limit = selectedLimit ?: 5
     DisposableEffect(prefs) {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == "expressive_round_limit") selectedLimit = prefs.getInt(key, 10).takeIf { it in listOf(10, 15, 20) }
+            if (key == "expressive_round_limit") selectedLimit = prefs.getInt(key, 5).takeIf { it in listOf(5, 10, 15, 20) }
         }
         prefs.registerOnSharedPreferenceChangeListener(listener)
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
@@ -334,18 +337,18 @@ fun LearningScreen(
             try {
                 val prepared = withContext(Dispatchers.IO) {
                     val active = sessionRepo.load()
-                    val session = if (active != null && !active.complete) active else {
+                    val session = if (active != null && !active.complete) sessionRepo.enableThreeSteps(active.id) else {
                         val tasks = plan.mapNotNull { state ->
                             words[state.word]?.definition?.takeIf { it.isNotBlank() }?.let {
                                 WordLearningTask(state.word, it)
                             }
                         }
                         if (tasks.isEmpty()) return@withContext null
-                        sessionRepo.start(tasks)
+                        sessionRepo.start(tasks, threeStep = true)
                     }
                     val byWord = repo.states(session.tasks.map { it.word }).associateBy { it.word }
                     val roundQueue = session.tasks.map { byWord.getValue(it.word) }
-                    val memory = roundQueue.drop(session.position).mapNotNull { item ->
+                    val memory = roundQueue.mapNotNull { item ->
                         val sense = senseOf(item.word)
                         senses.memoryFor(sense.second)?.let { record -> item.word to MemoryState(
                             difficulty = record.difficulty, stability = record.stability,
@@ -377,7 +380,51 @@ fun LearningScreen(
         }
     }
 
-    fun saveWordAnswer(state: Knowledge, correct: Boolean, elapsed: Long, revealed: Boolean, recognition: Boolean = false) {
+    suspend fun saveWordExercise(expectedPosition: Int, step: Int, attempt: Int, correct: Boolean, assisted: Boolean, elapsed: Long): Boolean {
+        if (busy) return false
+        busy = true; message = null
+        return try {
+            wordSession = withContext(Dispatchers.IO) {
+                sessionRepo.exercise(checkNotNull(wordSession).id, expectedPosition, step, attempt, correct, assisted, elapsed)
+            }
+            position = checkNotNull(wordSession).position
+            true
+        } catch (e: Exception) { message = "保存练习失败，请重试：${e.message}"; false }
+        finally { busy = false }
+    }
+
+    suspend fun saveWordIntroduction(expectedPosition: Int, known: Boolean): Boolean {
+        if (busy) return false
+        busy = true; message = null
+        return try {
+            wordSession = withContext(Dispatchers.IO) { sessionRepo.introduce(checkNotNull(wordSession).id, expectedPosition, known) }
+            true
+        } catch (e: Exception) { message = "保存认读进度失败，请重试：${e.message}"; false }
+        finally { busy = false }
+    }
+
+    suspend fun retryWordLater(expectedPosition: Int): Boolean {
+        if (busy) return false
+        busy = true; message = null
+        return try {
+            wordSession = withContext(Dispatchers.IO) { sessionRepo.retryLater(checkNotNull(wordSession).id, expectedPosition) }
+            position = checkNotNull(wordSession).position
+            true
+        } catch (e: Exception) { message = "保存重练位置失败，请重试：${e.message}"; false }
+        finally { busy = false }
+    }
+
+    suspend fun saveWordHelp(expectedPosition: Int): Boolean {
+        if (busy) return false
+        busy = true; message = null
+        return try {
+            wordSession = withContext(Dispatchers.IO) { sessionRepo.markAssisted(checkNotNull(wordSession).id, expectedPosition) }
+            true
+        } catch (e: Exception) { message = "保存进度失败，请重试：${e.message}"; false }
+        finally { busy = false }
+    }
+
+    fun saveWordAnswer(state: Knowledge, correct: Boolean, elapsed: Long, revealed: Boolean, recognition: Boolean = false, gradeElapsed: Long = elapsed) {
         if (busy) return
         busy = true
         message = null
@@ -385,24 +432,19 @@ fun LearningScreen(
             try {
                 val now = System.currentTimeMillis()
                 val known = withContext(Dispatchers.IO) { repo.states(listOf(state.word)).first { it.word == state.word } }
+                val belief = withContext(Dispatchers.IO) { repo.beliefFor(known, senseOf(state.word).second, now) }
                 // FSRS + BKT + ability, graded together; the verdict is what gets stored.
                 val verdict = if (recognition) coordinator.gradeRecognition(
-                    BeliefMapper.from(known.report.name, known.attempts, known.streak, known.updated, now),
+                    belief,
                     memoryByWord[state.word] ?: MemoryState.unseen, ability, correct, now, retention
                 ) else coordinator.grade(
-                    belief = BeliefMapper.from(
-                        report = known.report.name,
-                        attempts = known.attempts,
-                        streak = known.streak,
-                        updatedAt = known.updated,
-                        now = now
-                    ),
+                    belief = belief,
                     memory = memoryByWord[state.word] ?: MemoryState.unseen,
                     ability = ability,
                     difficulty = difficultyByWord[state.word] ?: 0.0,
                     correct = correct,
                     revealed = revealed,
-                    elapsedMillis = elapsed,
+                    elapsedMillis = gradeElapsed,
                     now = now,
                     targetRetention = retention
                 )
@@ -526,12 +568,21 @@ fun LearningScreen(
                 .togetherWith(fadeOut(tween(150)) + slideOutHorizontally(tween(200)) { -it / 8 })
                 .using(SizeTransform(clip = false))
         }, label = "study-word-transition") { shown ->
-            key(wordSession?.id, shown.first.word) {
-                ImmersiveWordScreen(dbHelper, shown.first.word, shown.second,
-                    shown.third + 1, queue.size, busy || shown.third != position, message, studyWallpaper, onPause = back,
-                    initialDetails = preparedDetails?.takeIf { it.first == shown.first.word }?.second,
-                    onRecallComplete = { correct, elapsed -> saveWordAnswer(shown.first, correct, elapsed, false, recognition = false) },
-                    onComplete = { correct, elapsed -> saveWordAnswer(shown.first, correct, elapsed, true, recognition = true) })
+            key(wordSession?.id, shown.first.word, wordSession?.phase) {
+                val progress = wordSession?.exercises?.get(shown.first.word) ?: WordExerciseProgress()
+                val bank = remember(words) { words.values.filter { it.definition.isNotBlank() }.map { WordLearningTask(it.word, it.definition) } }
+                WordRoundExerciseScreen(dbHelper, WordLearningTask(shown.first.word, shown.second), progress,
+                    wordSession?.completedWords ?: 0, queue.size, bank, busy || shown.third != position, message, studyWallpaper,
+                    preparedDetails?.takeIf { it.first == shown.first.word }?.second, onPause = back,
+                    onExercise = { step, attempt, correct, assisted, elapsed -> saveWordExercise(shown.third, step, attempt, correct, assisted, elapsed) },
+                    onHelp = { saveWordHelp(shown.third) },
+                    onIntroduction = { known -> saveWordIntroduction(shown.third, known) },
+                    onRetryLater = { retryWordLater(shown.third) },
+                    completedStages = wordSession?.completedStages ?: 0,
+                    roundPhase = wordSession?.phase ?: 0, turnPosition = shown.third,
+                    onFinish = { saveWordAnswer(shown.first, true, progress.elapsed, progress.assisted,
+                        recognition = progress.introductionKnown != null, gradeElapsed = progress.spellingMillis) },
+                    phraseLookup = exercisePhraseLookup)
             }
         }
     } else if (pageMode == "diagnose") {
@@ -623,7 +674,7 @@ fun LearningScreen(
                     bookName = books.filter { it.id in selectedBookIds }.joinToString("、") { it.name }.ifBlank { "个人词库" },
                     total = states.size, studied = states.count { it.attempts > 0 }, verified = verifiedCount,
                     due = dueCount, newBudget = newBudget, fuzzy = fuzzyCount, busy = busy,
-                    paused = wordSession?.takeUnless { it.complete }?.let { WordStudyResume(it.position, it.tasks.size) },
+                    paused = wordSession?.takeUnless { it.complete }?.let { WordStudyResume(it.completedWords, it.tasks.size) },
                     onBooks = { draftBooks = selectedBookIds; showBooks = true },
                     favorites = favorites.size, onFavorites = { mode = "favorites" },
                     query = studyQuery, onQuery = { studyQuery = it },

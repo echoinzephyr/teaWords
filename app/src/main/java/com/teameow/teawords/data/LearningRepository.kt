@@ -104,6 +104,28 @@ class LearningRepository(private val helper: DatabaseHelper) {
 
     data class Totals(val tests: Int, val correct: Int, val seconds: Long, val screened: Int)
 
+    /** Resume BKT from persisted recall evidence instead of reconstructing it from a streak. */
+    fun beliefFor(state: Knowledge, senseId: Long, now: Long): com.teameow.teawords.algorithm.KnowledgeBelief {
+        val database = helper.readableDatabase
+        val last = database.rawQuery(
+            "SELECT mastery_after,timestamp FROM test_records WHERE sense_id=? AND mode IN ('RECALL','SPELLING') ORDER BY timestamp DESC,id DESC LIMIT 1",
+            arrayOf(senseId.toString())
+        ).use { c -> if (c.moveToFirst()) (if (c.isNull(0)) null else c.getDouble(0)) to c.getLong(1) else null }
+        val answers = database.rawQuery(
+            "SELECT COUNT(*) FROM test_records WHERE sense_id=? AND mode IN ('RECALL','SPELLING') AND revealed=0",
+            arrayOf(senseId.toString())
+        ).use { it.moveToFirst(); it.getInt(0) }
+        if (last == null) {
+            val anyEvidence = database.rawQuery("SELECT 1 FROM test_records WHERE sense_id=? LIMIT 1", arrayOf(senseId.toString())).use { it.moveToFirst() }
+            return com.teameow.teawords.algorithm.BeliefMapper.from(state.report.name,
+                if (anyEvidence) 0 else state.attempts, if (anyEvidence) 0 else state.streak, state.updated, now)
+        }
+        val fallback = com.teameow.teawords.algorithm.BeliefMapper.from(state.report.name, answers, state.streak, state.updated, now)
+        return fallback.copy(mastery = last.first?.takeIf { it.isFinite() }?.coerceIn(.001, .999) ?: fallback.mastery,
+            confidence = 1.0 - kotlin.math.exp(-answers / 3.0), totalAnswers = answers,
+            verifiedByTest = answers >= VERIFY_STREAK && state.streak >= VERIFY_STREAK, lastUpdated = last.second)
+    }
+
     /** Shared persistence for book learning and lookup-word review. */
     fun saveReview(
         state: Knowledge, verdict: com.teameow.teawords.algorithm.ReviewVerdict,

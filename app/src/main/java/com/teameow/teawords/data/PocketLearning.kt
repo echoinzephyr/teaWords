@@ -229,9 +229,9 @@ class PocketLearningRepository(private val helper: DatabaseHelper) {
                 it != index && it !in round.done && round.tasks[it].word == task.word
             }
             val nextMemory = if (lastForWord) FsrsScheduler.review(memory, grade, now) else memory
-            val interval = if (lastForWord) FsrsScheduler.nextIntervalDays(nextMemory, retention)?.coerceAtMost(1.0)
+            val interval = if (lastForWord) ReviewCoordinator.scheduledIntervalDays(nextMemory, grade, retention)?.coerceAtMost(1.0)
                 else memoryRecord?.intervalDays?.takeIf { it > 0 } ?: (10.0 / 1440)
-            val belief = BeliefMapper.from(state.report.name, state.attempts, state.streak, state.updated, now)
+            val belief = repo.beliefFor(state, ids.second, now)
             val verdict = ReviewVerdict(grade, belief, nextMemory, ability, interval,
                 if (!lastForWord && memoryRecord != null && memoryRecord.dueAt > 0) memoryRecord.dueAt
                 else interval?.let { now + (it * MemoryState.MILLIS_PER_DAY).toLong() })

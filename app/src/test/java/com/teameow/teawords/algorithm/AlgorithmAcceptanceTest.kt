@@ -382,14 +382,15 @@ class AlgorithmAcceptanceTest {
         assertEquals("the first item should sit at the prior mean",
             0.0, CatSelector.selectNext(state, candidates)!!.difficulty, 0.5)
 
-        // Answer everything correctly: the estimate rises and the test stops on precision.
+        // Twenty binary items cannot reach SE=.35 (each contributes at most .25 information).
         var guard = 0
         while (!state.isFinished && guard++ < CatSelector.DEFAULT_MAX_ITEMS + 5) {
             val item = CatSelector.selectNext(state, candidates) ?: break
             state = CatSelector.answer(state, item, correct = true, elapsedMillis = 5_000, candidates = candidates)
         }
         assertNotNull("the test must reach a stop reason", state.stopReason)
-        assertEquals("precision must be the reason it stopped", CatStopReason.PRECISION_REACHED, state.stopReason)
+        assertEquals("report the item limit honestly rather than claiming false precision", CatStopReason.MAX_ITEMS_REACHED, state.stopReason)
+        assertFalse(state.ability.isPreciseEnough)
         // Answering a mix of correct and incorrect items settles above the prior mean.
         assertTrue("the estimate should have risen above the prior, was ${state.ability.theta}",
             state.ability.theta > 0.2)

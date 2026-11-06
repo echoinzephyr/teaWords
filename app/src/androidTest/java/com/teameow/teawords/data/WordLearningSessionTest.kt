@@ -77,6 +77,105 @@ class WordLearningSessionTest {
         assertEquals(active, repo.load())
     }
 
+    @Test fun threeDifferentStepsPersistAndCountAsOneMemoryExposure() = withDatabase { helper ->
+        val sessions = WordLearningSessionRepository(helper)
+        val initial = sessions.start(listOf(WordLearningTask("apple", "苹果")), threeStep = true)
+        sessions.introduce(initial.id, 0, false)
+        sessions.exercise(initial.id, 0, 0, 0, true, false, 1500)
+        assertEquals(1, WordLearningSessionRepository(helper).load()!!.exercises.getValue("apple").completed)
+        assertEquals(0, sessions.load()!!.position)
+        try { sessions.exercise(initial.id, 0, 0, 0, true, false, 1500); fail("Repeated submission must not award credit") }
+        catch (_: IllegalStateException) { }
+        sessions.exercise(initial.id, 0, 1, 1, false, false, 1500)
+        assertEquals(1, sessions.load()!!.exercises.getValue("apple").completed)
+        sessions.exercise(initial.id, 0, 1, 2, true, false, 1500)
+        sessions.exercise(initial.id, 0, 2, 3, true, true, 1500)
+        assertEquals(2, sessions.load()!!.exercises.getValue("apple").completed)
+        assertEquals(0, LearningRepository(helper).totals().tests)
+        sessions.exercise(initial.id, 0, 2, 4, true, false, 1500)
+        val progress = sessions.load()!!.exercises.getValue("apple")
+        assertEquals(3, progress.completed)
+        assertTrue(progress.assisted)
+        val result = sessions.answer(initial.id, 0, true, progress.assisted, progress.elapsed) {
+            review(helper, it, true, progress.assisted)
+        }.first
+        assertTrue(result.complete)
+        assertEquals(1, LearningRepository(helper).totals().tests)
+        assertEquals(0, LearningRepository(helper).states().first { it.word == "apple" }.streak)
+        assertEquals(1, result.practiced)
+    }
+
+    @Test fun unfinishedThreeStepWordCannotAdvanceOrLoseProgressOnWriteFailure() = withDatabase { helper ->
+        val sessions = WordLearningSessionRepository(helper)
+        val started = sessions.start(listOf(WordLearningTask("apple", "苹果")), threeStep = true)
+        val initial = sessions.introduce(started.id, 0, true)
+        try { sessions.answer(initial.id, 0, true, false, 1000) { review(helper, it, true, false) }; fail("Three steps are required") }
+        catch (_: IllegalStateException) { }
+        helper.writableDatabase.execSQL("CREATE TRIGGER fail_steps BEFORE INSERT ON word_learning_session BEGIN SELECT RAISE(ABORT, 'simulated failure'); END")
+        try { sessions.exercise(initial.id, 0, 0, 0, true, false, 1000); fail("Save should fail") }
+        catch (_: android.database.sqlite.SQLiteException) { }
+        assertEquals(initial, sessions.load())
+        assertEquals(0, LearningRepository(helper).totals().tests)
+        assertTrue(helper.isInVocabulary("book"))
+        helper.writableDatabase.execSQL("DROP TRIGGER fail_steps")
+    }
+
+    @Test fun selfReportIsDurableTeachingAndCannotSkipToATest() = withDatabase { helper ->
+        val sessions = WordLearningSessionRepository(helper)
+        val initial = sessions.start(listOf(WordLearningTask("apple", "苹果")), threeStep = true)
+        try { sessions.exercise(initial.id, 0, 0, 0, true, false, 1000); fail("A new word must be introduced first") }
+        catch (_: IllegalStateException) { }
+        sessions.introduce(initial.id, 0, false)
+        sessions.introduce(initial.id, 0, true) // Duplicate taps must not replace the original self-report.
+        helper.close()
+        val progress = WordLearningSessionRepository(helper).load()!!.exercises.getValue("apple")
+        assertEquals(false, progress.introductionKnown)
+        assertEquals(0, progress.completed)
+        assertTrue(progress.assisted)
+        assertEquals(0, LearningRepository(helper).totals().tests)
+    }
+
+    @Test fun wordsAreInterleavedAcrossThreePassesAndResumeAtTheSameTurn() = withDatabase { helper ->
+        val sessions = WordLearningSessionRepository(helper)
+        val session = sessions.start(listOf(WordLearningTask("apple", "苹果"), WordLearningTask("book", "书")), threeStep = true)
+        val order = mutableListOf<String>()
+        repeat(3) { phase ->
+            repeat(2) { index ->
+                val before = WordLearningSessionRepository(helper).load()!!
+                assertEquals(phase, before.phase)
+                assertEquals(index, before.position)
+                assertEquals(if (phase < 2) 0 else index, before.completedWords)
+                val task = before.tasks[index]
+                order += task.word
+                if (phase == 0) sessions.introduce(session.id, index, true)
+                val progress = sessions.load()!!.exercises[task.word] ?: WordExerciseProgress()
+                sessions.exercise(session.id, index, phase, progress.attempts, true, false, 1000)
+                if (phase == 2) sessions.answer(session.id, index, true, true, 3000) { review(helper, it, true, true) }
+            }
+        }
+        assertEquals(listOf("apple", "book", "apple", "book", "apple", "book"), order)
+        assertTrue(sessions.load()!!.complete)
+        assertEquals(2, sessions.load()!!.completedWords)
+        assertEquals(2, LearningRepository(helper).totals().tests)
+    }
+
+    @Test fun missedWordsReturnAfterOtherWordsBeforeAdvancingThePass() = withDatabase { helper ->
+        val sessions = WordLearningSessionRepository(helper)
+        val round = sessions.start(listOf(WordLearningTask("apple", "苹果"), WordLearningTask("book", "书")), threeStep = true)
+        repeat(2) { index ->
+            sessions.introduce(round.id, index, false)
+            sessions.exercise(round.id, index, 0, 0, true, false, 1000)
+        }
+        sessions.exercise(round.id, 0, 1, 1, false, false, 1000)
+        sessions.retryLater(round.id, 0)
+        assertEquals(1, sessions.load()!!.position)
+        sessions.exercise(round.id, 1, 1, 1, true, false, 1000)
+        assertEquals(0, sessions.load()!!.position)
+        assertEquals(1, sessions.load()!!.phase)
+        sessions.exercise(round.id, 0, 1, 2, true, false, 1000)
+        assertEquals(2, sessions.load()!!.phase)
+    }
+
     @Test fun recognitionPreservesExistingVerificationWithoutAddingARecallPass() = withDatabase { helper ->
         repeat(3) { review(helper, "apple", true, false) }
         val learning = LearningRepository(helper)

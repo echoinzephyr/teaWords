@@ -15,8 +15,8 @@ android {
         val wordbookUrl = providers.gradleProperty("wordbookBaseUrl").orElse("").get()
         require(wordbookUrl.none { it == '"' || it == '\\' || it.isISOControl() }) { "Invalid wordbookBaseUrl" }
         buildConfigField("String", "WORDBOOK_BASE_URL", "\"$wordbookUrl\"")
-        versionCode = 8
-        versionName = "1.2.2-rc.3"
+        versionCode = 9
+        versionName = "1.2.3-rc.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

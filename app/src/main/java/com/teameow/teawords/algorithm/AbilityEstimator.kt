@@ -76,21 +76,18 @@ object AbilityEstimator {
     fun update(previous: AbilityEstimate, observation: ResponseObservation): AbilityEstimate {
         val theta0 = previous.theta
         val priorPrecision = 1.0 / (PRIOR_SD * PRIOR_SD)
-        val priorMean = 0.0
-
-        // Newton-Raphson on the penalised log-likelihood. The prior enters as one pseudo-observation
-        // at theta = 0 with the prior precision, which keeps the first few answers stable.
+        // Streaming Laplace approximation: the previous posterior is the next prior.
+        // Keep its centre at theta0, rather than re-applying the original zero-mean prior per item.
         val p = probabilityCorrect(theta0, observation.difficulty)
         val residual = (if (observation.correct) 1.0 else 0.0) - p
-        val gradient = residual + (priorMean - theta0) * priorPrecision
-        val curvature = p * (1.0 - p) + priorPrecision
-        val step = if (curvature <= 1e-9) 0.0 else DAMPING * gradient / curvature
+        val information = p * (1.0 - p)
+        val curvature = previous.totalInformation + information + priorPrecision
+        val step = if (curvature <= 1e-9) 0.0 else DAMPING * residual / curvature
         val theta1 = (theta0 + step).coerceIn(MIN_THETA, MAX_THETA)
 
-        // Standard error from the observed information at the new estimate, including the prior.
-        val p1 = probabilityCorrect(theta1, observation.difficulty)
-        val totalInformation = previous.totalInformation + p1 * (1.0 - p1) + priorPrecision
-        val se = 1.0 / kotlin.math.sqrt(totalInformation)
+        // totalInformation contains observations only; count the original prior exactly once.
+        val totalInformation = previous.totalInformation + information
+        val se = 1.0 / kotlin.math.sqrt(totalInformation + priorPrecision)
 
         return AbilityEstimate(
             theta = theta1,

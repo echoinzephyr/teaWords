@@ -129,7 +129,7 @@ fun SettingsView(
     val version = installedVersionName()
     val settingsContext = LocalContext.current
     val learningPrefs = remember(settingsContext) { settingsContext.getSharedPreferences("learning", 0) }
-    var roundLimit by remember { mutableIntStateOf(learningPrefs.getInt("expressive_round_limit", 10).takeIf { it in listOf(10, 15, 20) } ?: 10) }
+    var roundLimit by remember { mutableIntStateOf(learningPrefs.getInt("expressive_round_limit", 5).takeIf { it in listOf(5, 10, 15, 20) } ?: 5) }
     val translationPrefs = remember(settingsContext) { TranslationPreferences(settingsContext) }
     val translationSummary = remember(currentPage) { translationPrefs.load().engine.label }
     // 动态取色需要 Android 12+；不支持时开关禁用，而不是假装能开。
@@ -231,7 +231,7 @@ fun SettingsView(
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text("每轮目标", style = MaterialTheme.typography.titleMedium)
                                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    listOf(10, 15, 20).forEach { count ->
+                                    listOf(5, 10, 15, 20).forEach { count ->
                                         SettingsValueChip(roundLimit == count, {
                                             roundLimit = count
                                             learningPrefs.edit().putInt("expressive_round_limit", count).apply()

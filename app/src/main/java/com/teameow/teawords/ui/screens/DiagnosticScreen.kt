@@ -260,11 +260,16 @@ class AbilityStore(context: android.content.Context) {
 
     fun load(): AbilityEstimate {
         if (!prefs.contains(KEY_THETA)) return AbilityEstimator.initial
+        val items = prefs.getInt(KEY_ITEMS, 0).coerceAtLeast(0)
+        val raw = prefs.getFloat(KEY_INFO, 0f).toDouble().takeIf { it.isFinite() } ?: 0.0
+        val prior = 1.0 / (AbilityEstimator.PRIOR_SD * AbilityEstimator.PRIOR_SD)
+        // Older estimates added the prior once per answer; retain the responses, remove duplicates.
+        val information = (if (raw > items * .25) raw - items * prior else raw).coerceIn(0.0, items * .25)
         return AbilityEstimate(
             theta = prefs.getFloat(KEY_THETA, 0f).toDouble(),
-            standardError = prefs.getFloat(KEY_SE, AbilityEstimator.PRIOR_SD.toFloat()).toDouble(),
-            itemsAnswered = prefs.getInt(KEY_ITEMS, 0),
-            totalInformation = prefs.getFloat(KEY_INFO, 0f).toDouble()
+            standardError = 1.0 / kotlin.math.sqrt(information + prior),
+            itemsAnswered = items,
+            totalInformation = information
         )
     }
     fun save(estimate: AbilityEstimate) {

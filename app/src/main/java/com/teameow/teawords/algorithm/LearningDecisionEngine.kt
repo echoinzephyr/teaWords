@@ -145,6 +145,13 @@ object LearningDecisionEngine {
             val neverTested = belief.totalAnswers == 0
             val mastered = unit.predictedMastery >= strategy.knownSkipThreshold
 
+            // Existing memory that has reached its due date outranks any "probably known" skip.
+            if (unit.memory.reps > 0 && unit.dueAtMillis in 1..input.now) {
+                pending += StudyDecision(unit, StudyAction.REVIEW, reviewValue(unit, input.now),
+                    "到期复习 · 预计提取概率 ${percent(unit.memory.retrievability(input.now))}")
+                continue
+            }
+
             if (mastered) {
                 if (unit.selfReportedKnown) {
                     // A self-report that the model also believes: the core saving. It leaves the

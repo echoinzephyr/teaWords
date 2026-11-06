@@ -72,7 +72,7 @@ fun LookupReviewScreen(helper: DatabaseHelper, entries: List<LocalEntry>, onBack
                                 MemoryState(it.difficulty, it.stability, it.lastReview, it.reps, it.lapses)
                             } ?: MemoryState.unseen
                             val grade = coordinator.grade(
-                                BeliefMapper.from(known.report.name, known.attempts, known.streak, known.updated, now),
+                                repository.beliefFor(known, senseId, now),
                                 memory, ability, DifficultyPrior.forWord(entry.word, entry.tags).value,
                                 correct, revealed, elapsed, now, retention)
                             repository.saveReview(known, grade, wordId, senseId, correct, revealed, elapsed, now, ability.theta)

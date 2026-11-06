@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -54,8 +55,10 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
     var infoVisible by remember { mutableStateOf(false) }
     var detailsVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    DisposableEffect(Unit) { onDispose { focusManager.clearFocus(force = true); keyboard?.hide() } }
     fun submit() {
-        focusManager.clearFocus()
+        focusManager.clearFocus(force = true); keyboard?.hide()
         if (state.dictionaryMode) model.search() else if (state.available) model.translate()
     }
     val pronunciation = rememberPronunciationServices()

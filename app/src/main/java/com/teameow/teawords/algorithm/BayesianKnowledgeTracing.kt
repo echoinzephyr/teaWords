@@ -127,7 +127,8 @@ object BayesianKnowledgeTracing : KnowledgeTracer {
             return belief.copy(
                 totalAnswers = belief.totalAnswers,
                 correctStreak = 0,
-                lastUpdated = now
+                lastUpdated = now,
+                verifiedByTest = false
             )
         }
         val slip = if (context == ResponseContext.CORRECTED) P_SLIP * 2 else P_SLIP

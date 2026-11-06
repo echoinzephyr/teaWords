@@ -61,7 +61,7 @@ class WordLearningScreenTest {
         val session = WordLearningSessionRepository(database).start(listOf(WordLearningTask("apple", "原轮次释义")))
         val generation = mutableIntStateOf(0)
         compose.setContent {
-            TeaWordsTheme { key(generation.intValue) { LearningScreen(database) } }
+            TeaWordsTheme { key(generation.intValue) { LearningScreen(database, exercisePhraseLookup = { emptyList() }) } }
         }
         fun capture(name: String) {
             val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
@@ -77,7 +77,7 @@ class WordLearningScreenTest {
             capture("study-layout-home.png")
             compose.onNodeWithTag("study-learn-entry").performClick()
             compose.waitUntil(10000) {
-                compose.onAllNodes(hasText("认识") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodes(hasTestTag("word-round-content")).fetchSemanticsNodes().isNotEmpty()
             }
         }
         open()
@@ -87,15 +87,40 @@ class WordLearningScreenTest {
         compose.onNodeWithText("暂停，稍后继续").performClick()
         compose.runOnIdle { generation.intValue++ }
         open()
-        compose.onNodeWithText("认识").performClick()
-        compose.onNodeWithText("原轮次释义").assertExists()
+        compose.onNodeWithText("原轮次释义").assertDoesNotExist()
+        compose.onNodeWithTag("word-choice-0").assertDoesNotExist()
+        compose.onNodeWithText("不认识").performClick()
+        compose.onNodeWithText("原轮次释义").assertIsDisplayed()
+        capture("study-introduction.png")
+        compose.onNodeWithContentDescription("本词已完成 0 / 3 项练习").assertExists()
+        compose.onNodeWithContentDescription("更多").performClick()
+        compose.onNodeWithText("暂停，稍后继续").performClick()
+        compose.runOnIdle { generation.intValue++ }
+        open()
+        compose.onNodeWithText("原轮次释义").assertIsDisplayed()
+        compose.waitUntil(5000) { compose.onAllNodes(hasText("记住了，开始巩固") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("记住了，开始巩固").performClick()
+        compose.onNodeWithContentDescription("本词已完成 1 / 3 项练习").assertExists()
         assertEquals(0, WordLearningSessionRepository(database).load()!!.position)
-        compose.onNodeWithText("下一个").performClick()
+        compose.onNodeWithContentDescription("更多").performClick()
+        compose.onNodeWithText("暂停，稍后继续").performClick()
+        compose.runOnIdle { generation.intValue++ }
+        open()
+        compose.onNodeWithContentDescription("本词已完成 1 / 3 项练习").assertExists()
+        capture("study-consolidation.png")
+        compose.onNodeWithText("apple").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("spelling-input").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("spelling-input").performTextInput("apple")
+        capture("study-spelling.png")
+        compose.onNodeWithContentDescription("检查拼写").performClick()
+        compose.onNodeWithContentDescription("本词已完成 3 / 3 项练习").assertExists()
+        compose.onNodeWithText("下一个单词").performClick()
         compose.waitUntil(10000) { WordLearningSessionRepository(database).load()?.complete == true }
         assertEquals(session.id, WordLearningSessionRepository(database).load()!!.id)
         assertEquals(1, LearningRepository(database).totals().tests)
         compose.onNodeWithText("本轮完成").assertIsDisplayed()
-        compose.onNodeWithText("已完成认读练习 1 个，可继续用拼写巩固。").assertExists()
+        compose.onNodeWithText("独立回忆正确 1 个").assertDoesNotExist()
+        assertEquals(1, WordLearningSessionRepository(database).load()!!.practiced)
     }
     @Test fun newRoundStillStartsAfterPreviousDailyAllowanceWasUsed() {
         name = "round-cap-${System.nanoTime()}.db"

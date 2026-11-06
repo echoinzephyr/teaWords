@@ -72,7 +72,7 @@ class ReviewCoordinatorTest {
 
     @Test
     fun `how long the answer took changes the grade`() {
-        assertEquals(ReviewGrade.EASY, grade(correct = true, elapsed = 1_500).grade)
+        assertEquals(ReviewGrade.GOOD, grade(correct = true, elapsed = 1_500).grade)
         assertEquals(ReviewGrade.GOOD, grade(correct = true, elapsed = 8_000).grade)
         assertEquals(ReviewGrade.HARD, grade(correct = true, elapsed = 40_000).grade)
         assertEquals(ReviewGrade.AGAIN, grade(correct = false).grade)
@@ -82,10 +82,8 @@ class ReviewCoordinatorTest {
     fun `a fast answer grades easier but is not treated as knowledge on its own`() {
         val fast = grade(correct = true, elapsed = 800)
         val normal = grade(correct = true, elapsed = 8_000)
-        assertEquals(ReviewGrade.EASY, fast.grade)
-        // FSRS does award more stability for EASY, which is correct: the answer really was effortless.
-        assertTrue("EASY must schedule at least as far out as GOOD",
-            fast.intervalDays!! >= normal.intervalDays!!)
+        assertEquals(ReviewGrade.GOOD, fast.grade)
+        assertEquals(normal.intervalDays!!, fast.intervalDays!!, 1e-9)
         assertFalse("a single easy answer must not verify the word", fast.knowledge.verifiedByTest)
     }
 
@@ -117,13 +115,14 @@ class ReviewCoordinatorTest {
 
     @Test
     fun `target retention from the strategy changes the schedule`() {
+        val established = MemoryState(5.0, 10.0, now - 864_000_000L, 3, 0)
         val efficient = coordinator.grade(
-            belief = KnowledgeBelief.unseen(now), memory = MemoryState.unseen,
+            belief = KnowledgeBelief.unseen(now), memory = established,
             ability = AbilityEstimator.initial, difficulty = 0.0, correct = true, revealed = false,
             elapsedMillis = 8_000, now = now, targetRetention = 0.85
         )
         val coverage = coordinator.grade(
-            belief = KnowledgeBelief.unseen(now), memory = MemoryState.unseen,
+            belief = KnowledgeBelief.unseen(now), memory = established,
             ability = AbilityEstimator.initial, difficulty = 0.0, correct = true, revealed = false,
             elapsedMillis = 8_000, now = now, targetRetention = 0.94
         )

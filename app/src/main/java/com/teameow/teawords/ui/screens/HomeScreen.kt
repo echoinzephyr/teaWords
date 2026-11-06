@@ -107,7 +107,7 @@ fun HomeView(
             keyboard?.show()
         }
     }
-    val search = { focus.clearFocus(); onSearch() }
+    val search = { focus.clearFocus(force = true); keyboard?.hide(); onSearch() }
     val exitSearch = {
         inputEverFocused = false
         focus.clearFocus(force = true)

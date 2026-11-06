@@ -264,13 +264,15 @@ fun MainScreen(
         searchJob?.cancel()
         isLookupExecuted = false
         isSearching = false
-        focusManager.clearFocus()
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
     }
     val triggerSearch: (String, Boolean) -> Unit = { queryText, _ ->
         val q = queryText.trim()
         if (q.isNotEmpty()) {
             searchJob?.cancel()
-            focusManager.clearFocus()
+            focusManager.clearFocus(force = true)
+            keyboardController?.hide()
             searchQuery = q
             submittedQuery = q
             lookupRequestId++

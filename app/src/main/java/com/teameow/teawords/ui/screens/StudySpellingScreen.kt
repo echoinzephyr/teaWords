@@ -34,12 +34,14 @@ internal fun StudySpellingScreen(
     feedback: String?, phonetic: String, wallpaper: String?, enabled: Boolean,
     onClose: () -> Unit, onHint: () -> Unit, onSubmit: () -> Unit,
     progress: Pair<Int, Int>? = null, closeLabel: String = "返回词卡",
-    result: StudySpellingResult? = null, onReveal: (() -> Unit)? = null, onContinue: (() -> Unit)? = null
+    result: StudySpellingResult? = null, onReveal: (() -> Unit)? = null, onContinue: (() -> Unit)? = null,
+    completedSteps: Int? = null
 ) {
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     var hint by remember { mutableStateOf(false) }
+    DisposableEffect(Unit) { onDispose { focusManager.clearFocus(force = true); keyboard?.hide() } }
     LaunchedEffect(result != null) {
         if (result == null) {
             kotlinx.coroutines.delay(320)
@@ -62,6 +64,7 @@ internal fun StudySpellingScreen(
                     Spacer(Modifier.width(48.dp))
                 }
             }
+            completedSteps?.let { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { WordExerciseDots(it) } }
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 result?.let {

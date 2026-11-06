@@ -68,7 +68,7 @@ internal fun LearningControls(limit: Int?, onLimitChange: (Int) -> Unit, quickMo
                     Icon(AppSymbols.ExpandMore, null, Modifier.size(24.dp).rotate(angle))
                 }
                 TeaDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, sections = listOf(
-                    TeaMenuSection(listOf(10, 15, 20).map { count ->
+                    TeaMenuSection(listOf(5, 10, 15, 20).map { count ->
                         TeaMenuOption("$count 个词", AppSymbols.School, selected = count == limit) { onLimitChange(count); expanded = false }
                     })
                 ))
