@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Density
 import com.teameow.teawords.data.AppPreferences
 import com.teameow.teawords.data.AppThemeMode
 import com.teameow.teawords.ui.theme.seededColorScheme
@@ -53,7 +54,6 @@ internal fun SettingsAppearanceOptions(
     var colorDialog by remember { mutableStateOf(false) }
     var hex by remember { mutableStateOf("") }
     val context = LocalContext.current
-    val displayedScale = LocalDensity.current.fontScale
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SettingsOptionHeading(Icons.Outlined.LightMode, "主题模式")
@@ -104,32 +104,7 @@ internal fun SettingsAppearanceOptions(
             }
             if (mode == AppThemeMode.LIGHT) TeaCaption("深色主题下生效")
         }
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("文字缩放", style = MaterialTheme.typography.titleMedium)
-            AppearanceSegments(listOf("跟随系统", "自定义"), if (fontScale == null) 0 else 1, "font-scale-mode") {
-                onFontScale(if (it == 0) null else (fontScale ?: displayedScale).coerceIn(.75f, 1.6f))
-            }
-            Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow,
-                modifier = Modifier.fillMaxWidth().testTag("font-scale-preview")) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Aa", Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall)
-                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHighest) {
-                            Text("${((fontScale ?: displayedScale) * 100).roundToInt()}%", Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.labelLarge)
-                        }
-                    }
-                    Text("应用内的文字将以这个大小显示", style = MaterialTheme.typography.bodyMedium)
-                    if (fontScale != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("A", style = MaterialTheme.typography.labelSmall)
-                        Slider(fontScale, { onFontScale((it * 20).roundToInt() / 20f) },
-                            valueRange = .75f..1.6f, steps = 16,
-                            modifier = Modifier.weight(1f).testTag("font-scale-slider").semantics { contentDescription = "自定义文字缩放" })
-                        Text("A", style = MaterialTheme.typography.titleLarge)
-                    } else TeaCaption("使用系统字号，在系统显示设置中调整")
-                }
-            }
-        }
+        FontScaleOptions(fontScale, onFontScale)
     }
     if (colorDialog) {
         val parsed = hex.removePrefix("#").takeIf { it.matches(Regex("[a-fA-F0-9]{6}")) }
@@ -144,6 +119,49 @@ internal fun SettingsAppearanceOptions(
             }
         }, confirmButton = { TextButton(enabled = parsed != null, onClick = { onSeed(checkNotNull(parsed)); onDynamic(false); colorDialog = false }) { Text("应用颜色") } },
             dismissButton = { TextButton(onClick = { colorDialog = false }) { Text("取消") } })
+    }
+}
+
+@Composable
+private fun FontScaleOptions(fontScale: Float?, onFontScale: (Float?) -> Unit) {
+    val density = LocalDensity.current
+    // Keep drag updates in this small preview; applying the preference remeasures the whole app.
+    var previewScale by remember(fontScale) { mutableFloatStateOf(fontScale ?: density.fontScale) }
+    val previewDensity = Density(density.density, if (fontScale == null) density.fontScale else previewScale)
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("文字缩放", style = MaterialTheme.typography.titleMedium)
+        AppearanceSegments(listOf("跟随系统", "自定义"), if (fontScale == null) 0 else 1, "font-scale-mode") {
+            onFontScale(if (it == 0) null else density.fontScale.coerceIn(.75f, 1.6f))
+        }
+        Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = Modifier.fillMaxWidth().testTag("font-scale-preview")) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
+                    CompositionLocalProvider(LocalDensity provides previewDensity) {
+                        Text("Aa", Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall)
+                    }
+                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                        Text("${(previewDensity.fontScale * 100).roundToInt()}%", Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+                Box(Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.CenterStart) {
+                    CompositionLocalProvider(LocalDensity provides previewDensity) {
+                        Text("应用内的文字将以这个大小显示", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (fontScale != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("A", style = MaterialTheme.typography.labelSmall)
+                        Slider(previewScale, { previewScale = it }, valueRange = .75f..1.6f,
+                            onValueChangeFinished = { onFontScale((previewScale * 100).roundToInt() / 100f) },
+                            modifier = Modifier.weight(1f).testTag("font-scale-slider").semantics { contentDescription = "自定义文字缩放" })
+                        Text("A", style = MaterialTheme.typography.titleLarge)
+                    }
+                    TeaCaption("松手后应用到全部页面")
+                } else TeaCaption("使用系统字号，在系统显示设置中调整")
+            }
+        }
     }
 }
 

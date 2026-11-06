@@ -2,6 +2,8 @@ package com.teameow.teawords.data
 
 import com.google.gson.*
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import okhttp3.*
@@ -29,14 +31,14 @@ internal class MemoryLru<K, V>(private val capacity: Int) {
 /** WordMoment's website endpoints; cancellable requests, bounded process-only cache. */
 class OnlineDictionary(private val fetch: suspend (String) -> String = { DictionaryHttp.get(it) }) {
     private val cache = MemoryLru<String, OnlineDictionaryResult>(64)
-    suspend fun lookup(query: String): OnlineDictionaryResult {
+    suspend fun lookup(query: String): OnlineDictionaryResult = withContext(Dispatchers.Default) {
         val word = query.trim()
         require(word.length <= 160) { "查词最多支持 160 个字符；长文请使用翻译模式" }
         require(word.isNotEmpty()) { "请输入要查询的单词" }
         val key = word.lowercase(Locale.ROOT)
-        cache.get(key)?.let { return it }
+        cache.get(key)?.let { return@withContext it }
         val url = "https://dict.youdao.com/jsonapi".toHttpUrl().newBuilder().addQueryParameter("q", word).build()
-        val payload = fetch(url.toString())
+        val payload = JsonParser.parseString(fetch(url.toString())).asJsonObject
         val detail = parse(payload)
         val entry = detail.takeIf { it.definition.isNotBlank() }?.let { OnlineWordEntry(headword(payload, word), it) }
         val suggestions = if (entry == null) {
@@ -45,18 +47,20 @@ class OnlineDictionary(private val fetch: suspend (String) -> String = { Diction
             parseSuggestions(fetch(suggestionUrl.toString()))
         } else emptyList()
         currentCoroutineContext().ensureActive()
-        return OnlineDictionaryResult(entry, suggestions).also { cache.put(key, it) }
+        OnlineDictionaryResult(entry, suggestions).also { cache.put(key, it) }
     }
     companion object {
         val shared by lazy { OnlineDictionary() }
         internal fun headword(payload: String, fallback: String): String {
-            val root = JsonParser.parseString(payload).asJsonObject
+            return headword(JsonParser.parseString(payload).asJsonObject, fallback)
+        }
+        private fun headword(root: JsonObject, fallback: String): String {
             val value = root.obj("ec").array("word").objects().firstOrNull().string("return-phrase")
                 .ifBlank { root.obj("simple").array("word").objects().firstOrNull().string("return-phrase") }.trim()
             return value.takeIf { it.isNotBlank() && it.length <= 160 && it.none(Char::isISOControl) } ?: fallback
         }
-        fun parse(payload: String): StudyDictionaryEntry {
-            val root = JsonParser.parseString(payload).asJsonObject
+        fun parse(payload: String): StudyDictionaryEntry = parse(JsonParser.parseString(payload).asJsonObject)
+        private fun parse(root: JsonObject): StudyDictionaryEntry {
             val head = root.obj("ec").array("word").objects().firstOrNull()
             val simple = root.obj("simple").array("word").objects().firstOrNull() ?: root.obj("base")
             val meanings = head.array("trs").objects().flatMap { tr ->

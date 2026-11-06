@@ -410,8 +410,7 @@ fun SettingsView(
     ) {
         CompositionLocalProvider(LocalSettingsHeaderDrag provides dragBy, LocalSettingsHeaderRelease provides releaseDrag) {
         Box(Modifier.fillMaxWidth()) {
-            val height = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 12.dp)
-                .coerceAtLeast(240.dp)
+            val height = teaModalPageHeight()
             Box(Modifier.fillMaxWidth().height(height)) {
                 CoveredPage(covered = currentPage != SettingsPage.Main) {
                     Column(Modifier.fillMaxSize()) {

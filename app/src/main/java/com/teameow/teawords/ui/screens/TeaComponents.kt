@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.delay
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -50,6 +51,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * bottom-bar layout and must fall back to its own system inset.
  */
 internal val LocalReservedBottom = staticCompositionLocalOf<Dp?> { null }
+
+@Composable
+internal fun teaModalPageHeight(): Dp = (LocalConfiguration.current.screenHeightDp.dp - 12.dp).coerceAtLeast(240.dp)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -397,5 +401,29 @@ internal fun TeaStatusMessage(message: String, error: Boolean = false) {
         color = if (error) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
         contentColor = if (error) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer) {
         Text(message, Modifier.fillMaxWidth().padding(16.dp), style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+/** Shared fixed header for modal pages; keeps the close target inside the content margins. */
+@Composable
+internal fun TeaPanelHeader(title: String, onClose: () -> Unit,
+    enabled: Boolean = true, closeLabel: String = "关闭$title", onBack: (() -> Unit)? = null,
+    modifier: Modifier = Modifier) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Column {
+            Row(modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                onBack?.let { IconButton(onClick = it, enabled = enabled) { Icon(AppSymbols.ArrowBack, "返回") } }
+                Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
+                FilledTonalIconButton(onClick = onClose, enabled = enabled, modifier = Modifier.size(44.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                    Icon(AppSymbols.Close, closeLabel)
+                }
+            }
+            HorizontalDivider(thickness = .5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .4f))
+        }
     }
 }

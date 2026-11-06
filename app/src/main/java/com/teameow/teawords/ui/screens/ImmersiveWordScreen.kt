@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.*
@@ -36,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.teameow.teawords.data.*
+import com.teameow.teawords.data.pronunciation.DictionaryAudioPhase
+import com.teameow.teawords.data.pronunciation.SpeechPhase
 import com.teameow.teawords.data.search.DictionaryGateway
 import com.teameow.teawords.data.search.SearchFilter
 import com.teameow.teawords.data.search.WordFormKeys
@@ -118,7 +121,8 @@ internal fun ImmersiveWordScreen(
     var onlineJob by remember { mutableStateOf<Job?>(null) }
     var dictionaryAudio by remember { mutableStateOf(prefs.getBoolean("dictionary_audio", true)) }
     val audio = remember(speech.manager) { com.teameow.teawords.data.pronunciation.DictionaryAudioPlayer(context, speech.manager) }
-    val recordingPlaying by audio.playing.collectAsState()
+    val recording by audio.state.collectAsState()
+    val speaking = playback.word == word && playback.phase in listOf(SpeechPhase.QUEUED, SpeechPhase.PLAYING)
     DisposableEffect(audio) { onDispose { audio.close() } }
     fun lookupOnline() {
         if (onlineBusy) return
@@ -230,14 +234,19 @@ internal fun ImmersiveWordScreen(
                                 Text(word, fontSize = layout.wordSize,
                                     fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = layout.wordSize * 1.2f)
                                 TextButton(onClick = {
-                                    pronunciation.dialect?.let { if (dictionaryAudio) audio.play(word, it) else speech.manager.play(word, it) }
-                                }, enabled = pronunciation.dialect != null && (dictionaryAudio || playback.phase != com.teameow.teawords.data.pronunciation.SpeechPhase.INITIALIZING),
+                                    val dialect = pronunciation.dialect ?: PronunciationDialect.US
+                                    if (dictionaryAudio) audio.play(word, dialect) else { audio.stop(); speech.manager.play(word, dialect) }
+                                }, modifier = Modifier.testTag("study-pronunciation"),
                                     colors = ButtonDefaults.textButtonColors(contentColor = StudyInk)) {
                                     Text(if (pronunciation.dialect == PronunciationDialect.UK) "英" else "美",
                                         Modifier.background(StudyInk.copy(alpha = .12f), RoundedCornerShape(7.dp)).padding(4.dp), fontSize = 12.sp)
                                     Spacer(Modifier.width(7.dp))
                                     val regional = if (pronunciation.dialect == PronunciationDialect.UK) onlineEntry?.uk else onlineEntry?.us
-                                    Text(if (recordingPlaying) "正在播放…" else regional?.takeIf { it.isNotBlank() }?.let { "/${it.trim('/')}/" } ?: "播放发音", fontSize = 15.sp)
+                                    Text(when {
+                                        recording.phase == DictionaryAudioPhase.LOADING -> "加载发音…"
+                                        recording.phase == DictionaryAudioPhase.PLAYING || speaking -> "正在播放…"
+                                        else -> regional?.takeIf { it.isNotBlank() }?.let { "/${it.trim('/')}/" } ?: "播放发音"
+                                    }, fontSize = 15.sp)
                                     Spacer(Modifier.width(5.dp)); Icon(AppSymbols.VolumeUp, "播放发音", Modifier.size(16.dp))
                                 }
                                 if (onlineEntry == null && details.phonetic.isNotBlank()  )
@@ -248,9 +257,9 @@ internal fun ImmersiveWordScreen(
                                 }
                             }
                             Column(Modifier.align(Alignment.TopEnd), horizontalAlignment = Alignment.CenterHorizontally) {
-                                TextButton(onClick = { if (revealed) finish(recognized) else { recognized = true; revealed = true } }, enabled = controlsEnabled,
-                                    colors = ButtonDefaults.textButtonColors(contentColor = StudyInk), contentPadding = PaddingValues(0.dp)) {
-                                    Text(if (revealed) "继续" else "会", fontSize = if (revealed) 16.sp else 22.sp)
+                                IconButton(onClick = { if (revealed) finish(recognized) else { recognized = true; revealed = true } }, enabled = controlsEnabled) {
+                                    Icon(if (revealed) AppSymbols.ArrowForward else AppSymbols.Check,
+                                        if (revealed) "继续下一个单词" else "认识，查看释义", tint = StudyInk)
                                 }
                                 IconButton(enabled = controlsEnabled, onClick = {
                                     detailsBusy = true
@@ -266,8 +275,9 @@ internal fun ImmersiveWordScreen(
                                     }
                                 }) { Icon(if (details.saved) Icons.Default.Star else Icons.Outlined.StarBorder,
                                     if (details.saved) "移出生词本" else "加入生词本", tint = StudyInk) }
-                                TextButton(enabled = controlsEnabled, onClick = { typing = true; answer = ""; typingFeedback = null },
-                                    colors = ButtonDefaults.textButtonColors(contentColor = StudyInk), contentPadding = PaddingValues(0.dp)) { Text("拼写", fontSize = 14.sp) }
+                                IconButton(enabled = controlsEnabled, onClick = { typing = true; answer = ""; typingFeedback = null }) {
+                                    Icon(Icons.Outlined.Keyboard, "拼写单词", tint = StudyInk)
+                                }
                             }
                         }
                     }
@@ -279,7 +289,10 @@ internal fun ImmersiveWordScreen(
                             Text(message, Modifier.fillMaxWidth().padding(16.dp))
                         }
                     } }
-                    if (playback.word == word) playback.message?.let { message -> item { Text(message, color = StudyInk.copy(alpha = .8f), fontSize = 13.sp) } }
+                    recording.message?.let { message -> item { TeaCaption(message) } }
+                    pronunciation.error?.let { message -> item { TeaCaption(message) } }
+                    if (playback.word == word || !dictionaryAudio || recording.phase == DictionaryAudioPhase.FALLBACK)
+                        playback.message?.let { message -> item { Text(message, color = StudyInk.copy(alpha = .8f), fontSize = 13.sp) } }
                     item {
                         AnimatedVisibility(revealed,
                             enter = fadeIn(tween(240)) + expandVertically(spring(dampingRatio = .85f)),
@@ -406,8 +419,8 @@ private fun StudyPill(label: String, enabled: Boolean, modifier: Modifier, prima
 internal fun StudyAmbientBackground(wallpaper: String?) {
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
     if (!wallpaper.isNullOrBlank()) {
-        AsyncImage(ImageRequest.Builder(LocalContext.current).data(wallpaper).size(720, 1600).build(),
-            contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().blur(6.dp))
+        AsyncImage(ImageRequest.Builder(LocalContext.current).data(wallpaper).build(),
+            contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().blur(2.dp))
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(
             MaterialTheme.colorScheme.background.copy(alpha = .35f),
             MaterialTheme.colorScheme.background.copy(alpha = .22f),

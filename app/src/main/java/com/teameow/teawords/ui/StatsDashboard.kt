@@ -56,7 +56,7 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
     var reverting by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(windowDays) {
+    LaunchedEffect(Unit) {
         loading = true
         try {
             val midnight = Calendar.getInstance().apply {
@@ -75,7 +75,6 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
                     rows = repo.wordRows(),
                     totals = repo.totals(),
                     today = repo.totals(midnight),
-                    trend = repo.daily(midnight - (windowDays - 1) * DAY_MS),
                     streak = streakCount,
                     dictionarySize = repo.dictionarySize(),
                     legacyTests = dbHelper.getReviewStats()?.totalProblems ?: 0
@@ -84,22 +83,36 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
             rows = loaded.rows
             totals = loaded.totals
             today = loaded.today
-            trend = loaded.trend
             streak = loaded.streak
             dictionarySize = loaded.dictionarySize
             legacyTests = loaded.legacyTests
-        } catch (e: Exception) {
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
             error = "读取统计失败：${e.message}"
         } finally {
             loading = false
         }
     }
 
-    val verified = rows.count { it.verified }
-    val selfKnown = rows.count { it.selfReportedKnown }
-    val learning = rows.count { it.attempts > 0 && !it.verified }
-    val fuzzy = rows.count { it.report == "FUZZY" && it.attempts == 0 }
-    val unknown = rows.count { it.report == "UNKNOWN" && it.attempts == 0 }
+    var trendLoading by remember { mutableStateOf(true) }
+    LaunchedEffect(windowDays) {
+        trendLoading = true
+        try {
+            trend = withContext(Dispatchers.IO) {
+                val midnight = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                repo.daily(midnight - (windowDays - 1) * DAY_MS)
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+        catch (e: Exception) { error = "读取趋势失败：${e.message}" }
+        finally { trendLoading = false }
+    }
+
+    val verified = remember(rows) { rows.count { it.verified } }
+    val selfKnown = remember(rows) { rows.count { it.selfReportedKnown } }
+    val learning = remember(rows) { rows.count { it.attempts > 0 && !it.verified } }
+    val fuzzy = remember(rows) { rows.count { it.report == "FUZZY" && it.attempts == 0 } }
+    val unknown = remember(rows) { rows.count { it.report == "UNKNOWN" && it.attempts == 0 } }
     val pending = (rows.size - verified - selfKnown - learning - fuzzy - unknown).coerceAtLeast(0)
 
     fun category(row: LearningRepository.WordRow): String = when {
@@ -120,6 +133,13 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
         "待确认" to MaterialTheme.colorScheme.outline
     )
 
+    val filtered = remember(rows, filter) { rows.filter { category(it) == filter } }
+    val categoryCounts = remember(rows) { rows.groupingBy { category(it) }.eachCount() }
+    val skipped = remember(rows) { rows.filter { it.selfReportedKnown } }
+    val bands = remember(rows) { listOf(
+        "CET-4" to rows.count { it.tags.contains("cet4") && it.verified },
+        "CET-6" to rows.count { it.tags.contains("cet6") && it.verified },
+        "大纲外" to rows.count { it.tags.isBlank() && it.verified }) }
     var showExplanation by remember { mutableStateOf(false) }
     TeaListPage(
         embedded = true, expandedTitle = false,
@@ -127,12 +147,7 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
         subtitle = "学习积累与回忆表现",
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        navigationContent = {},
-        actions = {
-            FilledTonalIconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
-                Icon(AppSymbols.Close, "关闭统计")
-            }
-        }
+        header = { TeaPanelHeader("词汇知识画像", onClose = onBack, closeLabel = "关闭统计") }
     ) {
         if (loading) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         error?.let { item { TeaStatusMessage(it, error = true) } }
@@ -154,14 +169,14 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
             }
         }
         item {
-            TeaCard {
+            TeaCard(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                 TeaMetricRow("$learning" to "学习中", "$selfKnown" to "自评认识", "$pending" to "待确认")
                 TeaCaption("本地词库 $dictionarySize 词 · 已记录 ${rows.size} 词")
             }
         }
         if (rows.isNotEmpty()) {
             item {
-                LearningCard("词汇状态", "测试记录与自评分别统计") {
+                ProfileCard("词汇状态", "测试记录与自评分别统计") {
                     val states = listOf("已验证" to verified, "学习中" to learning, "自评认识" to selfKnown,
                         "模糊认识" to fuzzy, "完全陌生" to unknown, "待确认" to pending)
                     states.filter { it.second > 0 }.forEach { (label, count) ->
@@ -172,11 +187,7 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
         }
         if (verified > 0) {
             item {
-                LearningCard("词书覆盖", "已通过测试验证的词汇") {
-                    val bands = listOf(
-                        "CET-4" to rows.count { it.tags.contains("cet4") && it.verified },
-                        "CET-6" to rows.count { it.tags.contains("cet6") && it.verified },
-                        "大纲外" to rows.count { it.tags.isBlank() && it.verified })
+                ProfileCard("词书覆盖", "已通过测试验证的词汇") {
                     BarChart(bands, "按本地词典的词书标签统计。")
                 }
             }
@@ -184,7 +195,7 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
 
         // Learning trend with a switchable window.
         item {
-            LearningCard("学习趋势", "$windowDays 天内的真实答题") {
+            ProfileCard("学习趋势", "$windowDays 天内的真实答题") {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(7, 30, 90).forEach { days ->
                         FilterChip(
@@ -194,7 +205,8 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
                         )
                     }
                 }
-                if (trend.isEmpty()) {
+                if (trendLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
+                if (trend.isEmpty() && !trendLoading) {
                     TeaCaption("这 $windowDays 天没有答题记录。完成一次学习后这里会出现真实数据。")
                 } else {
                     TrendChart(trend, windowDays)
@@ -210,13 +222,13 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
         }
 
         item {
-            LearningCard("学习积累", "来自实际作答记录") {
+            ProfileCard("学习积累", "来自实际作答记录") {
                 TeaMetricRow("$streak" to "连续天数", "${totals.tests}" to "累计回忆", formatDuration(totals.seconds) to "专注时长")
             }
         }
 
         item {
-            LearningCard("今日", "前台单题耗时；每题最多计 5 分钟") {
+            ProfileCard("今日", "前台单题耗时；每题最多计 5 分钟") {
                 TeaMetricRow(
                     "${today.tests}" to "回忆次数",
                     "${today.seconds / 60}:${(today.seconds % 60).toString().padStart(2, '0')}" to "专注时长",
@@ -227,8 +239,7 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
         }
 
         if (selfKnown > 0 || legacyTests > 0) item {
-            LearningCard("减少无效重复", "自评认识、且尚无测试记录的词不再占用新词队列") {
-                val skipped = rows.filter { it.selfReportedKnown }
+            ProfileCard("减少无效重复", "自评认识、且尚无测试记录的词不再占用新词队列") {
                 val hiddenNow = skipped.count { System.currentTimeMillis() - it.updated < SAMPLE_AFTER_MS }
                 Text("$hiddenNow 个词按你的判断暂离队列，系统只做少量间隔抽查。", style = MaterialTheme.typography.bodyMedium)
                 if (skipped.isNotEmpty()) {
@@ -246,7 +257,7 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
 
         if (skippedExpanded) {
             item { TeaSectionLabel("自评认识 · 暂离新词队列") }
-            items(rows.filter { it.selfReportedKnown }, key = { "skipped-${it.word}" }) { k ->
+            items(skipped, key = { "skipped-${it.word}" }) { k ->
                 Surface(
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -291,13 +302,12 @@ fun StatsDashboard(dbHelper: DatabaseHelper, modifier: Modifier = Modifier, onBa
                     FilterChip(
                         selected = filter == label,
                         onClick = { filter = label },
-                        label = { Text("$label · ${rows.count { category(it) == label }}") }
+                        label = { Text("$label · ${categoryCounts[label] ?: 0}") }
                     )
                 }
             }
         }
 
-        val filtered = rows.filter { category(it) == filter }
         if (filtered.isEmpty() && !loading) {
             item { TeaCard { TeaEmptyState("暂无词汇", "完成排雷或学习后，相应词汇会出现在这里。") } }
         }
@@ -311,7 +321,6 @@ private data class ProfileSnapshot(
     val rows: List<LearningRepository.WordRow>,
     val totals: LearningRepository.Totals,
     val today: LearningRepository.Totals,
-    val trend: List<LearningRepository.Daily>,
     val streak: Int,
     val dictionarySize: Int,
     val legacyTests: Int
@@ -319,6 +328,9 @@ private data class ProfileSnapshot(
 
 @Composable
 private fun WordEvidenceRow(k: LearningRepository.WordRow, accent: Color) {
+    val dueText = remember(k.due) {
+        if (k.due > 0) "下次复习 ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(k.due))}" else null
+    }
     Surface(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -341,9 +353,7 @@ private fun WordEvidenceRow(k: LearningRepository.WordRow, accent: Color) {
                         else -> "尚无任何记录"
                     }
                 )
-                if (k.due > 0) {
-                    TeaCaption("下次复习 ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(k.due))}")
-                }
+                dueText?.let { TeaCaption(it) }
                 if (k.tags.isNotBlank()) TeaCaption("词书 · ${k.tags}")
             }
             TeaChip(
@@ -406,13 +416,16 @@ private fun BarChart(entries: List<Pair<String, Int>>, caption: String) {
 /** Daily bar chart over the selected window, with the peak day called out. */
 @Composable
 private fun TrendChart(days: List<LearningRepository.Daily>, windowDays: Int) {
-    val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-    val calendar = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }
-    val window = (windowDays - 1 downTo 0).map { offset ->
-        val day = format.format(Date(calendar.timeInMillis - offset * DAY_MS))
-        days.firstOrNull { it.day == day } ?: LearningRepository.Daily(day, 0, 0, 0)
+    val window = remember(days, windowDays) {
+        val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val midnight = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val byDay = days.associateBy { it.day }
+        (windowDays - 1 downTo 0).map { offset ->
+            val day = format.format(Date(midnight - offset * DAY_MS))
+            byDay[day] ?: LearningRepository.Daily(day, 0, 0, 0)
+        }
     }
     val peak = window.maxByOrNull { it.tests }
     val peakValue = (peak?.tests ?: 0).coerceAtLeast(1)
@@ -470,4 +483,13 @@ private fun formatDuration(seconds: Long): String {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     return if (hours > 0) "${hours}h${minutes}m" else "${minutes}m"
+}
+
+@Composable
+private fun ProfileCard(title: String, subtitle: String, content: @Composable ColumnScope.() -> Unit) {
+    TeaCard(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        TeaCaption(subtitle)
+        content()
+    }
 }

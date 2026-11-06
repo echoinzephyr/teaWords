@@ -99,7 +99,7 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = null,
         containerColor = MaterialTheme.colorScheme.background) {
         val closeSheet = LocalTeaSheetClose.current
-        Column(Modifier.fillMaxWidth().height((LocalConfiguration.current.screenHeightDp - 12).dp.coerceAtLeast(240.dp)).imePadding()) {
+        Column(Modifier.fillMaxWidth().height(teaModalPageHeight()).imePadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { closeSheet(null) }) { Icon(AppSymbols.ArrowBack, "取消选择词书") }
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {

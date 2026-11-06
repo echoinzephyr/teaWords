@@ -140,7 +140,7 @@ fun DiagnosticScreen(
     TeaListPage(expandedTitle = false,
         loading = loading,
         title = "词汇能力诊断",
-        subtitle = "自适应选题 · 答对更难的问题会更快定位水平",
+        subtitle = "凭第一反应判断，逐步了解词汇水平",
         onBack = onBack,
         backEnabled = !busy,
         actions = {
@@ -153,23 +153,13 @@ fun DiagnosticScreen(
     ) {
         message?.let { item { TeaCaption(it) } }
 
-        item {
-            LearningCard(
-                "当前估计",
-                CatSelector.describe(state.ability)
-            ) {
-                TeaMetricRow(
-                    "${state.answeredCount}" to "已答题数",
-                    "${state.ability.isPreciseEnough}".replace("true", "是").replace("false", "否") to "精度达标",
-                    CatSelector.approximateBand(state.ability.theta) to "大致水平"
-                )
-                Text(
-                    "能力值 ${"%.2f".format(state.ability.theta)}（logit） · 95% 区间 " +
-                        "${"%.2f".format(state.ability.interval.start)} ~ ${"%.2f".format(state.ability.interval.endInclusive)}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                TeaCaption("难度来自词书标签先验，未经真实数据校准；能力值只描述整体水平，不代表某个具体单词已掌握。")
-                TeaCaption("已写入的可回溯证据：$storedEvidence 条（含义项与题型，供以后拟合参数）")
+        if (!state.isFinished) item {
+            TeaCard {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("诊断进度", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                    TeaChip("已答 ${state.answeredCount} 题")
+                }
+                TeaCaption("按第一反应选择认识或不认识；可随时结束，已答内容会保存。")
             }
         }
 
@@ -177,11 +167,12 @@ fun DiagnosticScreen(
         when {
             state.isFinished -> item {
                 LearningCard("诊断结束", stopReasonText(state.stopReason)) {
+                    if (state.answeredCount > 0) Text(CatSelector.approximateBand(state.ability.theta), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
                     Text(
-                        "本次答了 ${state.answeredCount} 题，正确 ${state.correctCount} 题。",
+                        "本次答了 ${state.answeredCount} 题，自评认识 ${state.correctCount} 题。",
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    TeaCaption("结果已保存。之后的学习与排雷会继续修正这个估计，你可以随时再测一次。")
+                    TeaCaption("结果已保存。这是词汇水平估计，不代表具体单词已掌握；后续学习会继续修正。")
                     Button(
                         onClick = { onFinished() },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
@@ -230,8 +221,7 @@ fun DiagnosticScreen(
                     ) {
                         Text(entry.item.word, style = MaterialTheme.typography.bodyLarge)
                         TeaCaption(
-                            (if (entry.correct) "认识" else "不认识") +
-                                " · 难度 ${"%.2f".format(entry.item.difficulty)}"
+                            if (entry.correct) "认识" else "不认识"
                         )
                     }
                 }

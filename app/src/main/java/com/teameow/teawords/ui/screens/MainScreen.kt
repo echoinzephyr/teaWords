@@ -85,8 +85,6 @@ enum class SettingsPage {
     Logs
 }
 
-data class BingWallpaper(val url: String)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") // Pages already apply their measured system and dock insets.
@@ -205,19 +203,13 @@ fun MainScreen(
                     val request = okhttp3.Request.Builder()
                         .url("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1")
                         .build()
-                    val response = client.newCall(request).execute()
-                    val json = response.body?.string()
-                    if (json != null) {
-                        val jsonObj = com.google.gson.JsonParser.parseString(json).asJsonObject
-                        val images = jsonObj.getAsJsonArray("images")
-                        if (images != null && images.size() > 0) {
-                            val url = "https://www.bing.com" + images[0].asJsonObject.get("url").asString
-                            withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                bingWallpaperUrl = url
-                            }
-                        }
+                    val url = client.newCall(request).execute().use { response ->
+                        check(response.isSuccessful) { "Bing HTTP ${response.code}" }
+                        response.body?.string()?.let(BingWallpaperSource::imageUrl)
                     }
-                } catch (e: Exception) {
+                    withContext(kotlinx.coroutines.Dispatchers.Main) { bingWallpaperUrl = url }
+                } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                catch (e: Exception) {
                     Log.e("MainScreen", "Failed to fetch Bing wallpaper", e)
                 }
             }
@@ -329,11 +321,11 @@ fun MainScreen(
                     "stats" -> {
                         val statsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
                         val statsClose: () -> Unit = { scope.launch { statsSheetState.hide(); requestBack() } }
-                        val sheetHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 72.dp)
-                            .coerceIn(320.dp, 800.dp)
+                        val sheetHeight = teaModalPageHeight()
                         TeaModalBottomSheet(
                             onDismissRequest = requestBack,
                             sheetState = statsSheetState,
+                            dragHandle = null,
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
                         ) {

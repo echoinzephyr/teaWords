@@ -205,27 +205,10 @@ internal fun SettingsPanelHeader(title: String, onBack: (() -> Unit)? = null,
     val release = LocalSettingsHeaderRelease.current
     val currentDrag by rememberUpdatedState(drag)
     val currentRelease by rememberUpdatedState(release)
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = .97f)) {
-        Column {
-            Row(Modifier.fillMaxWidth().heightIn(min = 64.dp)
-                .testTag("settings-panel-header")
-                .pointerInput(Unit) {
-                    detectVerticalDragGestures(onDragEnd = { currentRelease() }, onDragCancel = { currentRelease() }) { change, amount ->
-                        change.consume(); currentDrag(amount)
-                    }
-                }.padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (onBack != null) IconButton(onClick = onBack, enabled = enabled) { Icon(AppSymbols.ArrowBack, "返回") }
-                Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold)
-                FilledTonalIconButton(onClick = onClose, enabled = enabled, modifier = Modifier.size(44.dp),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                    Icon(AppSymbols.Close, if (onBack == null) "关闭设置" else "关闭子设置")
-                }
+    TeaPanelHeader(title, onClose, enabled, if (onBack == null) "关闭设置" else "关闭子设置", onBack,
+        modifier = Modifier.testTag("settings-panel-header").pointerInput(Unit) {
+            detectVerticalDragGestures(onDragEnd = { currentRelease() }, onDragCancel = { currentRelease() }) { change, amount ->
+                change.consume(); currentDrag(amount)
             }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .4f), thickness = .5.dp)
-        }
-    }
+        })
 }

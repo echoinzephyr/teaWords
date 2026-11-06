@@ -31,11 +31,11 @@ internal fun PocketRoundSetupScreen(
         }
     }
     DisposableEffect(Unit) { onDispose { focus.clearFocus(force = true); keyboard?.hide() } }
-    TeaListPage(title = "准备小练习", subtitle = "按你现在的空闲时间，选一轮的词数",
+    TeaListPage(expandedTitle = false, title = "准备小练习", subtitle = "按你现在的空闲时间，选一轮的词数",
         onBack = onBack, backEnabled = !busy, loading = busy) {
         item {
             TeaCard {
-                Text("这轮想练几个词？", style = MaterialTheme.typography.headlineSmall)
+                Text("这轮想练几个词？", style = MaterialTheme.typography.titleLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(3, 5, 10, 20).forEach { preset ->
                         FilterChip(selected = count == preset, onClick = {

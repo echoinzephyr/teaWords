@@ -113,6 +113,7 @@ fun LearningScreen(
     var lastScreened by remember { mutableStateOf(emptyList<Knowledge>()) }
     var screeningTotal by remember { mutableIntStateOf(0) }
     var showImport by remember { mutableStateOf(false) }
+    var importRevision by remember { mutableIntStateOf(0) }
     var diagnosticBusy by remember { mutableStateOf(false) }
     var importText by rememberSaveable { mutableStateOf("") }
 
@@ -141,6 +142,7 @@ fun LearningScreen(
     fun importWords(source: String = "用户导入", license: String = "用户提供，许可由用户确认", read: () -> String) {
         val returnToHub = mode == "learningHub"
         busy = true
+        message = null
         scope.launch {
             try {
                 val count = withContext(Dispatchers.IO) { repo.importWords(WordImport.parse(read()), source, license) }
@@ -149,7 +151,7 @@ fun LearningScreen(
                 lastScreened = emptyList()
                 mode = if (returnToHub) "learningHub" else "home"
                 message = "新增 $count 个词，重复词保留原有学习记录"
-                showImport = false
+                importRevision++
             } catch (e: Exception) {
                 message = "导入失败：${e.message}"
             } finally {
@@ -421,20 +423,28 @@ fun LearningScreen(
                 catch (_: Exception) { message = "收藏更新失败，请重试" }
             } }, onBack = back)
     } else if (pageMode == "learningHub") {
-        TeaListPage("专项练习", onBack = back) {
+        TeaListPage("专项练习", expandedTitle = false, onBack = back) {
+            val paused = pocketRound?.takeUnless { it.complete }
             item {
-                val paused = pocketRound?.takeUnless { it.complete }
                 TeaCard {
-                    Text("专项练习", style = MaterialTheme.typography.headlineSmall)
+                    Text("按自己的节奏练习", style = MaterialTheme.typography.titleLarge)
                     Text("混合小练习与整词打字，按自己的节奏巩固。")
                     paused?.let { TeaCaption("上次练到 ${it.done.size}/${it.tasks.size} 步") }
-                    Button(onClick = {
+                }
+            }
+            item { TeaSectionLabel("选择练习") }
+            item {
+                TeaSegmentedGroup {
+                    TeaOptionRow(title = if (paused != null) "继续上次练习" else "混合小练习",
+                        summary = "词义、听音、配对与拼写", icon = AppSymbols.Insights, enabled = !busy, onClick = {
                         if (paused != null) mode = "pocket"
                         else { message = null; mode = "pocketSetup" }
-                    }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (paused != null) "继续上次练习" else "混合小练习")
-                    }
-                    OutlinedButton(onClick = {
+                    })
+                    TeaOptionRow(title = when {
+                        paused == null -> "打字记词"
+                        paused.tasks.all { it.kind == PocketKind.TYPING } -> "继续打字记词"
+                        else -> "完成上次练习后再打字"
+                    }, summary = "看释义，回忆并拼写完整单词", icon = AppSymbols.Book5, onClick = {
                         if (paused != null) mode = "pocket"
                         else {
                             val round = PocketPlanner.typingRound(states, words, newBudget, System.currentTimeMillis())
@@ -452,14 +462,7 @@ fun LearningScreen(
                                 }
                             }
                         }
-                    }, enabled = !busy && (paused == null || paused.tasks.all { it.kind == PocketKind.TYPING }),
-                        modifier = Modifier.fillMaxWidth()) {
-                        Text(when {
-                            paused == null -> "打字记词"
-                            paused.tasks.all { it.kind == PocketKind.TYPING } -> "继续打字记词"
-                            else -> "完成上次练习后再打字"
-                        })
-                    }
+                    }, enabled = !busy && (paused == null || paused.tasks.all { it.kind == PocketKind.TYPING }))
                 }
             }
             message?.let { note -> item { TeaCaption(note) } }
@@ -470,7 +473,7 @@ fun LearningScreen(
                 val round = PocketPlanner.build(states, words, newBudget, System.currentTimeMillis(),
                     screeningPlan.learnDirectly.map { it.first.word } + screeningQueue.map { it.word }, wordLimit = count)
                 if (round == null) message = if (states.isEmpty()) "先选择词书或添加词库，就能开始小练习"
-                    else "今天的新词额度已用完，暂时也没有到期的词，稍后再来吧"
+                    else "暂时没有可练的词，可调整每轮词数或选择其他词书"
                 else {
                     busy = true
                     scope.launch {
@@ -635,32 +638,12 @@ fun LearningScreen(
     if (showBooks) StudyBookPicker(dbHelper, books, draftBooks,
         onSelection = { draftBooks = it }, onDismiss = { showBooks = false },
         onApply = { onSelectedBooksChange(draftBooks); bookRevision++; showBooks = false })
-    if (showImport) AlertDialog(
-        onDismissRequest = { if (!busy) showImport = false },
-        title = { Text("添加个人词库") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("使用你有权使用的词库。支持 CSV / JSON / TXT；每行“单词,释义”，JSON 使用 word 和 definition 字段。相同词条不会覆盖已有学习记录。")
-                TextButton(enabled = !busy, onClick = { showImport = false; draftBooks = selectedBookIds; showBooks = true }) { Text("选择内置词书（含雅思、托福）") }
-                OutlinedTextField(
-                    value = importText,
-                    onValueChange = { importText = it },
-                    label = { Text("粘贴词条") },
-                    minLines = 3,
-                    maxLines = 5
-                )
-                TextButton(enabled = !busy, onClick = {
-                    picker.launch(arrayOf("text/*", "application/json", "application/octet-stream"))
-                }) { Text("选择文件") }
-            }
-        },
-        confirmButton = {
-            Button(
-                enabled = importText.isNotBlank() && !busy,
-                onClick = { importWords { importText } }
-            ) { Text("导入词库") }
-        },
-        dismissButton = { TextButton(enabled = !busy, onClick = { showImport = false }) { Text("取消") } }
+    if (showImport) PersonalWordbookSheet(
+        text = importText, onText = { importText = it }, busy = busy, error = message,
+        importRevision = importRevision, onDismiss = { showImport = false },
+        onBooks = { draftBooks = selectedBookIds; showBooks = true },
+        onFile = { picker.launch(arrayOf("text/*", "application/json", "application/octet-stream")) },
+        onImport = { importWords { importText } }
     )
 }
 

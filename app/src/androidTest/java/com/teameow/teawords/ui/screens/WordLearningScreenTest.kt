@@ -83,6 +83,7 @@ class WordLearningScreenTest {
         open()
         capture("study-layout-focus.png")
         compose.onNodeWithContentDescription("更多").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("暂停，稍后继续").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("暂停，稍后继续").performClick()
         compose.runOnIdle { generation.intValue++ }
         open()
@@ -132,14 +133,14 @@ class WordLearningScreenTest {
                 ) { value, _ -> correct = value }
             }
         }
-        compose.waitUntil(5_000) { compose.onAllNodes(hasText("会") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5_000) { compose.onAllNodes(hasContentDescription("认识，查看释义") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         assertEquals(0, calls.get())
-        compose.onNodeWithText("会").performClick()
+        compose.onNodeWithContentDescription("认识，查看释义").performClick()
         compose.waitUntil(5_000) { calls.get() == 1 }
         compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasText("在线补充"))
         compose.onNodeWithText("在线补充").assertIsDisplayed()
-        compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasText("继续"))
-        compose.onNodeWithText("继续").performClick()
+        compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasContentDescription("继续下一个单词"))
+        compose.onNodeWithContentDescription("继续下一个单词").performClick()
         assertEquals(true, correct)
     }
     @Test fun swipingLeftOpensFocusedSpellingWithoutTheLegacyInlineView() {
@@ -151,7 +152,7 @@ class WordLearningScreenTest {
                 ImmersiveWordScreen(database, "access", "入口", 1, 10, false, null, onPause = {}) { _, _ -> }
             }
         }
-        compose.waitUntil(5_000) { compose.onAllNodes(hasText("拼写") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5_000) { compose.onAllNodes(hasContentDescription("拼写单词") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("immersive-word-content").performTouchInput { swipeLeft(startX = width * .8f, endX = width * .2f) }
         compose.onNodeWithTag("spelling-input").assertIsDisplayed()
         compose.onNodeWithText("拼写自测").assertDoesNotExist()
@@ -223,8 +224,8 @@ class WordLearningScreenTest {
         compose.onNode(hasSetTextAction()).performTextInput("记住：获得使用权")
         compose.onNodeWithText("保存").performClick()
         compose.waitUntil(5000) { StudyWordDetailsRepository(database).load("access").note == "记住：获得使用权" }
-        compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasText("拼写"))
-        compose.onNodeWithText("拼写").performClick()
+        compose.onNodeWithTag("immersive-word-content").performScrollToNode(hasContentDescription("拼写单词"))
+        compose.onNodeWithContentDescription("拼写单词").performClick()
         compose.onNode(hasSetTextAction()).performTextInput("access")
         compose.onNodeWithContentDescription("检查拼写").performClick()
         compose.onNodeWithText("下一个").performClick()
@@ -245,7 +246,7 @@ class WordLearningScreenTest {
             }
         }
         compose.waitUntil(10000) { compose.onAllNodes(hasText("认识") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("拼写").performClick()
+        compose.onNodeWithContentDescription("拼写单词").performClick()
         compose.onNode(hasSetTextAction()).performTextInput("access")
         compose.onNodeWithContentDescription("检查拼写").performClick()
         compose.onNodeWithText("下一个").performClick()
@@ -268,7 +269,7 @@ class WordLearningScreenTest {
         }
         compose.waitUntil(10000) { compose.onAllNodes(hasText("认识") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("认识").performClick()
-        compose.onNodeWithText("拼写").performClick()
+        compose.onNodeWithContentDescription("拼写单词").performClick()
         compose.onNodeWithContentDescription("返回词卡").performClick()
         compose.onNodeWithText("下一个").performClick()
         compose.runOnIdle { assertEquals(1, recognitionCalls); assertEquals(0, recallCalls) }

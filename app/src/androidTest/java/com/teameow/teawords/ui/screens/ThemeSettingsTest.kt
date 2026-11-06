@@ -105,4 +105,22 @@ class ThemeSettingsTest {
             assertNull(AppPreferences(compose.activity).customFontScale)
         } finally { prefs.customFontScale = previous }
     }
+    @Test fun draggingFontSliderOnlyCommitsGlobalScaleOnRelease() {
+        val prefs = AppPreferences(compose.activity)
+        val previous = prefs.customFontScale
+        prefs.customFontScale = 1f
+        try {
+            mount(prefs)
+            val slider = compose.onNodeWithTag("font-scale-slider").performScrollTo()
+            slider.performTouchInput {
+                down(center)
+                moveTo(androidx.compose.ui.geometry.Offset(width * .85f, centerY), delayMillis = 64)
+            }
+            compose.runOnIdle { assertEquals(1f, renderedScale, .001f) }
+            assertEquals(1f, prefs.customFontScale!!, .001f)
+            slider.performTouchInput { up() }
+            compose.runOnIdle { assertTrue(renderedScale > 1f) }
+            assertTrue(prefs.customFontScale!! > 1f)
+        } finally { prefs.customFontScale = previous }
+    }
 }
