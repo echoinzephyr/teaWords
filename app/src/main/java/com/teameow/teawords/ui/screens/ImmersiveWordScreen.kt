@@ -22,7 +22,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -36,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.size.Scale
 import com.teameow.teawords.data.*
 import com.teameow.teawords.data.pronunciation.DictionaryAudioPhase
 import com.teameow.teawords.data.pronunciation.SpeechPhase
@@ -57,7 +57,9 @@ internal data class StudyWordDetails(
 )
 
 internal class StudyWordDetailsRepository(private val helper: DatabaseHelper) {
-    init { helper.writableDatabase.execSQL("CREATE TABLE IF NOT EXISTS study_word_notes (word TEXT PRIMARY KEY, note TEXT NOT NULL)") }
+    private val notes by lazy { helper.writableDatabase.also {
+        it.execSQL("CREATE TABLE IF NOT EXISTS study_word_notes (word TEXT PRIMARY KEY, note TEXT NOT NULL)")
+    } }
     fun load(word: String): StudyWordDetails {
         val source = DictionaryGateway.sourceOrNull()
         val head = source?.exists(LexicalText.normalize(word))
@@ -69,14 +71,14 @@ internal class StudyWordDetailsRepository(private val helper: DatabaseHelper) {
             val pair = it.split(':', limit = 2)
             if (pair.size == 2 && pair[1].isNotBlank()) WordFormKeys.label(pair[0]) to pair[1] else null
         }
-        val note = helper.readableDatabase.rawQuery("SELECT note FROM study_word_notes WHERE word=?", arrayOf(word)).use {
+        val note = notes.rawQuery("SELECT note FROM study_word_notes WHERE word=?", arrayOf(word)).use {
             if (it.moveToFirst()) it.getString(0) else ""
         }
         return StudyWordDetails(head?.phonetic?.takeIf { it.isNotBlank() } ?: local?.phonetic.orEmpty(),
             phrases, forms, helper.isInVocabulary(word), note)
     }
     fun saveNote(word: String, note: String) {
-        helper.writableDatabase.insertWithOnConflict("study_word_notes", null, android.content.ContentValues().apply {
+        notes.insertWithOnConflict("study_word_notes", null, android.content.ContentValues().apply {
             put("word", word); put("note", note)
         }, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE).also { check(it != -1L) }
     }
@@ -89,14 +91,15 @@ internal fun ImmersiveWordScreen(
     busy: Boolean, error: String?, wallpaper: String? = null, onPause: () -> Unit,
     onRecallComplete: ((Boolean, Long) -> Unit)? = null,
     onlineLookup: (suspend (String) -> StudyDictionaryEntry)? = null,
+    initialDetails: StudyWordDetails? = null,
     onComplete: (Boolean, Long) -> Unit
 ) {
     val layout = teaLayoutSize()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val repo = remember(helper) { StudyWordDetailsRepository(helper) }
-    var details by remember(word) { mutableStateOf(StudyWordDetails()) }
-    var detailsBusy by remember(word) { mutableStateOf(true) }
+    var details by remember(word) { mutableStateOf(initialDetails ?: StudyWordDetails()) }
+    var detailsBusy by remember(word) { mutableStateOf(initialDetails == null) }
     var localError by remember(word) { mutableStateOf<String?>(null) }
     var revealed by rememberSaveable(word) { mutableStateOf(false) }
     var recognized by rememberSaveable(word) { mutableStateOf(false) }
@@ -165,7 +168,7 @@ internal fun ImmersiveWordScreen(
     }
     LaunchedEffect(word) {
         try {
-            details = withContext(Dispatchers.IO) { repo.load(word) }
+            if (initialDetails == null) details = withContext(Dispatchers.IO) { repo.load(word) }
             onlineEntry = withContext(Dispatchers.IO) { dictionary.cached(word) }
             if (details.phrases.isEmpty() && details.forms.isNotEmpty()) selectedTab = 1
         }
@@ -419,12 +422,18 @@ private fun StudyPill(label: String, enabled: Boolean, modifier: Modifier, prima
 internal fun StudyAmbientBackground(wallpaper: String?) {
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
     if (!wallpaper.isNullOrBlank()) {
-        AsyncImage(ImageRequest.Builder(LocalContext.current).data(wallpaper).build(),
-            contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().blur(2.dp))
+        AsyncImage(studyWallpaperRequest(LocalContext.current, wallpaper),
+            contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(
             MaterialTheme.colorScheme.background.copy(alpha = .35f),
             MaterialTheme.colorScheme.background.copy(alpha = .22f),
             MaterialTheme.colorScheme.background.copy(alpha = .48f)
         ))))
     }
+}
+
+internal fun studyWallpaperRequest(context: android.content.Context, wallpaper: String): ImageRequest {
+    val metrics = context.resources.displayMetrics
+    return ImageRequest.Builder(context).data(wallpaper).size(metrics.widthPixels, metrics.heightPixels)
+        .scale(Scale.FILL).memoryCacheKey("study:$wallpaper:${metrics.widthPixels}x${metrics.heightPixels}").build()
 }

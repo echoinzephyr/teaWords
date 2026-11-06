@@ -41,9 +41,8 @@ private fun bookCategory(book: BookInfo): String = when (book.category) {
 internal fun StudyBookPicker(helper: DatabaseHelper, selected: Set<String>,
     onSelection: (Set<String>) -> Unit, onDismiss: () -> Unit, onApply: () -> Unit) {
     val context = LocalContext.current
-    var books by remember(context) { mutableStateOf(OnlineWordbooks(context).catalog().map {
-        BookInfo(it.id, it.title, it.description, it.count, it.category)
-    }) }
+    var books by remember(context) { mutableStateOf(emptyList<BookInfo>()) }
+    var catalogLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(helper) {
         try {
@@ -52,16 +51,22 @@ internal fun StudyBookPicker(helper: DatabaseHelper, selected: Set<String>,
                 checkNotNull(DictionaryGateway.sourceOrNull()).books()
             }
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (failure: Exception) { error = failure.message ?: "词书目录暂时无法读取。" }
+        catch (failure: Exception) {
+            books = withContext(Dispatchers.IO) { OnlineWordbooks(context).catalog().map {
+                BookInfo(it.id, it.title, it.description, it.count, it.category)
+            } }
+            error = failure.message ?: "词书目录暂时无法读取。"
+        }
+        finally { catalogLoading = false }
     }
-    StudyBookPicker(helper, books, selected, onSelection, onDismiss, onApply, catalogError = error)
+    StudyBookPicker(helper, books, selected, onSelection, onDismiss, onApply, catalogError = error, catalogLoading = catalogLoading)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, selected: Set<String>,
     onSelection: (Set<String>) -> Unit, onDismiss: () -> Unit, onApply: () -> Unit,
-    catalogError: String? = null) {
+    catalogError: String? = null, catalogLoading: Boolean = false) {
     val context = LocalContext.current
     val downloads = remember(context) { OnlineWordbooks(context) }
     val scope = rememberCoroutineScope()
@@ -91,10 +96,10 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { error = "学习进度暂时无法读取，仍可选择词书。" }
     }
-    val categories = listOf("全部") + listOf("大学", "留学", "中学", "考研", "其他").filter { c -> books.any { bookCategory(it) == c } }
-    val ordered = books.sortedWith(compareBy({ listOf("cet4", "cet6", "ielts", "toefl", "gre", "zk", "gk", "ky").indexOf(it.id).let { n -> if (n < 0) Int.MAX_VALUE else n } }, { it.name }))
-    val filtered = ordered.filter { book -> (category == "全部" || bookCategory(book) == category) &&
-        (query.isBlank() || listOf(book.name, book.id, book.description).any { it.contains(query.trim(), ignoreCase = true) }) }
+    val categories = remember(books) { listOf("全部") + listOf("大学", "留学", "中学", "考研", "其他").filter { c -> books.any { bookCategory(it) == c } } }
+    val ordered = remember(books) { books.sortedWith(compareBy({ listOf("cet4", "cet6", "ielts", "toefl", "gre", "zk", "gk", "ky").indexOf(it.id).let { n -> if (n < 0) Int.MAX_VALUE else n } }, { it.name })) }
+    val grouped = remember(ordered, category, query) { ordered.filter { book -> (category == "全部" || bookCategory(book) == category) &&
+        (query.isBlank() || listOf(book.name, book.id, book.description).any { it.contains(query.trim(), ignoreCase = true) }) }.groupBy(::bookCategory) }
     TeaModalBottomSheet(onDismissRequest = ::dismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = null,
         containerColor = MaterialTheme.colorScheme.background) {
@@ -104,7 +109,7 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
                 IconButton(onClick = { closeSheet(null) }) { Icon(AppSymbols.ArrowBack, "取消选择词书") }
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("选择词书", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text("${books.size} 本" + (unionCount?.let { " · $it 个已下载词条" } ?: " · 正在统计词数"),
+                    Text(if (catalogLoading) "正在读取词书" else "${books.size} 本" + (unionCount?.let { " · $it 个已下载词条" } ?: " · 正在统计词数"),
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Icon(AppSymbols.Book5, null, Modifier.padding(12.dp))
@@ -123,8 +128,9 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
                 contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 catalogError?.let { item { TeaStatusMessage(it, error = true) } }
                 error?.let { item { TeaStatusMessage(it, error = true) } }
-                if (filtered.isEmpty()) item { TeaEmptyState("没有匹配的词书", "换个关键词或分类试试。") }
-                filtered.groupBy(::bookCategory).forEach { (group, entries) ->
+                if (catalogLoading) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+                else if (grouped.isEmpty()) item { TeaEmptyState("没有匹配的词书", "换个关键词或分类试试。") }
+                grouped.forEach { (group, entries) ->
                     item(key = "heading-$group") { TeaSectionLabel(group) }
                     item(key = "group-$group") {
                         TeaSegmentedGroup {
@@ -159,7 +165,7 @@ internal fun StudyBookPicker(helper: DatabaseHelper, books: List<BookInfo>, sele
                         TextButton(onClick = { task?.cancel() }) { Text("暂停下载") }
                     }
                     error?.let { TeaStatusMessage(it, error = true) }
-                    Button(enabled = !downloading, onClick = {
+                    Button(enabled = !downloading && !catalogLoading, onClick = {
                         focus.clearFocus(); keyboard?.hide(); error = null
                         task = scope.launch {
                             downloading = true

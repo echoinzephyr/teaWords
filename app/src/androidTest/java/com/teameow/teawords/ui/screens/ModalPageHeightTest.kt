@@ -11,6 +11,7 @@ class ModalPageHeightTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
     @Test fun statisticsAndSettingsExpandToTheSameTopAndShareHeaderHeight() {
+        compose.waitUntil(15_000) { compose.onAllNodesWithContentDescription("设置").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("翻译").performClick()
         compose.onNodeWithContentDescription("设置").performClick()
         val settings = compose.onNodeWithContentDescription("关闭设置").getUnclippedBoundsInRoot()

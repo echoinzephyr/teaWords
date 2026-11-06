@@ -339,7 +339,8 @@ fun LookupScreen(initialText: String, external: Boolean = false, onBack: () -> U
                 }
             }
             items(state.history, key = { "history-${it.id}" }) { record ->
-                LearningCard(record.text.take(100), "${record.kind} · ${record.direction} · ${java.text.DateFormat.getDateTimeInstance().format(java.util.Date(record.time))}") {
+                val date = remember(record.time) { java.text.DateFormat.getDateTimeInstance().format(java.util.Date(record.time)) }
+                LearningCard(record.text.take(100), "${record.kind} · ${record.direction} · $date") {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(onClick = { model.open(record.text); historyVisible = false }) { Text("再次查询") }
                         TextButton(onClick = { model.deleteHistory(record.id) }) { Text("删除") }

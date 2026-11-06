@@ -13,8 +13,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.background
@@ -50,6 +49,7 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -382,24 +382,30 @@ fun SettingsView(
     }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val closeSheet: () -> Unit = { scope.launch { sheetState.hide(); onBack() } }
-    var headerDrag by remember { mutableFloatStateOf(0f) }
-    var draggingHeader by remember { mutableStateOf(false) }
+    val headerOffset = remember { mutableFloatStateOf(0f) }
+    var reboundJob by remember { mutableStateOf<Job?>(null) }
+    val childBack = remember { arrayOfNulls<() -> Unit>(1) }
     var dragFromMain by remember { mutableStateOf(true) }
     val threshold = with(androidx.compose.ui.platform.LocalDensity.current) { 80.dp.toPx() }
-    val headerOffset by animateFloatAsState(headerDrag,
-        if (draggingHeader) snap() else spring(dampingRatio = 1f, stiffness = 500f), label = "settings-header-drag")
     val dragBy: (Float) -> Unit = { delta ->
-        if (!draggingHeader) dragFromMain = currentPage == SettingsPage.Main
-        draggingHeader = true; headerDrag = (headerDrag + delta).coerceAtLeast(0f)
+        reboundJob?.cancel()
+        dragFromMain = currentPage == SettingsPage.Main
+        headerOffset.floatValue = (headerOffset.floatValue + delta).coerceAtLeast(0f)
     }
     val releaseDrag: () -> Unit = {
-        if (headerDrag >= threshold) {
-            if (currentPage == SettingsPage.Main) closeSheet() else currentPage = SettingsPage.Main
+        if (headerOffset.floatValue >= threshold) {
+            // Keep the drag displacement until the exit finishes; resetting it here jumps upward.
+            if (currentPage == SettingsPage.Main) closeSheet() else childBack[0]?.invoke()
+        } else {
+            reboundJob = scope.launch {
+                Animatable(headerOffset.floatValue).animateTo(0f, spring(dampingRatio = 1f, stiffness = 500f)) {
+                    headerOffset.floatValue = value
+                }
+            }
         }
-        draggingHeader = false; headerDrag = 0f
     }
     TeaModalBottomSheet(
-        modifier = Modifier.graphicsLayer { if (dragFromMain && currentPage == SettingsPage.Main) translationY = headerOffset },
+        modifier = Modifier.graphicsLayer { if (dragFromMain && currentPage == SettingsPage.Main) translationY = headerOffset.floatValue },
         onDismissRequest = { if (currentPage == SettingsPage.Main) onBack() else currentPage = SettingsPage.Main },
         sheetState = sheetState,
         sheetGesturesEnabled = false,
@@ -447,8 +453,9 @@ fun SettingsView(
                     }
                 }
                 if (currentPage != SettingsPage.Main) key(currentPage) {
-                    PredictiveBackLayer(onBack = { currentPage = SettingsPage.Main }) { requestBack ->
-                    Surface(Modifier.fillMaxSize().graphicsLayer { if (!dragFromMain) translationY = headerOffset },
+                    PredictiveBackLayer(onBack = { headerOffset.floatValue = 0f; currentPage = SettingsPage.Main }) { requestBack ->
+                    SideEffect { childBack[0] = requestBack }
+                    Surface(Modifier.fillMaxSize().graphicsLayer { if (!dragFromMain) translationY = headerOffset.floatValue },
                         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                         color = MaterialTheme.colorScheme.surfaceContainerLow, shadowElevation = 12.dp) {
                         CompositionLocalProvider(LocalSettingsInSheet provides true, LocalReservedBottom provides null) {

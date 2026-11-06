@@ -24,22 +24,22 @@ fun RecordsView(
     var showNotebook by rememberSaveable { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()) {
         CoveredPage(covered = showNotebook) {
-            TeaListPage(title = "回望", subtitle = "查过的生词，回来巩固", loading = loading, actions = {
+            TeaListPage(title = "回望", expandedTitle = false, loading = loading, header = { TeaTopLevelHeader("回望") {
                 IconButton(onClick = onSettings) { Icon(AppSymbols.Settings, "设置") }
                 IconButton(onClick = onStats) { Icon(AppSymbols.BarChart, "学习统计") }
-            }) {
+            } }) {
                 error?.let { item { TeaStatusMessage(it, error = true) } }
                 item {
                     Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.tertiaryContainer,
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer) {
-                        Box(Modifier.fillMaxWidth().heightIn(min = if (layout.compact) 160.dp else 220.dp).padding(if (layout.compact) 20.dp else 24.dp)) {
-                            Column(Modifier.align(Alignment.TopStart).padding(bottom = if (layout.compact) 64.dp else 108.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("开始复习", style = MaterialTheme.typography.headlineMedium)
+                        Box(Modifier.fillMaxWidth().heightIn(min = 160.dp).padding(20.dp)) {
+                            Column(Modifier.align(Alignment.TopStart).padding(bottom = 64.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("开始复习", style = MaterialTheme.typography.titleLarge)
                                 Text("$reviewCount 个查过的生词", style = MaterialTheme.typography.titleMedium)
                                 Text("只复习单词，暂不包含句子", style = MaterialTheme.typography.bodyMedium)
                             }
                             FilledTonalIconButton(onClick = onStartReview, enabled = !loading && reviewCount > 0,
-                                modifier = Modifier.align(Alignment.BottomEnd).size(if (layout.compact) 56.dp else 80.dp),
+                                modifier = Modifier.align(Alignment.BottomEnd).size(56.dp),
                                 colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                                 Icon(AppSymbols.ArrowForward, "开始生词复习", Modifier.size(28.dp))
                             }
@@ -65,7 +65,7 @@ fun RecordsView(
 
 @Composable
 internal fun NotebookPage(words: List<VocabularyItem>, onOpen: (String) -> Unit, onDelete: (String) -> Unit, onBack: () -> Unit) {
-    TeaListPage(title = "生词本", onBack = onBack) {
+    TeaListPage(title = "生词本", expandedTitle = false, onBack = onBack) {
         if (words.isEmpty()) item { TeaEmptyState("给新词留个位置", "收藏的单词会出现在这里。") }
         items(words, key = { it.word }) { word ->
             Surface(onClick = { onOpen(word.word) }, shape = MaterialTheme.shapes.large,

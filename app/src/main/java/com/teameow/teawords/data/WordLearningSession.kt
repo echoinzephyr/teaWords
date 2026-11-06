@@ -21,10 +21,10 @@ data class WordLearningSession(
 
 /** Recall evidence and the durable cursor advance together, including after a failed save. */
 class WordLearningSessionRepository(private val helper: DatabaseHelper) {
-    private val db get() = helper.writableDatabase
-
-    init {
-        db.execSQL("CREATE TABLE IF NOT EXISTS word_learning_session (slot INTEGER PRIMARY KEY CHECK(slot=1), payload TEXT NOT NULL)")
+    private val db by lazy {
+        helper.writableDatabase.also {
+            it.execSQL("CREATE TABLE IF NOT EXISTS word_learning_session (slot INTEGER PRIMARY KEY CHECK(slot=1), payload TEXT NOT NULL)")
+        }
     }
 
     fun load(): WordLearningSession? = db.rawQuery(

@@ -477,7 +477,12 @@ fun MainScreen(
                             }
                         )
                     }
-                    "lookup-review" -> LookupReviewScreen(dbHelper, lookupReviewEntries, requestBack) { lookupReviewBusy = it }
+                    "lookup-review" -> LookupReviewScreen(dbHelper, lookupReviewEntries, requestBack,
+                        wallpaper = when (homeWallpaperMode) {
+                            HomeWallpaperMode.NONE -> null
+                            HomeWallpaperMode.DAILY -> bingWallpaperUrl
+                            HomeWallpaperMode.CUSTOM -> customWallpaperUri
+                        }) { lookupReviewBusy = it }
                 }
             }
             }
@@ -526,7 +531,7 @@ fun MainScreen(
                     if (overlay == "settings" || overlay == "stats") {
                         screen(overlay) { if (overlay == "settings") showSettings = false else showStats = false }
                     } else {
-                        PredictiveBackLayer(enabled = !lookupReviewBusy, searchTransition = overlay == "result",
+                        PredictiveBackLayer(enabled = !lookupReviewBusy, searchTransition = overlay == "result", opaqueEntrance = overlay == "lookup-review",
                             onExitStarted = { if (overlay == "result") { searchReturning = true; isInputFocused = true } }, onBack = {
                             when (overlay) {
                                 "stats" -> showStats = false

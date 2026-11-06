@@ -38,6 +38,7 @@ internal fun PredictiveBackLayer(
     topLevel: Boolean = false,
     searchTransition: Boolean = false,
     enterFromRight: Boolean = false,
+    opaqueEntrance: Boolean = false,
     onExitStarted: () -> Unit = {},
     content: @Composable (requestBack: () -> Unit) -> Unit
 ) {
@@ -134,11 +135,11 @@ internal fun PredictiveBackLayer(
                 val shown = visibility.value.coerceIn(0f, 1f)
                 val gesture = preview.value.coerceIn(0f, 1f)
                 val exiting = phase == BackPhase.Exiting || phase == BackPhase.Committed
-                alpha = if (exiting || enterFromRight) 1f else shown
+                alpha = if (exiting || enterFromRight || opaqueEntrance) 1f else shown
                 // Both system edges reveal the source from the top without shrinking either page.
                 val spellingEntrance = enterFromRight && phase == BackPhase.Entering
                 translationX = if (spellingEntrance) size.width * (1f - shown) else 0f
-                val distance = if (exiting) size.height else (if (topLevel) 12.dp else 32.dp).toPx()
+                val distance = if (exiting || opaqueEntrance) size.height else (if (topLevel) 12.dp else 32.dp).toPx()
                 translationY = if (spellingEntrance) 0f else distance * (1f - shown) + size.height * .35f * gesture * shown
                 scaleX = 1f
                 scaleY = 1f

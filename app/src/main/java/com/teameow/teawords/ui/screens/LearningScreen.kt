@@ -41,8 +41,15 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import coil.imageLoader
 
 private const val DAY_MS = 86_400_000L
+
+private data class PreparedStudyRound(
+    val session: WordLearningSession, val queue: List<Knowledge>,
+    val memory: Map<String, MemoryState>, val ability: AbilityEstimate,
+    val details: Pair<String, StudyWordDetails>?
+)
 
 /**
  * Learning entry point.
@@ -69,6 +76,7 @@ fun LearningScreen(
     val pocketRepo = remember(dbHelper) { PocketLearningRepository(dbHelper) }
     val sessionRepo = remember(dbHelper) { WordLearningSessionRepository(dbHelper) }
     var wordSession by remember { mutableStateOf<WordLearningSession?>(null) }
+    var preparedDetails by remember { mutableStateOf<Pair<String, StudyWordDetails>?>(null) }
     var pocketRound by remember { mutableStateOf<PocketRound?>(null) }
     val prefs = remember { context.getSharedPreferences("learning", 0) }
     var pocketWordLimit by rememberSaveable { mutableIntStateOf(
@@ -97,6 +105,7 @@ fun LearningScreen(
     var wordReturnMode by rememberSaveable { mutableStateOf("home") }
     var homeReview by rememberSaveable { mutableStateOf(false) }
     var busy by remember { mutableStateOf(true) }
+    var catalogLoaded by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var queue by remember { mutableStateOf(emptyList<Knowledge>()) }
     var position by remember { mutableIntStateOf(0) }
@@ -130,6 +139,14 @@ fun LearningScreen(
         states = result.second.states
         words = result.second.words
         tags = result.second.tags
+        catalogLoaded = true
+    }
+
+    DisposableEffect(studyWallpaper, context) {
+        val preload = studyWallpaper?.takeIf { it.isNotBlank() }?.let {
+            context.imageLoader.enqueue(studyWallpaperRequest(context, it))
+        }
+        onDispose { preload?.dispose() }
     }
 
     LaunchedEffect(selectedBookIds, bookRevision) {
@@ -182,7 +199,7 @@ fun LearningScreen(
     DisposableEffect(Unit) { onDispose { onModeChange("home") } }
 
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(mode, lifecycle) {
+    LaunchedEffect(lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) { homeClock = System.currentTimeMillis(); delay(15_000) }
         }
@@ -190,21 +207,21 @@ fun LearningScreen(
     val now = homeClock
     // Recomputed whenever the knowledge states or the round size change; never cached against a
     // frozen clock, otherwise a freshly screened word would not enter today's plan.
-    val sampleDay = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now))
-    val scheduledPlan = remember(states, limit, newBudget, mode, sampleDay, now) {
+    val sampleDay = remember(now) { SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now)) }
+    val scheduledPlan = remember(states, limit, newBudget, sampleDay, now) {
         LearningEngine.queue(states, now, limit, newBudget, prefs.getString("sample_day", null) != sampleDay)
     }
-    val unseen = states.filter { it.report == SelfReport.UNSEEN && it.attempts == 0 }
-    val dueCount = states.count { it.attempts > 0 && it.due <= now }
-    val fuzzyCount = states.count { it.report == SelfReport.FUZZY && it.attempts == 0 }
-    val verifiedCount = states.count { it.verified }
-    val learningCount = states.count { it.attempts > 0 && !it.verified }
-    val unknownCount = states.count { it.report == SelfReport.UNKNOWN }
+    val unseen = remember(states) { states.filter { it.report == SelfReport.UNSEEN && it.attempts == 0 } }
+    val dueCount = remember(states, now) { states.count { it.attempts > 0 && it.due <= now } }
+    val fuzzyCount = remember(states) { states.count { it.report == SelfReport.FUZZY && it.attempts == 0 } }
+    val verifiedCount = remember(states) { states.count { it.verified } }
+    val learningCount = remember(states) { states.count { it.attempts > 0 && !it.verified } }
+    val unknownCount = remember(states) { states.count { it.report == SelfReport.UNKNOWN } }
 
     // Ability estimate and word book tags drive an ability-scoped screening queue, so a 4500-word
     // book does not have to be judged by hand. See ScreeningPriority for the banding rules.
     var ability by remember { mutableStateOf(AbilityStore(context).load()) }
-    LaunchedEffect(mode) { if (mode == "home") ability = AbilityStore(context).load() }
+    LaunchedEffect(mode) { if (mode == "home") ability = withContext(Dispatchers.IO) { AbilityStore(context).load() } }
     val tagged = remember(tags) { tags.map { LearningRepository.TaggedWord(it.key, it.value) } }
     val screeningPlan: ScreeningPriority.Plan = remember(unseen, tagged, ability, strategy) {
         val difficultyByWord = tagged.associate { it.word to DifficultyPrior.forWord(it.word, it.tags).value }
@@ -315,38 +332,43 @@ fun LearningScreen(
         busy = true
         scope.launch {
             try {
-                val active = withContext(Dispatchers.IO) { sessionRepo.load() }
-                val session = if (active != null && !active.complete) active else {
-                    val tasks = plan.mapNotNull { state ->
-                        words[state.word]?.definition?.takeIf { it.isNotBlank() }?.let {
-                            WordLearningTask(state.word, it)
+                val prepared = withContext(Dispatchers.IO) {
+                    val active = sessionRepo.load()
+                    val session = if (active != null && !active.complete) active else {
+                        val tasks = plan.mapNotNull { state ->
+                            words[state.word]?.definition?.takeIf { it.isNotBlank() }?.let {
+                                WordLearningTask(state.word, it)
+                            }
                         }
+                        if (tasks.isEmpty()) return@withContext null
+                        sessionRepo.start(tasks)
                     }
-                    if (tasks.isEmpty()) {
-                        message = "本轮暂无任务：可选择其他词书、调整每轮新词上限，或等待复习到期。"
-                        return@launch
-                    }
-                    withContext(Dispatchers.IO) { sessionRepo.start(tasks) }
-                }
-                val byWord = withContext(Dispatchers.IO) {
-                    repo.states(session.tasks.map { it.word }).associateBy { it.word }
-                }
-                val roundQueue = session.tasks.map { byWord.getValue(it.word) }
-                val roundMemory = withContext(Dispatchers.IO) {
-                    roundQueue.drop(session.position).mapNotNull { item ->
+                    val byWord = repo.states(session.tasks.map { it.word }).associateBy { it.word }
+                    val roundQueue = session.tasks.map { byWord.getValue(it.word) }
+                    val memory = roundQueue.drop(session.position).mapNotNull { item ->
                         val sense = senseOf(item.word)
                         senses.memoryFor(sense.second)?.let { record -> item.word to MemoryState(
                             difficulty = record.difficulty, stability = record.stability,
                             lastReview = record.lastReview, reps = record.reps, lapses = record.lapses)
                         }
                     }.toMap()
+                    val firstWord = roundQueue.getOrNull(session.position)?.word
+                    val details = firstWord?.let { word ->
+                        runCatching { word to StudyWordDetailsRepository(dbHelper).load(word) }.getOrNull()
+                    }
+                    PreparedStudyRound(session, roundQueue, memory, AbilityStore(context).load(), details)
                 }
-                wordSession = session
-                queue = roundQueue
-                memoryByWord = roundMemory
-                ability = AbilityStore(context).load()
-                position = session.position
-                sessionCorrect = session.correct
+                if (prepared == null) {
+                    message = "本轮暂无任务：可选择其他词书、调整每轮新词上限，或等待复习到期。"
+                    return@launch
+                }
+                wordSession = prepared.session
+                queue = prepared.queue
+                memoryByWord = prepared.memory
+                ability = prepared.ability
+                preparedDetails = prepared.details
+                position = prepared.session.position
+                sessionCorrect = prepared.session.correct
                 message = null
                 wordReturnMode = if (mode == "home") "home" else "learningHub"
                 mode = "session"
@@ -507,6 +529,7 @@ fun LearningScreen(
             key(wordSession?.id, shown.first.word) {
                 ImmersiveWordScreen(dbHelper, shown.first.word, shown.second,
                     shown.third + 1, queue.size, busy || shown.third != position, message, studyWallpaper, onPause = back,
+                    initialDetails = preparedDetails?.takeIf { it.first == shown.first.word }?.second,
                     onRecallComplete = { correct, elapsed -> saveWordAnswer(shown.first, correct, elapsed, false, recognition = false) },
                     onComplete = { correct, elapsed -> saveWordAnswer(shown.first, correct, elapsed, true, recognition = true) })
             }
@@ -521,9 +544,7 @@ fun LearningScreen(
         loading = busy && pageMode != "session",
         expandedTitle = false,
         header = if (pageMode == "home") ({
-            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Text("学习", Modifier.weight(1f), fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            TeaTopLevelHeader("学习") {
                 IconButton(onClick = { mode = "diagnose" }, enabled = !busy) { Icon(AppSymbols.Insights, "词汇能力诊断") }
                 IconButton(onClick = { showImport = true }, enabled = !busy) { Icon(AppSymbols.Add, "导入词库") }
             }
@@ -582,6 +603,21 @@ fun LearningScreen(
                 onFinish = back
             )
 
+            pageMode == "home" && !catalogLoaded -> item {
+                TeaCard {
+                    if (busy) {
+                        Text("正在读取词书与学习进度", style = MaterialTheme.typography.titleMedium)
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    } else {
+                        Text("学习进度暂时无法读取", style = MaterialTheme.typography.titleMedium)
+                        Button(onClick = { scope.launch {
+                            busy = true; message = null
+                            try { reload() } catch (e: Exception) { message = "读取失败：${e.message}" }
+                            finally { busy = false }
+                        } }) { Text("重试") }
+                    }
+                }
+            }
             pageMode == "home" -> item {
                 StudyOverview(
                     bookName = books.filter { it.id in selectedBookIds }.joinToString("、") { it.name }.ifBlank { "个人词库" },
@@ -607,6 +643,7 @@ fun LearningScreen(
     }
     val homeBottom = LocalReservedBottom.current
     Box(Modifier.fillMaxSize()) {
+        if (!catalogLoaded) page("home") {} else {
         CoveredPage(covered = mode != "home") { page("home") {} }
         if (mode != "home") key(mode) {
             PredictiveBackLayer(onBack = {
@@ -624,11 +661,12 @@ fun LearningScreen(
                     try { reload() } catch (e: Exception) { message = "读取失败：${e.message}" }
                     finally { busy = false }
                 }
-            }, enabled = !busy && !diagnosticBusy) { back ->
+            }, enabled = !busy && !diagnosticBusy, opaqueEntrance = mode == "session" || mode == "pocket") { back ->
                 CompositionLocalProvider(LocalReservedBottom provides if (mode == "screen") homeBottom else null) {
                     page(mode, back)
                 }
             }
+        }
         }
     }
 

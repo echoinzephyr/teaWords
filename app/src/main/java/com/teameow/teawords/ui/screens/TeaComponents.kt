@@ -27,6 +27,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.delay
@@ -54,6 +55,15 @@ internal val LocalReservedBottom = staticCompositionLocalOf<Dp?> { null }
 
 @Composable
 internal fun teaModalPageHeight(): Dp = (LocalConfiguration.current.screenHeightDp.dp - 12.dp).coerceAtLeast(240.dp)
+
+@Composable
+internal fun TeaTopLevelHeader(title: String, actions: @Composable RowScope.() -> Unit) {
+    Row(Modifier.testTag("top-level-header-$title").fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Text(title, Modifier.weight(1f), fontSize = 26.sp, fontWeight = FontWeight.Bold)
+        actions()
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable

@@ -13,6 +13,7 @@ class SearchTransitionTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
     @Test fun homeSearchMovesIntoResultAndReturnsWithDraft() {
+        compose.waitUntil(15_000) { compose.onAllNodesWithContentDescription("打开下拉搜索").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("打开下拉搜索").performClick()
         compose.onNode(hasSetTextAction()).performTextReplacement("apple")
         compose.onNode(hasSetTextAction()).performImeAction()

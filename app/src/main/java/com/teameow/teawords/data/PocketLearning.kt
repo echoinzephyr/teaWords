@@ -109,10 +109,11 @@ object PocketPlanner {
 
 /** One checkpoint; answer evidence and cursor commit in the same SQLite transaction. */
 class PocketLearningRepository(private val helper: DatabaseHelper) {
-    private val db get() = helper.writableDatabase
-    init {
-        db.execSQL("CREATE TABLE IF NOT EXISTS pocket_round (slot INTEGER PRIMARY KEY CHECK(slot=1), payload TEXT NOT NULL)")
-        db.execSQL("CREATE TABLE IF NOT EXISTS typing_attempts (round_id TEXT NOT NULL, task_index INTEGER NOT NULL, word TEXT NOT NULL, errors INTEGER NOT NULL, elapsed_ms INTEGER NOT NULL, chars INTEGER NOT NULL, timestamp INTEGER NOT NULL, PRIMARY KEY(round_id, task_index))")
+    private val db by lazy {
+        helper.writableDatabase.also {
+            it.execSQL("CREATE TABLE IF NOT EXISTS pocket_round (slot INTEGER PRIMARY KEY CHECK(slot=1), payload TEXT NOT NULL)")
+            it.execSQL("CREATE TABLE IF NOT EXISTS typing_attempts (round_id TEXT NOT NULL, task_index INTEGER NOT NULL, word TEXT NOT NULL, errors INTEGER NOT NULL, elapsed_ms INTEGER NOT NULL, chars INTEGER NOT NULL, timestamp INTEGER NOT NULL, PRIMARY KEY(round_id, task_index))")
+        }
     }
 
     data class TypingStats(val words: Int, val errors: Int, val chars: Int, val elapsedMs: Long) {

@@ -21,7 +21,7 @@ class PredictiveBackLayerTest {
     private var commits = 0
     private var parentMounts = 0
 
-    private fun mount(predictive: Boolean = true, topLevel: Boolean = false) {
+    private fun mount(predictive: Boolean = true, topLevel: Boolean = false, opaqueEntrance: Boolean = false) {
         compose.setContent {
             CompositionLocalProvider(LocalPredictiveBackEnabled provides predictive) {
             var visible by remember { mutableStateOf(true) }
@@ -29,7 +29,7 @@ class PredictiveBackLayerTest {
                 DisposableEffect(Unit) { parentMounts++; onDispose { } }
                 Text("Source page")
                 if (visible) {
-                    PredictiveBackLayer(onBack = { commits++; visible = false }, topLevel = topLevel) { back ->
+                    PredictiveBackLayer(onBack = { commits++; visible = false }, topLevel = topLevel, opaqueEntrance = opaqueEntrance) { back ->
                         Box(Modifier.fillMaxSize().testTag("page")) {
                             Button(onClick = back, modifier = Modifier.testTag("back")) { Text("Back") }
                         }
@@ -221,5 +221,26 @@ class PredictiveBackLayerTest {
         compose.onNodeWithTag("source-action").assertDoesNotExist()
         compose.runOnIdle { covered = false }
         compose.onNodeWithTag("source-action").assertExists()
+    }
+
+    @Test fun opaqueEntranceTravelsUpWithoutMovingTheRetainedSource() {
+        compose.mainClock.autoAdvance = false
+        mount(opaqueEntrance = true)
+        compose.mainClock.advanceTimeBy(32)
+        compose.waitForIdle()
+        val starting = compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot
+        val parent = compose.onNodeWithText("Source page").fetchSemanticsNode().boundsInRoot
+        compose.mainClock.advanceTimeBy(96)
+        compose.waitForIdle()
+        val moving = compose.onNodeWithTag("page").fetchSemanticsNode().boundsInRoot
+        assertTrue(moving.top < starting.top)
+        assertEquals(starting.left, moving.left, 1f)
+        assertEquals(parent, compose.onNodeWithText("Source page").fetchSemanticsNode().boundsInRoot)
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        compose.onNodeWithTag("back").performClick()
+        compose.waitForIdle()
+        assertEquals(1, commits)
+        assertEquals(1, parentMounts)
     }
 }

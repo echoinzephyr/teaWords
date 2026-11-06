@@ -1,10 +1,15 @@
 package com.teameow.teawords
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -21,34 +26,45 @@ import com.teameow.teawords.ui.screens.MainScreen
 import com.teameow.teawords.ui.screens.ProvidePronunciation
 import com.teameow.teawords.ui.theme.TeaWordsTheme
 import com.teameow.teawords.ui.theme.resolveDarkTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var levelProvider: WordLevelProvider
     private lateinit var api: DictionaryApi
+    private var initialized by mutableStateOf(false)
+    private var initializationError by mutableStateOf<String?>(null)
+
+    private fun initializeStorage() {
+        initializationError = null
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    dbHelper.ensureSchema()
+                    check(DictionaryGateway.open(applicationContext)) { "离线词典暂时无法读取" }
+                }
+                initialized = true
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { initializationError = e.message ?: "本地资料暂时无法读取" }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         dbHelper = DatabaseHelper(this)
-        // Bring an existing database up to the current additive schema before anything reads it.
-        // onUpgrade does not fire when the version already matches, so this cannot be left to it.
-        dbHelper.ensureSchema()
         levelProvider = WordLevelProvider(this)
         api = DictionaryApi()
         val preferences = AppPreferences(this)
 
-        // Preload word level lists in background
-        Thread { levelProvider.loadIfNeeded() }.start()
-
-        // Open the compact index off the main thread; network downloads are always user initiated.
-        Thread {
-            DictionaryGateway.open(this) { progress ->
-                Log.i("MainActivity", "dictionary install ${progress.percent}% done=${progress.done}")
-            }
-        }.start()
+        // Render first; migrations and the compact index must not hold the first UI frame.
+        // MainScreen is mounted only after both are ready, so readers cannot race schema setup.
+        initializeStorage()
 
         setContent {
             // Read on every composition so choosing a mode in settings re-themes immediately.
@@ -67,6 +83,16 @@ class MainActivity : ComponentActivity() {
                 seedColor = seedColor,
                 customFontScale = fontScale
             ) {
+              if (!initialized) {
+                  Surface(Modifier.fillMaxSize()) {
+                      Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+                          horizontalAlignment = Alignment.CenterHorizontally) {
+                          if (initializationError == null) CircularProgressIndicator()
+                          Text(initializationError ?: "正在打开本地资料", style = MaterialTheme.typography.bodyLarge)
+                          if (initializationError != null) Button(onClick = ::initializeStorage) { Text("重试") }
+                      }
+                  }
+              } else {
               ProvidePronunciation {
                 MainScreen(
                     dbHelper = dbHelper,
@@ -105,6 +131,7 @@ class MainActivity : ComponentActivity() {
                         retention = it
                     }
                 )
+              }
               }
             }
         }
