@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#EADDFF" android:pathData="M24,0 H84 Q108,0 108,24 V84 Q108,108 84,108 H24 Q0,108 0,84 V24 Q0,0 24,0 Z" />
-    <path android:fillColor="#65529D" android:fillType="evenOdd"
-        android:pathData="M69,47 H73 C82,47 84,52 84,58 C84,64 79,68 72,68 H67 V61 H72 C77,61 78,60 78,57 C78,54 76,53 73,53 H69 Z" />
-    <path android:fillColor="#65529D" android:pathData="M29,45 Q29,43 32,43 H69 Q72,43 72,46 V62 Q72,77 57,77 H45 Q29,77 29,62 Z" />
-    <path android:fillColor="#FFF7FF" android:pathData="M38,51 Q44,49 50,53 V66 Q44,62 38,64 Z M53,53 Q59,49 65,51 V64 Q59,62 53,66 Z" />
-    <path android:fillColor="#65529D" android:pathData="M48,36 C44,28 48,24 58,25 C61,33 55,38 48,36 Z" />
-    <path android:fillColor="@android:color/transparent" android:strokeColor="#FFF7FF" android:strokeWidth="1.8" android:strokeLineCap="round" android:pathData="M49,34 L56,28" />
-    <path android:fillColor="#65529D" android:pathData="M39,80 H62 Q65,80 65,82 Q65,84 62,84 H39 Q36,84 36,82 Q36,80 39,80 Z" />
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="108dp" android:height="108dp" android:viewportWidth="1254" android:viewportHeight="1254">
+    <path android:fillColor="#B9E4FB" android:pathData="M320,0 H934 Q1254,0 1254,320 V934 Q1254,1254 934,1254 H320 Q0,1254 0,934 V320 Q0,0 320,0 Z" />
+    <group>
+        <path android:fillType="evenOdd" android:pathData="M331,269 H621 C711,269 765,330 765,419 V507 C765,556 738,582 694,582 C636,581 603,601 570,642 C543,673 540,722 501,752 C480,770 453,776 422,776 H341 Q332,775 325,781 L243,849 Q220,864 220,840 V778 Q220,768 210,762 C175,743 159,708 159,661 V442 C159,343 227,269 331,269 Z">
+            <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="159" android:startY="269" android:endX="1098" android:endY="1085" android:startColor="#075D7D" android:endColor="#034A66" /></aapt:attr>
+        </path>
+        <path android:fillType="evenOdd" android:pathData="M810,492 H898 Q916,491 928,494 C906,528 903,568 918,616 Q920,627 930,624 C977,614 1023,622 1067,576 Q1098,615 1098,680 V867 C1098,929 1069,976 1018,1004 Q1011,1008 1012,1018 V1072 Q1013,1099 991,1085 L903,1025 Q898,1021 888,1022 H599 C498,1022 431,951 431,855 V819 C507,818 551,788 576,724 C597,665 630,625 694,625 C756,628 797,596 807,550 Q812,528 810,492 Z">
+            <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="159" android:startY="269" android:endX="1098" android:endY="1085" android:startColor="#32B5A8" android:endColor="#22A19D" /></aapt:attr>
+        </path>
+        <path android:fillType="evenOdd" android:pathData="M936,596 C922,510 974,452 1082,446 C1086,553 1052,590 957,593 C972,565 994,536 1021,511 C981,530 954,562 936,596 Z">
+            <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="159" android:startY="269" android:endX="1098" android:endY="1085" android:startColor="#148894" android:endColor="#00626E" /></aapt:attr>
+        </path>
+        <path android:fillColor="#F7FAFC" android:fillType="evenOdd" android:pathData="M397,371 H457 Q460,371 462,377 L568,642 L543,668 H515 Q511,668 510,663 L487,601 H366 L343,663 Q342,668 338,668 H281 Q276,668 278,662 L391,377 Q393,371 397,371 Z M426,438 L384,551 H468 Z" />
+        <path android:fillColor="#F7FAFC" android:fillType="evenOdd" android:pathData="M811,655 H846 Q850,655 850,659 V701 H978 Q982,701 982,705 V736 Q982,741 978,741 H930 C914,785 891,822 861,854 C897,877 936,895 978,905 Q983,906 981,911 L958,946 Q956,951 951,949 C905,933 865,912 827,883 C790,911 745,934 698,949 Q693,951 691,946 L674,913 Q672,907 678,905 C721,893 763,875 796,854 C767,824 745,787 729,741 H679 Q675,741 675,737 V705 Q675,701 680,701 H807 V659 Q807,655 811,655 Z M774,741 C788,775 805,803 828,826 C850,801 868,773 882,741 Z" />
+    </group>
 </vector>

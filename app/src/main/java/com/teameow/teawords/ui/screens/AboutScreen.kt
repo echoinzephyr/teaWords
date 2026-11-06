@@ -1,22 +1,19 @@
 package com.teameow.teawords.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.teameow.teawords.R
 import com.teameow.teawords.data.UpdateChecker
 
 @Composable
 fun AboutIdentity() {
     Column(Modifier.fillMaxWidth().padding(vertical = 32.dp), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Image(painterResource(R.drawable.teawords_logo), "茶词图标", Modifier.size(80.dp))
+        TeaAppIcon()
         Text("茶词 · teaWords", style = MaterialTheme.typography.headlineMedium)
         Text("版本 ${installedVersionName()}", style = MaterialTheme.typography.bodyMedium)
         TeaCaption("查词、翻译，慢慢记住。")
