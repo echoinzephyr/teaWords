@@ -111,6 +111,7 @@ class WordLearningScreenTest {
         compose.onNodeWithContentDescription("本词已完成 1 / 3 项练习").assertExists()
         capture("study-consolidation.png")
         compose.onNodeWithText("apple").performClick()
+        compose.onNodeWithText("下一题").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("spelling-input").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("2 / 3").assertIsDisplayed()
         compose.onNodeWithTag("spelling-input").performTextInput("apple")
@@ -198,6 +199,60 @@ class WordLearningScreenTest {
             preferences.edit().putBoolean("word_card_wallpaper_v2", previous).commit()
             wallpaper.delete()
         }
+    }
+
+    @Test fun choicesRevealAllMatchesAndWaitForConfirmationForBothVerdicts() {
+        name = "choice-review-${System.nanoTime()}.db"
+        val database = DatabaseHelper(compose.activity, name)
+        helper = database
+        database.ensureSchema()
+        val bank = listOf(WordLearningTask("stageapple", "苹果"), WordLearningTask("stagebook", "书"))
+        LearningRepository(database).importWords(bank.map { ImportedWord(it.word, it.definition) }, "test", "test")
+        val sessions = WordLearningSessionRepository(database)
+        sessions.start(bank, threeStep = true)
+        val generation = mutableIntStateOf(0)
+        compose.setContent { TeaWordsTheme { key(generation.intValue) { LearningScreen(database, exercisePhraseLookup = { emptyList() }) } } }
+        fun open() {
+            compose.waitUntil(15000) { compose.onAllNodes(hasTestTag("study-learn-entry") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("study-learn-entry").performScrollTo().performClick()
+        }
+        open()
+        repeat(2) {
+            compose.waitUntil(5000) { compose.onAllNodes(hasText("认识") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithText("认识").performClick()
+            compose.waitUntil(5000) { compose.onAllNodes(hasTestTag("word-intro-continue") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("word-intro-continue").performClick()
+        }
+        val question = WordExercisePlanner.build(bank[0], 1, bank)
+        compose.waitUntil(5000) { compose.onAllNodes(hasTestTag("word-choice-0") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText(question.choices.first { it != question.answer }).performClick()
+        compose.onNodeWithText("下一题").assertIsDisplayed()
+        compose.onNodeWithText("2 / 6").assertIsDisplayed()
+        assertEquals(0, sessions.load()!!.position)
+        question.choices.forEachIndexed { index, choice ->
+            compose.onNodeWithTag("word-choice-$index").assertExists().assertIsNotEnabled()
+            assertTrue(compose.onAllNodesWithText(question.choiceMatches.getValue(choice)).fetchSemanticsNodes().isNotEmpty())
+        }
+        compose.onNodeWithContentDescription("正确答案").assertExists()
+        File(compose.activity.getExternalFilesDir(null), "study-choice-review.png").outputStream().use {
+            compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+        compose.onNodeWithText("下一题").performClick()
+        compose.waitUntil(5000) { compose.onAllNodes(hasText("stagebook") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("stagebook").performClick()
+        compose.onNodeWithText("3 / 6").assertIsDisplayed()
+        compose.onNodeWithText("下一题").assertIsDisplayed()
+        assertEquals(1, sessions.load()!!.position)
+        assertEquals(1, sessions.load()!!.phase)
+        compose.onNodeWithContentDescription("更多").performClick()
+        compose.onNodeWithText("暂停，稍后继续").performClick()
+        compose.runOnIdle { generation.intValue++ }
+        open()
+        compose.onNodeWithText("下一题").assertIsDisplayed()
+        compose.onNodeWithText("3 / 6").assertIsDisplayed()
+        compose.onNodeWithText("下一题").performClick()
+        compose.waitUntil(5000) { sessions.load()?.position == 0 }
+        assertEquals(1, sessions.load()!!.phase)
     }
 
     @Test fun revealingAutomaticallyLoadsOnlineDetailsAndTopContinueResponds() {

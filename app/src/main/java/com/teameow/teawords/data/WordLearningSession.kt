@@ -125,6 +125,7 @@ class WordLearningSessionRepository(private val helper: DatabaseHelper) {
         val word = session.tasks[position].word
         val progress = session.exercises[word] ?: WordExerciseProgress()
         check(step in 0..2 && step == progress.completed && attempt == progress.attempts) { "题目已更新，请继续当前练习" }
+        check(session.exerciseVersion < 3 || step == session.phase) { "请先确认当前题目，再继续下一轮" }
         check(step != 0 || progress.introductionKnown != null) { "请先认读本词，再开始巩固" }
         val time = elapsed.coerceIn(0, 300_000)
         val passed = correct && !assisted
@@ -134,7 +135,8 @@ class WordLearningSessionRepository(private val helper: DatabaseHelper) {
             spellingMillis = if (step == 2 && passed) time else progress.spellingMillis)
         val updated = session.copy(exercises = session.exercises + (word to next),
             missed = if (!correct || assisted) (session.missed + word).distinct() else session.missed)
-        if (session.exerciseVersion >= 3 && passed && step < 2) nextTurn(updated, position + 1) else updated
+        // Recognition advances immediately; a choice answer stays visible until explicit confirmation.
+        if (session.exerciseVersion >= 3 && passed && step == 0) nextTurn(updated, position + 1) else updated
     }
 
     private fun mutate(id: String, change: (WordLearningSession) -> WordLearningSession): WordLearningSession {
@@ -159,6 +161,7 @@ class WordLearningSessionRepository(private val helper: DatabaseHelper) {
             }
             val word = session.tasks[position].word
             if (session.exerciseVersion >= 2) check(session.exercises[word]?.completed == 3) { "请先完成本词的三项练习" }
+            check(session.exerciseVersion < 3 || session.phase == 2)
             val updated = saveReview(word)
             val updatedSession = session.copy(
                 position = position + 1,

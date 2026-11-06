@@ -116,6 +116,9 @@ class MaterialRefreshTest {
                 }
             }
         }
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithText("还没有学习记录，完成一轮学习后查看你的积累。").fetchSemanticsNodes().isNotEmpty()
+        }
         val list = compose.onNode(hasScrollToNodeAction() and androidx.compose.ui.test.SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange))
         repeat(8) { list.performTouchInput { swipeUp() } }
         compose.onNodeWithText("词汇明细").assertIsDisplayed()

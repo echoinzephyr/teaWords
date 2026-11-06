@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -44,7 +45,7 @@ internal fun PredictiveBackLayer(
 ) {
     val predictive = LocalPredictiveBackEnabled.current
     val visibility = remember { Animatable(if (searchTransition) 1f else 0f) }
-    val preview = remember { Animatable(0f) }
+    var preview by remember { mutableFloatStateOf(0f) }
     val scope = rememberCoroutineScope()
     val latestBack by rememberUpdatedState(onBack)
     var phase by remember { mutableStateOf(BackPhase.Entering) }
@@ -94,7 +95,7 @@ internal fun PredictiveBackLayer(
                 visibility.snapTo(1f)
                 events.collect { event ->
                     if (generation == gestureGeneration) {
-                        preview.snapTo(event.progress.coerceIn(0f, 1f))
+                        preview = event.progress.coerceIn(0f, 1f)
                     }
                 }
                 // Settle outside the gesture job: another back event cannot cancel a committed exit.
@@ -111,7 +112,7 @@ internal fun PredictiveBackLayer(
                 if (generation == gestureGeneration) {
                     phase = BackPhase.Restoring
                     animationJob = scope.launch {
-                        preview.animateTo(0f, spring(dampingRatio = 1f, stiffness = 500f))
+                        animate(preview, 0f, animationSpec = spring(dampingRatio = 1f, stiffness = 700f)) { value, _ -> preview = value }
                         phase = BackPhase.Idle
                     }
                 }
@@ -133,7 +134,7 @@ internal fun PredictiveBackLayer(
         Box(
             Modifier.fillMaxSize().graphicsLayer {
                 val shown = visibility.value.coerceIn(0f, 1f)
-                val gesture = preview.value.coerceIn(0f, 1f)
+                val gesture = preview.coerceIn(0f, 1f)
                 val exiting = phase == BackPhase.Exiting || phase == BackPhase.Committed
                 alpha = if (exiting || enterFromRight || opaqueEntrance) 1f else shown
                 // Both system edges reveal the source from the top without shrinking either page.
@@ -144,7 +145,7 @@ internal fun PredictiveBackLayer(
                 scaleX = 1f
                 scaleY = 1f
                 shape = RoundedCornerShape((28f * maxOf(gesture, 1f - shown)).dp)
-                clip = true
+                clip = gesture > 0f || shown < 1f
             }.background(MaterialTheme.colorScheme.background)
                 // Absorb taps on empty space without merging the entire page into one
                 // accessibility node (clickable would swallow static text and scroll ancestry).

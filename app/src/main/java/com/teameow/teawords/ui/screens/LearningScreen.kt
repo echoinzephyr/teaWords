@@ -84,6 +84,7 @@ fun LearningScreen(
     val pocketRepo = remember(dbHelper) { PocketLearningRepository(dbHelper) }
     val sessionRepo = remember(dbHelper) { WordLearningSessionRepository(dbHelper) }
     var wordSession by remember { mutableStateOf<WordLearningSession?>(null) }
+    var roundPhrases by remember(wordSession?.id) { mutableStateOf(emptyMap<String, List<Pair<String, String>>>()) }
     var preparedDetails by remember { mutableStateOf<Pair<String, StudyWordDetails>?>(null) }
     var pocketRound by remember { mutableStateOf<PocketRound?>(null) }
     val prefs = remember { context.getSharedPreferences("learning", 0) }
@@ -437,6 +438,25 @@ fun LearningScreen(
         finally { busy = false }
     }
 
+    suspend fun saveExtraSpelling(word: String, token: String, correct: Boolean, assisted: Boolean, elapsed: Long): Boolean {
+        if (busy) return false
+        busy = true; message = null
+        return try {
+            val saved = withContext(Dispatchers.IO) {
+                SpellingPracticeRepository(dbHelper).record(token, word, correct, assisted, elapsed,
+                    System.currentTimeMillis(), AbilityStore(context).load(), retention)
+            }
+            saved?.let {
+                states = states.map { state -> if (state.word == word) it.state else state }
+                memoryByWord = memoryByWord + (word to it.verdict.memory)
+                ability = it.verdict.ability
+                AbilityStore(context).save(ability)
+            }
+            true
+        } catch (e: Exception) { message = "保存拼写记录失败，请重试：${e.message}"; false }
+        finally { busy = false }
+    }
+
     fun saveWordAnswer(state: Knowledge, correct: Boolean, elapsed: Long, revealed: Boolean, recognition: Boolean = false, gradeElapsed: Long = elapsed) {
         if (busy) return
         busy = true
@@ -595,6 +615,9 @@ fun LearningScreen(
                     onHelp = { saveWordHelp(shown.position) },
                     onIntroduction = { known -> saveWordIntroduction(shown.position, known) },
                     onRetryLater = { retryWordLater(shown.position) },
+                    onExtraSpelling = { token, correct, assisted, elapsed -> saveExtraSpelling(shown.state.word, token, correct, assisted, elapsed) },
+                    phraseBank = remember(roundPhrases) { roundPhrases.values.flatten().take(80) },
+                    onPhrasesPrepared = { phrases -> if (roundPhrases[shown.state.word] != phrases) roundPhrases = roundPhrases + (shown.state.word to phrases) },
                     completedStages = shown.completedStages,
                     roundPhase = shown.phase, turnPosition = shown.position,
                     drawBackground = false,

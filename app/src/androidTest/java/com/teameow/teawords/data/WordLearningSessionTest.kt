@@ -89,6 +89,8 @@ class WordLearningSessionTest {
         sessions.exercise(initial.id, 0, 1, 1, false, false, 1500)
         assertEquals(1, sessions.load()!!.exercises.getValue("apple").completed)
         sessions.exercise(initial.id, 0, 1, 2, true, false, 1500)
+        assertEquals(1, sessions.load()!!.phase)
+        sessions.retryLater(initial.id, 0)
         sessions.exercise(initial.id, 0, 2, 3, true, true, 1500)
         assertEquals(2, sessions.load()!!.exercises.getValue("apple").completed)
         assertEquals(0, LearningRepository(helper).totals().tests)
@@ -151,6 +153,7 @@ class WordLearningSessionTest {
                 if (phase == 0) sessions.introduce(session.id, index, true)
                 val progress = sessions.load()!!.exercises[task.word] ?: WordExerciseProgress()
                 sessions.exercise(session.id, index, phase, progress.attempts, true, false, 1000)
+                if (phase == 1) sessions.retryLater(session.id, index)
                 if (phase == 2) sessions.answer(session.id, index, true, true, 3000) { review(helper, it, true, true) }
             }
         }
@@ -172,9 +175,12 @@ class WordLearningSessionTest {
         sessions.retryLater(round.id, 0)
         assertEquals(1, sessions.load()!!.position)
         sessions.exercise(round.id, 1, 1, 1, true, false, 1000)
+        assertEquals(1, sessions.load()!!.position)
+        sessions.retryLater(round.id, 1)
         assertEquals(0, sessions.load()!!.position)
         assertEquals(1, sessions.load()!!.phase)
         sessions.exercise(round.id, 0, 1, 2, true, false, 1000)
+        sessions.retryLater(round.id, 0)
         assertEquals(2, sessions.load()!!.phase)
     }
 
