@@ -1,89 +1,91 @@
-# teaWords（茶词）
+<p align="center">
+  <img src="docs/brand/teawords-logo.png" width="104" alt="茶词：A 与文组成的双语对话气泡和茶叶" />
+</p>
 
-<img src="docs/brand/teawords-logo.png" alt="茶词图标：茶杯与书页" width="96" />
+<h1 align="center">teaWords · 茶词</h1>
 
-茶词是一款 Android 单词查询、中英翻译与自适应学习应用，使用 Kotlin、Jetpack Compose 和 Material 3。
+<p align="center">查词、翻译，也把遇见的单词记下来。</p>
 
-## 下载
+茶词是一款使用 Kotlin、Jetpack Compose 和 Material 3 构建的 Android 英语学习应用，支持 Android 7.0 及以上。
 
-当前候选版本 **1.2.2 RC2**（versionCode 7），适用于 Android 7.0 及以上。
+## 下载与更新
 
-从 [GitHub Releases](https://github.com/echoinzephyr/teaWords/releases/tag/v1.2.2-rc.2) 下载已签名的 `teaWords-1.2.2-rc.2.apk`。无需下载翻译模型即可使用默认在线翻译；更新记录见 [CHANGELOG](CHANGELOG.md)。
+- **候选测试版：[1.2.3 RC1](https://github.com/echoinzephyr/teaWords/releases/tag/v1.2.3-rc.1)**，下载发布页中的 APK 安装。
+- **稳定版：[最新正式发布](https://github.com/echoinzephyr/teaWords/releases/latest)**。
 
-1.2.0 起，设置中的“检查更新”支持直接下载 APK，显示后台下载进度并在完成后打开系统安装确认。首次安装需允许茶词安装应用；发布包会校验版本、校验和及签名，使用相同发布签名更新可保留数据。
+在应用的「设置 → 检查更新」中检查和下载安装包。希望接收 Beta、RC 等预发布版本时，开启「接收 Beta 更新」。下载完成后由 Android 确认安装；使用相同签名覆盖更新可保留应用数据。
 
-学习布局参考 WordMoment 的信息层级：入口展示当前词书、进度和今日安排；单词练习沿用应用主题（壁纸可手动开启），采用居中词条与音标、顶部胶囊进度、右侧生词本和拼写入口、底部双按钮。点击认识或不认识后展开释义、短语或词形与个人笔记，再确认进入下一个词；切词、展开释义和按钮反馈均有过渡动效。学习页可主动查询有道词义、英美音标、短语和词形，新结果只保留在内存中，不新增磁盘缓存；发音优先有道词典音频，失败回退到所选口音的系统语音，也可切换为系统语音。底部导航采用浮动胶囊，最近查阅和词汇画像作为右侧独立圆形按钮；页面内容可滚动到导航栏后方，末尾留出按钮所需的空间。辨认属于辅助练习，不增加独立回忆验证次数；整词默写仍可在专项练习中使用。
+## 用茶词做什么
 
-单词计划支持暂停续学：已保存的答题进度与本轮释义在重启应用、切换词书后保留，继续时从当前未完成词开始。结算区分独立回忆与看过答案后的练习，并列出答错词；快速排查后可直接进入单词学习。到期任务按时间刷新，新词额度按每轮计算，完成后可继续下一轮。
+### 查词与翻译
 
-学习页新增“随手练一小轮”：点开始后可选词数或自定义 1–100 个词，混合词义、听音、配对、拼写填空及现有例句的语境题。实际词数受可用词条和每轮新词额度影响；暂停后继续原轮次。
+搜索单词时保留已有本地结果，联网补充有道释义、英美音标、短语、词形与搜索建议。查询历史保存查询文字和本地词条关联，在线释义最多在进程内缓存 64 条，不新增在线结果磁盘缓存。
 
-学习首页提供搜索、词书进度、学习／复习／收藏入口。「专项练习」提供混合小练习和打字记词，支持暂停续学。词书和学习记录保存在本机；按需下载词书后可离线使用。
+句子和长文默认使用 MyMemory，无需配置密钥；也可使用自己的 DeepSeek API 密钥。支持从其他应用分享或选择文本，确认后再查询。在线功能受网络和服务额度影响；翻译原文会发送给所选服务商。
 
-## 开发入口
+### 分轮学习
 
-当前工程直接位于仓库根目录，使用 Android Studio 打开克隆后的仓库即可。
+默认每组 5 个词，也可调整每轮词数。整组分三遍完成：
 
-## 当前功能
+1. **先认读**：看单词、选「认识／不认识」，再查看释义、听发音和学习搭配。
+2. **再辨认**：认读完整组后，穿插进行搭配含义或词义辨认。
+3. **最后拼写**：根据释义回忆英文，答错或看过提示的词回看后再练。
 
-- 离线词典：英文查询、中文反查、词形还原、拼写建议与词书范围选择。
-- 句子与长文翻译：默认 MyMemory 联网即译，无需下载；可选 DeepSeek（本人 API 密钥）；已移除 Google 设备端离线翻译及模型依赖。支持系统文本选择、分享与复制译文。
-- 回望：独立复习查过的单词（暂不包含句子），保留生词本入口；查阅记录在首页查看。
-- 学习：花瓣形学习入口、复习与收藏快捷入口、词书分类搜索与多选、真实去重词数、自适应诊断、回忆练习和学习统计。
-- 发音：英音 / 美音偏好及设备语音支持，详见 [发音说明](PRONUNCIATION.md)。
-- 外观：Bing 每日壁纸、一言、自定义首页、浅色 / 深色 / 跟随系统，Android 12 及以上支持动态取色；可选预设或自定义主题色，以及跟随系统或 75%–160% 自定义字号。
-- 设置：接近全屏的分层面板，固定顶栏、圆形关闭按钮与分组列表；顶栏下拉关闭当前层，列表拖动只滚动内容。主题页提供实时配色预览与可保存的纯黑模式，主页定制直接缩放绘制真实主页。统一管理句子与长文翻译偏好、外观、发音与学习策略；保留独立更新页、诊断日志和反馈入口。“关于茶词”暂不提供检查更新按钮。
-- 菜单：统一 Material 3 Expressive 圆角菜单；查词选项以简洁主菜单和二级选项呈现，查询范围与每轮目标使用相同的选中反馈。
+顶部统一记录整组已完成步骤：5 个词共 15 步，每完成一步加 1，答错、提示和重复提交不加数。三个进度点表示本词的实际完成步骤，结算再显示完成词数。每步进度保存到本机，可暂停续学。认读后的巩固属于辅助学习，不冒充三次独立回忆或永久掌握。
 
-词书采用 ECDICT 数据，中考、高考、四级、六级、考研、雅思、托福和 GRE 词书按需下载，下载后可离线学习。安装包仅保留稳定词条编号索引，不包含完整词典。考试标签不代表官方最新完整大纲；诊断难度和义项拆分具有启发式限制，详见 [交付记录](FEATURE_DELIVERY.md)。
+学习页支持下拉查词、左滑拼写，以及发音、收藏和笔记。「专项练习」另有混合小练习和打字记词；「回望」用于巩固查过的生词。
 
-## 构建与验证
+### 词书与记录
 
-需要 JDK 21 与 Android SDK Platform 37；最低运行版本为 Android 7.0（API 24）。Gradle 使用工程自带的 wrapper。
+支持词书分类、搜索和多选，以及个人词库导入。已下载词书可离线学习；学习进度、查询历史、收藏与笔记保存在本机。统计与词汇诊断根据实际记录展示，记忆调度使用 FSRS-4.5 默认参数，尚未进行个人参数拟合。
+
+**词书下载服务目前尚未配置公共地址。** 已有词书、个人导入及在线查词可使用；全新安装暂不能直接下载公共词书。自建服务方法见下方部署说明。安装包不包含完整词典，也不需要下载设备端翻译模型。
+
+### 外观与操作
+
+- 浅色、深色、跟随系统和纯黑模式。
+- Android 12 起支持 Material Monet 动态取色；开启应用动态取色后，桌面图标同步采用系统配色，刷新速度取决于启动器。
+- Bing 每日壁纸、自定义壁纸、首页文字及实时主题预览。
+- 跟随系统字号或自定义文字缩放，保留浮动导航。
+- Android 14 起可开启向下预览的预测性返回。
+
+发音优先使用词典音频，不可用时尝试所选口音的系统语音；系统语音资源是否可用取决于设备和已安装语音包。
+
+## 构建
+
+使用 Android Studio 打开仓库根目录，准备 **JDK 21** 和 **Android SDK Platform 37**，通过工程自带的 Gradle Wrapper 构建：
 
 ```powershell
 .\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-本机 JDK 路径、离线构建和模拟器验证方法见 [快速入门](QUICK_START.md)。
+调试 APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。连接真机后可运行 `:app:connectedDebugAndroidTest` 验证设备界面与数据流程。
 
-调试安装包生成于 `app/build/outputs/apk/debug/app-debug.apk`。
+发布构建运行 `:app:assembleRelease`，启用代码和资源压缩。使用环境变量提供签名：
 
-发布构建使用 `:app:assembleRelease`；通过环境变量 `TEAWORDS_KEYSTORE`、`TEAWORDS_STORE_PASSWORD`、`TEAWORDS_KEY_ALIAS`、`TEAWORDS_KEY_PASSWORD` 提供自己的发布签名。未提供时输出未签名 APK，不可直接安装。请保留签名文件和密码，后续更新必须使用同一签名。
+- `TEAWORDS_KEYSTORE`：密钥库路径。
+- `TEAWORDS_STORE_PASSWORD`：密钥库密码。
+- `TEAWORDS_KEY_ALIAS`：密钥别名，默认 `teawords`。
+- `TEAWORDS_KEY_PASSWORD`：私钥密码。
 
-GitHub 发布包使用独立发布签名，无法直接覆盖 Android Studio 的调试签名安装。切换前请保留数据；卸载调试版会清除其应用数据。也可以继续使用本地同签名调试构建。
+未提供签名时，发布产物为未签名 APK。GitHub 安装包使用发布签名，无法直接覆盖 Android Studio 的调试签名版本；卸载应用会清除其本机数据。
 
-## 翻译方式
+## 自建词书服务
 
-在「设置 → 句子与长文翻译」中选择翻译方式：
+服务端、数据生成器及部署步骤见 [词书服务说明](server/wordbooks/README.md)。服务仅提供词书目录与下载，不保存用户学习记录。
 
-- **MyMemory**：无需密钥，默认在线翻译；匿名服务额度为 5,000 字符/日，提供本人有效联系邮箱可提升至 50,000 字符/日，实际限制以服务商响应为准。长文按 UTF-8 字节拆分，保留换行；失败、取消时保留部分译文，本次会话内重试复用已完成段落。
-- **DeepSeek**：填写自己的 API 密钥后，将全文一起发送至官方接口以保留上下文。服务商按用量计费；密钥通过 Android Keystore 加密，存于不参与系统备份的私有目录。未提供密钥时不发请求。
-- **轻量版本**：设备端句子翻译及 ML Kit 依赖已移除，旧设置自动切换为 MyMemory 并提示一次。已下载词书仍可离线背词。
+HTTPS 服务就绪后，构建时指定地址：
 
-单次翻译上限 20,000 字符；超限明确提示，不截断原文。在线翻译会把原文发送给所选服务，失败不会自动切到其他服务。外部应用分享的文本先展示，再由用户点击翻译，不保存查询历史。
+```powershell
+.\gradlew.bat :app:assembleRelease -PwordbookBaseUrl=https://your-domain.example
+```
 
-接口与额度：[MyMemory API](https://mymemory.translated.net/doc/spec.php)、[额度说明](https://mymemory.translated.net/doc/usagelimits.php)、[DeepSeek API](https://api-docs.deepseek.com/guides/harness)、[DeepSeek 计费](https://api-docs.deepseek.com/quick_start/pricing/)。免配置服务受网络与配额限制，不承诺无限使用。
+词书下载支持校验和检查与中断重试。客户端词条身份保持稳定，切换词书不会重新分配已有单词的学习身份。更新备用清单的维护方式见 [更新服务说明](updates/README.md)。
 
-## 工程结构
+## 反馈与许可
 
-- `app/src/main/`：应用源码、界面、离线词典和资源。
-- `app/src/test/`：JVM 单元测试。
-- `app/src/androidTest/`：设备数据库与界面测试。
-- `gradle/`：版本目录和 wrapper。
-- `tools/`：词典构建、升级、核查工具及 ECDICT 来源说明。
-- `FEATURE_DELIVERY.md`：功能交付、验证结果和已知边界。
+遇到问题可在 [Issues](https://github.com/echoinzephyr/teaWords/issues) 中反馈，附上应用版本、Android 版本及复现步骤；应用设置中提供诊断日志入口。
 
-## 许可证
+应用使用 [GPL-3.0](LICENSE) 许可。词书采用 [ECDICT](https://github.com/skywind3000/ECDICT) 数据，其 [MIT 许可](tools/data/ecdict-LICENSE) 和 [数据说明](tools/data/ecdict-README.md) 随仓库保留。考试分类不代表官方最新完整大纲。
 
-应用沿用仓库 [GPL-3.0 许可证](LICENSE)。ECDICT 的 MIT 许可证保留在 `tools/data/ecdict-LICENSE`。完整来源与处理说明见交付记录。
-
-Developed by teaMeow Technology.
-
-界面改造、验证与设计参考见 [Material 界面说明](docs/MATERIAL_UI.md)。
-
-## 在线查词与词书服务
-
-提交查询后先展示本地结果，再通过有道 `jsonapi` / `suggest` 补充释义和建议。在线结果最多缓存 64 条于内存，不新增磁盘缓存，查询不改变学习进度。参考了本机 WordMoment 项目的接口接入方式，保留 GPLv3 许可及第三方数据来源说明。
-
-词书服务的程序、数据生成器和部署说明见 [server/wordbooks/README.md](server/wordbooks/README.md)。本轮按要求只准备服务端交付包，不配置阿里云；默认下载地址留空。域名就绪后通过 `-PwordbookBaseUrl=https://你的域名` 构建，正式包仅允许 HTTPS。
+teaMeow Technology

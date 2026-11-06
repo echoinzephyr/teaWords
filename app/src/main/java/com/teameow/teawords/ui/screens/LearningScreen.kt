@@ -51,6 +51,11 @@ private data class PreparedStudyRound(
     val details: Pair<String, StudyWordDetails>?
 )
 
+private data class WordRoundTurn(
+    val state: Knowledge, val definition: String, val position: Int, val phase: Int,
+    val progress: WordExerciseProgress, val completedWords: Int, val completedStages: Int
+)
+
 /**
  * Learning entry point.
  *
@@ -82,6 +87,14 @@ fun LearningScreen(
     var preparedDetails by remember { mutableStateOf<Pair<String, StudyWordDetails>?>(null) }
     var pocketRound by remember { mutableStateOf<PocketRound?>(null) }
     val prefs = remember { context.getSharedPreferences("learning", 0) }
+    var useStudyWallpaper by remember { mutableStateOf(prefs.getBoolean("word_card_wallpaper_v2", false)) }
+    DisposableEffect(prefs) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "word_card_wallpaper_v2") useStudyWallpaper = prefs.getBoolean(key, false)
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
     var pocketWordLimit by rememberSaveable { mutableIntStateOf(
         prefs.getInt("pocket_word_limit", PocketPlanner.DEFAULT_WORD_LIMIT).coerceIn(1, PocketPlanner.MAX_WORD_LIMIT)
     ) }
@@ -562,28 +575,34 @@ fun LearningScreen(
             onBack = back, onContinue = if (plan.isNotEmpty()) ({ startWordPlan() }) else null)
     } else if (pageMode == "session" && queue.getOrNull(position) != null) {
         val current = queue[position]
-        val card = Triple(current, wordSession?.tasks?.getOrNull(position)?.definition.orEmpty(), position)
-        AnimatedContent(card, transitionSpec = {
+        val card = WordRoundTurn(current, wordSession?.tasks?.getOrNull(position)?.definition.orEmpty(), position,
+            wordSession?.phase ?: 0, wordSession?.exercises?.get(current.word) ?: WordExerciseProgress(),
+            wordSession?.completedWords ?: 0, wordSession?.completedStages ?: 0)
+        Box(Modifier.fillMaxSize()) {
+        StudyAmbientBackground(if (useStudyWallpaper) studyWallpaper else null)
+        AnimatedContent(card, contentKey = { it.position to it.phase }, transitionSpec = {
             (fadeIn(tween(280)) + slideInHorizontally(tween(280, easing = TeaEnterEasing)) { it / 8 })
                 .togetherWith(fadeOut(tween(150)) + slideOutHorizontally(tween(200)) { -it / 8 })
                 .using(SizeTransform(clip = false))
         }, label = "study-word-transition") { shown ->
-            key(wordSession?.id, shown.first.word, wordSession?.phase) {
-                val progress = wordSession?.exercises?.get(shown.first.word) ?: WordExerciseProgress()
+            key(wordSession?.id, shown.state.word, shown.phase) {
+                val progress = shown.progress
                 val bank = remember(words) { words.values.filter { it.definition.isNotBlank() }.map { WordLearningTask(it.word, it.definition) } }
-                WordRoundExerciseScreen(dbHelper, WordLearningTask(shown.first.word, shown.second), progress,
-                    wordSession?.completedWords ?: 0, queue.size, bank, busy || shown.third != position, message, studyWallpaper,
-                    preparedDetails?.takeIf { it.first == shown.first.word }?.second, onPause = back,
-                    onExercise = { step, attempt, correct, assisted, elapsed -> saveWordExercise(shown.third, step, attempt, correct, assisted, elapsed) },
-                    onHelp = { saveWordHelp(shown.third) },
-                    onIntroduction = { known -> saveWordIntroduction(shown.third, known) },
-                    onRetryLater = { retryWordLater(shown.third) },
-                    completedStages = wordSession?.completedStages ?: 0,
-                    roundPhase = wordSession?.phase ?: 0, turnPosition = shown.third,
-                    onFinish = { saveWordAnswer(shown.first, true, progress.elapsed, progress.assisted,
+                WordRoundExerciseScreen(dbHelper, WordLearningTask(shown.state.word, shown.definition), progress,
+                    shown.completedWords, queue.size, bank, busy || shown.position != position || shown.phase != wordSession?.phase, message, studyWallpaper,
+                    preparedDetails?.takeIf { it.first == shown.state.word }?.second, onPause = back,
+                    onExercise = { step, attempt, correct, assisted, elapsed -> saveWordExercise(shown.position, step, attempt, correct, assisted, elapsed) },
+                    onHelp = { saveWordHelp(shown.position) },
+                    onIntroduction = { known -> saveWordIntroduction(shown.position, known) },
+                    onRetryLater = { retryWordLater(shown.position) },
+                    completedStages = shown.completedStages,
+                    roundPhase = shown.phase, turnPosition = shown.position,
+                    drawBackground = false,
+                    onFinish = { saveWordAnswer(shown.state, true, progress.elapsed, progress.assisted,
                         recognition = progress.introductionKnown != null, gradeElapsed = progress.spellingMillis) },
                     phraseLookup = exercisePhraseLookup)
             }
+        }
         }
     } else if (pageMode == "diagnose") {
         DiagnosticScreen(

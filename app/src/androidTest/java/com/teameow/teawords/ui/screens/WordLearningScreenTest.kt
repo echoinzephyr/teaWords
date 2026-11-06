@@ -88,6 +88,7 @@ class WordLearningScreenTest {
         compose.runOnIdle { generation.intValue++ }
         open()
         compose.onNodeWithText("原轮次释义").assertDoesNotExist()
+        compose.onNodeWithText("0 / 3").assertIsDisplayed()
         compose.onNodeWithTag("word-choice-0").assertDoesNotExist()
         compose.onNodeWithText("不认识").performClick()
         compose.onNodeWithText("原轮次释义").assertIsDisplayed()
@@ -98,9 +99,10 @@ class WordLearningScreenTest {
         compose.runOnIdle { generation.intValue++ }
         open()
         compose.onNodeWithText("原轮次释义").assertIsDisplayed()
-        compose.waitUntil(5000) { compose.onAllNodes(hasText("记住了，开始巩固") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("记住了，开始巩固").performClick()
+        compose.waitUntil(5000) { compose.onAllNodes(hasTestTag("word-intro-continue") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("word-intro-continue").performClick()
         compose.onNodeWithContentDescription("本词已完成 1 / 3 项练习").assertExists()
+        compose.onNodeWithText("1 / 3").assertIsDisplayed()
         assertEquals(0, WordLearningSessionRepository(database).load()!!.position)
         compose.onNodeWithContentDescription("更多").performClick()
         compose.onNodeWithText("暂停，稍后继续").performClick()
@@ -110,10 +112,12 @@ class WordLearningScreenTest {
         capture("study-consolidation.png")
         compose.onNodeWithText("apple").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("spelling-input").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("2 / 3").assertIsDisplayed()
         compose.onNodeWithTag("spelling-input").performTextInput("apple")
         capture("study-spelling.png")
         compose.onNodeWithContentDescription("检查拼写").performClick()
         compose.onNodeWithContentDescription("本词已完成 3 / 3 项练习").assertExists()
+        compose.onNodeWithText("3 / 3").assertIsDisplayed()
         compose.onNodeWithText("下一个单词").performClick()
         compose.waitUntil(10000) { WordLearningSessionRepository(database).load()?.complete == true }
         assertEquals(session.id, WordLearningSessionRepository(database).load()!!.id)
@@ -143,6 +147,57 @@ class WordLearningScreenTest {
             compose.waitUntil(5_000) { WordLearningSessionRepository(database).load() != null }
             assertEquals(listOf("roundfresh"), WordLearningSessionRepository(database).load()!!.tasks.map { it.word })
         } finally { preferences.dailyNewCapOverride = previous }
+    }
+
+    @Test fun changingWordsKeepsWallpaperFixedThroughEveryTransitionFrame() {
+        name = "word-background-${System.nanoTime()}.db"
+        val database = DatabaseHelper(compose.activity, name)
+        helper = database
+        database.ensureSchema()
+        LearningRepository(database).importWords(listOf(ImportedWord("apple", "苹果"), ImportedWord("book", "书")), "test", "test")
+        val sessions = WordLearningSessionRepository(database)
+        sessions.start(listOf(WordLearningTask("apple", "苹果"), WordLearningTask("book", "书")), threeStep = true)
+        val wallpaper = File(compose.activity.cacheDir, "transition-wallpaper.png")
+        val bitmap = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(android.graphics.Color.rgb(35, 160, 80))
+        wallpaper.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        bitmap.recycle()
+        val preferences = compose.activity.getSharedPreferences("learning", 0)
+        val previous = preferences.getBoolean("word_card_wallpaper_v2", false)
+        preferences.edit().putBoolean("word_card_wallpaper_v2", true).commit()
+        try {
+            compose.setContent { TeaWordsTheme { LearningScreen(database, studyWallpaper = wallpaper.absolutePath, exercisePhraseLookup = { emptyList() }) } }
+            compose.waitUntil(15000) { compose.onAllNodes(hasTestTag("study-learn-entry") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("study-learn-entry").performScrollTo().performClick()
+            compose.waitUntil(5000) { compose.onAllNodes(hasText("认识") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithText("认识").performClick()
+            compose.waitUntil(5000) { compose.onAllNodes(hasTestTag("word-intro-continue") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+            val before = compose.onRoot().captureToImage().asAndroidBitmap()
+            val x = 2; val y = before.height / 2
+            val expected = before.getPixel(x, y)
+            compose.mainClock.autoAdvance = false
+            compose.onNodeWithTag("word-intro-continue").performClick()
+            compose.waitUntil(5000) { sessions.load()?.position == 1 }
+            repeat(18) {
+                compose.mainClock.advanceTimeByFrame()
+                val frame = compose.onRoot().captureToImage().asAndroidBitmap()
+                if (frame.getPixel(x, y) != expected) {
+                    File(compose.activity.getExternalFilesDir(null), "transition-before.png").outputStream().use { before.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                    File(compose.activity.getExternalFilesDir(null), "transition-frame.png").outputStream().use { frame.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                }
+                assertEquals("Wallpaper must not be faded with outgoing/incoming word cards", expected, frame.getPixel(x, y))
+                compose.onNodeWithTag("word-choice-0").assertDoesNotExist()
+            }
+            compose.mainClock.autoAdvance = true
+            compose.waitForIdle()
+            compose.onNodeWithText("book").assertIsDisplayed()
+            compose.onNodeWithText("认识").assertIsDisplayed()
+            assertEquals(0, sessions.load()!!.completedWords)
+        } finally {
+            compose.mainClock.autoAdvance = true
+            preferences.edit().putBoolean("word_card_wallpaper_v2", previous).commit()
+            wallpaper.delete()
+        }
     }
 
     @Test fun revealingAutomaticallyLoadsOnlineDetailsAndTopContinueResponds() {

@@ -40,6 +40,7 @@ internal fun WordRoundExerciseScreen(
     onRetryLater: suspend () -> Boolean = { true },
     completedStages: Int = completedWords * 3 + progress.completed,
     roundPhase: Int = progress.completed.coerceAtMost(2), turnPosition: Int = completedWords,
+    drawBackground: Boolean = true,
     phraseLookup: suspend (String) -> List<Pair<String, String>> = { OnlineDictionary.shared.lookup(it).entry?.detail?.phrases.orEmpty() }
 ) {
     val scope = rememberCoroutineScope()
@@ -122,8 +123,8 @@ internal fun WordRoundExerciseScreen(
         val elapsed = activeTime[0] + if (activeTime[1] == 0L) 0 else android.os.SystemClock.elapsedRealtime() - activeTime[1]
         scope.launch { try {
             if (onExercise(step, progress.attempts, correct, assisted, elapsed)) {
-                if (step == 0 && correct && !assisted) { step = 1; selected = null; feedback = null }
-                else feedback = correct && !assisted
+                // Successful early steps navigate to another turn. Keep this outgoing card unchanged.
+                if (step == 2 || !correct || assisted) feedback = correct && !assisted
             }
         } finally { working = false } }
     }
@@ -170,18 +171,18 @@ internal fun WordRoundExerciseScreen(
         StudySpellingScreen(task.definition, answer, { answer = it }, error, details.phonetic,
             activeWallpaper, enabled, onClose = onPause, onHint = { help {} },
             onSubmit = { submit(LexicalText.normalize(answer) == LexicalText.normalize(task.word), usedHint) },
-            progress = completedWords to totalWords, closeLabel = "暂停学习", completedSteps = progress.completed,
-            onReveal = { submit(false, true) })
+            progress = completedStages to totalWords * 3, closeLabel = "暂停学习", completedSteps = progress.completed,
+            onReveal = { submit(false, true) }, drawBackground = drawBackground)
     } else {
         Box(Modifier.fillMaxSize()) {
-            StudyAmbientBackground(activeWallpaper)
+            if (drawBackground) StudyAmbientBackground(activeWallpaper)
             Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     FilledTonalIconButton(onClick = onPause, enabled = navigationEnabled, modifier = Modifier.size(48.dp)) { Icon(AppSymbols.ArrowBack, "暂停学习") }
                     Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                         Column(Modifier.width(140.dp).padding(horizontal = 20.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("${completedWords + if (progress.completed == 3) 1 else 0} / $totalWords", style = MaterialTheme.typography.titleMedium)
+                            Text("$completedStages / ${totalWords * 3}", style = MaterialTheme.typography.titleMedium)
                             LinearProgressIndicator(progress = { completedStages.toFloat() / (totalWords * 3).coerceAtLeast(1) },
                                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(4.dp), drawStopIndicator = {})
                         }
@@ -206,9 +207,16 @@ internal fun WordRoundExerciseScreen(
                         }) { change, delta -> horizontal += delta; change.consume() }
                     }, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     item {
-                        Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = .92f)) {
-                            Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = .9f)) {
+                            Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("${when (roundPhase) { 0 -> "认读"; 1 -> "第一轮巩固"; else -> "第二轮巩固" }} · ${turnPosition + 1} / $totalWords",
+                                        style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    WordExerciseDots(progress.completed)
+                                }
                                 if (step == 0 || feedback != null) StudyAdaptiveWord(task.word)
                                 else Text(prompt.prompt, style = MaterialTheme.typography.headlineSmall)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -220,11 +228,8 @@ internal fun WordRoundExerciseScreen(
                                         Icon(Icons.Outlined.Keyboard, "拼写练习")
                                     }
                                 }
-                                WordExerciseDots(progress.completed)
-                                Text("${when (roundPhase) { 0 -> "认读"; 1 -> "第一轮巩固"; else -> "第二轮巩固" }} · ${turnPosition + 1} / $totalWords",
-                                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                                Text(when (prompt.kind) {
-                                    WordExerciseKind.INTRODUCTION -> if (introductionKnown == null) "先认读，再巩固" else "听一听，记住词义和用法"
+                                if (step > 0) Text(when (prompt.kind) {
+                                    WordExerciseKind.INTRODUCTION -> ""
                                     WordExerciseKind.USAGE -> "选择短语或搭配的含义"
                                     WordExerciseKind.REVERSE -> "根据释义选择单词"
                                     WordExerciseKind.SPELLING -> "根据释义拼写单词"
@@ -233,15 +238,19 @@ internal fun WordRoundExerciseScreen(
                         }
                     }
                     if (step == 0 && introductionKnown != null && feedback == null) item {
-                        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.primaryContainer) {
-                            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Text(task.definition, style = MaterialTheme.typography.headlineSmall)
-                                details.phrases.take(2).forEach { (phrase, meaning) ->
-                                    Text(phrase, style = MaterialTheme.typography.titleMedium)
-                                    Text(meaning, style = MaterialTheme.typography.bodyLarge)
+                        Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = .96f)) {
+                            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                                Text(task.definition, style = MaterialTheme.typography.titleLarge)
+                                if (details.phrases.isNotEmpty()) {
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .5f))
+                                    details.phrases.take(2).forEach { (phrase, meaning) ->
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(phrase, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                                            Text(meaning, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
                                 }
-                                Text(if (introductionKnown == false) "先看释义、听发音，记住后再开始巩固。" else "核对一下词义，随后用两项练习巩固。",
-                                    style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
@@ -268,7 +277,8 @@ internal fun WordRoundExerciseScreen(
                     if (pull > 0) item { TeaCaption(if (pull >= threshold) "松开查词" else "继续下拉查词") }
                     error?.let { item { TeaStatusMessage(it, error = true) } }
                 }
-                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = if (activeWallpaper != null) .78f else 1f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp)) {
                         if (feedback != null) Button(onClick = ::continueExercise, enabled = enabled,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
@@ -277,7 +287,9 @@ internal fun WordRoundExerciseScreen(
                             Button(onClick = { introduce(true) }, enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 52.dp)) { Text("认识") }
                             FilledTonalButton(onClick = { introduce(false) }, enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 52.dp)) { Text("不认识") }
                         } else if (step == 0) Button(onClick = { submit(true) }, enabled = enabled,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text("记住了，开始巩固") }
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag("word-intro-continue")) {
+                            Text(if (turnPosition + 1 < totalWords) "记住了，下一个" else "开始第一轮巩固")
+                        }
                         else TextButton(onClick = { submit(false, true) }, enabled = enabled,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("想不起来，回看讲解") }
                     }

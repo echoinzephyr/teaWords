@@ -143,6 +143,7 @@ class WordLearningSessionTest {
             repeat(2) { index ->
                 val before = WordLearningSessionRepository(helper).load()!!
                 assertEquals(phase, before.phase)
+                assertEquals(phase * 2 + index, before.completedStages)
                 assertEquals(index, before.position)
                 assertEquals(if (phase < 2) 0 else index, before.completedWords)
                 val task = before.tasks[index]
@@ -156,6 +157,7 @@ class WordLearningSessionTest {
         assertEquals(listOf("apple", "book", "apple", "book", "apple", "book"), order)
         assertTrue(sessions.load()!!.complete)
         assertEquals(2, sessions.load()!!.completedWords)
+        assertEquals(6, sessions.load()!!.completedStages)
         assertEquals(2, LearningRepository(helper).totals().tests)
     }
 

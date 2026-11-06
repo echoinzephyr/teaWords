@@ -16,3 +16,20 @@
 /tools/out/
 /tools/data/*.csv
 __pycache__/
+
+# Local development notes, review screenshots and unused design explorations.
+/ACTIVE_PROJECT.md
+/FEATURE_DELIVERY.md
+/PRONUNCIATION.md
+/QUICK_START.md
+/docs/LIGHTWEIGHT_DELIVERY.md
+/docs/MATERIAL_UI.md
+/docs/WORD_LEARNING.md
+/docs/dev/
+/docs/validation/
+/docs/releases/
+/teawords-*.png
+/immersive-word-*.png
+/study-layout-*.png
+/docs/brand/concepts/*
+!/docs/brand/concepts/11-language-lookup.png

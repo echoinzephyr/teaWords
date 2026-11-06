@@ -35,7 +35,7 @@ internal fun StudySpellingScreen(
     onClose: () -> Unit, onHint: () -> Unit, onSubmit: () -> Unit,
     progress: Pair<Int, Int>? = null, closeLabel: String = "返回词卡",
     result: StudySpellingResult? = null, onReveal: (() -> Unit)? = null, onContinue: (() -> Unit)? = null,
-    completedSteps: Int? = null
+    completedSteps: Int? = null, drawBackground: Boolean = true
 ) {
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -50,7 +50,7 @@ internal fun StudySpellingScreen(
     }
     val ink = MaterialTheme.colorScheme.onBackground
     Box(Modifier.fillMaxSize()) {
-        StudyAmbientBackground(wallpaper)
+        if (drawBackground) StudyAmbientBackground(wallpaper)
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding().padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
